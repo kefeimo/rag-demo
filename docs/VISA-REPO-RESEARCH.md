@@ -139,18 +139,25 @@ Sample closed issues:
 
 **Expected Output:** 50-100 API reference entries
 
-### **Pillar 3: Issue Q&A** ❌ LOW VALUE (Skip for this repo)
-**Reason:** Most issues are internal PRs, not user questions
+### **Pillar 3: Issue Q&A** ✅ MEDIUM VALUE (Internal Developer Q&A)
+**Rationale:** While most issues are internal PRs/releases, this is actually **valuable for internal tooling**
+- Internal developers face similar problems (merges, releases, build issues)
+- Metadata can tag audience: `audience: "internal"` vs `audience: "external"`
+- Shows real development workflows, not just user-facing questions
+- RAG system can filter by audience when answering
 
-**Alternative:** Focus on GitHub Pages documentation (if accessible)
+**Strategy:** Extract ALL closed issues, tag with metadata
+- `issue_type: "merge"` | `"release"` | `"bug"` | `"feature"`
+- `audience: "internal"` (from labels/patterns)
+- `context: "development"` | `"production"` | `"ci_cd"`
 
 ---
 
 ## 🚀 Revised Implementation Plan
 
-### **Hour 14: Core Extraction (Pillars 1 & 2)**
+### **Hour 14: Core Extraction (All 3 Pillars)**
 
-#### **Phase 1: Repository Clone & Doc Extraction (20 min)**
+#### **Phase 1: Repository Clone & Doc Extraction (15 min)**
 ```bash
 # Clone visa-chart-components
 git clone --depth=1 https://github.com/visa/visa-chart-components.git
@@ -175,7 +182,7 @@ for package in packages/*/:
         }
 ```
 
-#### **Phase 3: Code Documentation (20 min)**
+#### **Phase 3: Code Documentation (15 min)**
 ```python
 # Find TypeScript files with exported interfaces
 find packages/ -name "*.tsx" -o -name "*.ts"
@@ -186,9 +193,30 @@ find packages/ -name "*.tsx" -o -name "*.ts"
 # - JSDoc comments
 ```
 
+#### **Phase 4: Issue Q&A Extraction (15 min)**
+```python
+# Fetch closed issues via GitHub API
+GET /repos/visa/visa-chart-components/issues?state=closed&per_page=100
+
+# For each issue:
+# - Extract: title, body, comments, labels
+# - Classify: issue_type, audience (internal/external)
+# - Format as Q&A pair:
+#   question: issue.title + issue.body
+#   answer: top comments or PR description
+#   metadata: {
+#     "source": "visa-chart-components-issues",
+#     "issue_number": 125,
+#     "issue_type": "chore" | "merge" | "bug" | "feature",
+#     "audience": "internal" | "external",
+#     "labels": [...],
+#     "created_at": "2025-12-01"
+#   }
+```
+
 ### **Hour 15: Processing & Ingestion (60 min)**
 
-#### **Markdown Cleaning (15 min)**
+#### **Markdown Cleaning (10 min)**
 - Remove HTML tags
 - Fix relative links (→ absolute GitHub URLs)
 - Normalize code blocks
@@ -197,15 +225,19 @@ find packages/ -name "*.tsx" -o -name "*.ts"
 - Add source: "visa-chart-components"
 - Add component_name, package_name
 - Add file_path, commit_hash
-- Add doc_type: "readme" | "api" | "guide"
+- Add doc_type: "readme" | "api" | "guide" | "issue_qa"
+- Add audience: "internal" | "external" (from labels/patterns)
+- Add issue_type: "merge" | "release" | "bug" | "feature" (for issues)
 
-#### **RAG Ingestion (15 min)**
+#### **RAG Ingestion (20 min)**
 - Run existing `ingest.py` with new dataset
 - Verify ChromaDB collection
 - Check chunk count increase
 
 #### **Testing (15 min)**
 - Query: "How do I create a bar chart with Visa Chart Components?"
+- Query: "What's the process for yarn audit cleanup?" (internal issue #125)
+- Query: "How do you handle release merges?" (internal issue #113)
 - Query: "What accessibility features does VCC provide?"
 - Query: "How do I use VCC with React?"
 - Expected: Confidence >0.75, proper source attribution
@@ -227,15 +259,18 @@ find packages/ -name "*.tsx" -o -name "*.ts"
 - Query coverage: FastAPI framework only
 
 ### **After (FastAPI + VCC)**
-- Documents: 100-125 (13 FastAPI + 87-112 VCC)
-- Chunks: 1000-1500 (252 FastAPI + 748-1248 VCC)
-- Sources: 2 (FastAPI + Visa)
-- Query coverage: FastAPI + Data visualization + Accessibility
+- Documents: 150-175 (13 FastAPI + 137-162 VCC)
+  - VCC breakdown: 25-30 docs + 50-100 code docs + 50-100 issue Q&A
+- Chunks: 1200-2000 (252 FastAPI + 948-1748 VCC)
+- Sources: 3 (FastAPI + VCC docs + VCC issues)
+- Query coverage: FastAPI + Data visualization + Accessibility + Internal workflows
 
 ### **Success Criteria**
-✅ Ingest 80+ new documents from VCC  
+✅ Ingest 130+ new documents from VCC (docs + code + issues)  
 ✅ Answer VCC-specific queries with confidence >0.75  
-✅ Show source attribution mixing FastAPI and VCC docs  
+✅ Answer internal workflow queries (e.g., "How to handle release merges?")  
+✅ Show source attribution mixing FastAPI, VCC docs, and VCC issues  
+✅ Demonstrate audience filtering (internal vs. external metadata)  
 ✅ Demonstrate reusable pipeline (config-driven)
 
 ---
@@ -273,7 +308,12 @@ find packages/ -name "*.tsx" -o -name "*.ts"
 **Implementation Focus:**
 - **Pillar 1:** ✅ Full implementation (repo docs)
 - **Pillar 2:** ✅ Full implementation (code docs from TypeScript)
-- **Pillar 3:** ❌ Skip (low-value issues, focus elsewhere)
+- **Pillar 3:** ✅ Full implementation (issue Q&A with audience tagging) ⭐ REVISED
+
+**Key Innovation:** Metadata-driven audience filtering
+- Tag all content with `audience: "internal"` | `"external"`
+- RAG system can answer "How do internal devs handle X?" vs "How do users use X?"
+- Demonstrates understanding that internal tooling needs internal Q&A
 
 ---
 
