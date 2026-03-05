@@ -44,6 +44,8 @@ def main():
     parser.add_argument('--output', type=str, required=True, help='Path to save query results JSON file')
     parser.add_argument('--api-url', type=str, default='http://localhost:8000/api/v1/query', help='RAG API endpoint URL')
     parser.add_argument('--top-k', type=int, default=5, help='Number of context chunks to retrieve')
+    parser.add_argument('--dataset-name', type=str, default='general', help='Dataset name for tracking (e.g., "vcc", "fastapi")')
+    parser.add_argument('--validate-sources', action='store_true', help='Validate that sources match expected dataset')
     args = parser.parse_args()
     
     # Load queries
@@ -51,16 +53,18 @@ def main():
     
     # Run queries
     print(f"\n{'='*60}")
-    print("Stage 1: Running RAG Queries")
+    print(f"Stage 1: Running RAG Queries - Dataset: {args.dataset_name}")
     print(f"{'='*60}\n")
     
     results = []
     success_count = 0
     fail_count = 0
+    source_validation_warnings = 0
     
     for idx, query_item in enumerate(queries, 1):
         query = query_item['query']
         difficulty = query_item.get('difficulty', 'unknown')
+        expected_source = query_item.get('expected_source', None)
         
         print(f"[{idx}/{len(queries)}] Query: {query}")
         print(f"  Difficulty: {difficulty}")
@@ -80,15 +84,26 @@ def main():
             # Format contexts for RAGAS
             contexts = [source.get('content', '') for source in sources]
             
+            # Source validation for dataset isolation
+            source_files = [source.get('source', 'unknown') for source in sources]
+            if args.validate_sources and expected_source:
+                matching_sources = [s for s in source_files if expected_source in s]
+                if len(matching_sources) < len(source_files) * 0.5:  # Less than 50% match
+                    source_validation_warnings += 1
+                    print(f"  ⚠️  Source Validation: Expected '{expected_source}', got {source_files[:2]}")
+            
             # Store result
             result = {
                 "query": query,
                 "difficulty": difficulty,
+                "category": query_item.get('category', 'unknown'),
                 "answer": answer,
                 "contexts": contexts,
                 "confidence": confidence,
                 "num_sources": len(sources),
-                "response_time": round(elapsed, 2)
+                "response_time": round(elapsed, 2),
+                "source_files": source_files,
+                "expected_source": expected_source
             }
             results.append(result)
             success_count += 1
@@ -109,6 +124,8 @@ def main():
     print(f"Completed {success_count}/{len(queries)} queries")
     if fail_count > 0:
         print(f"Failed: {fail_count} queries")
+    if args.validate_sources and source_validation_warnings > 0:
+        print(f"⚠️  Source validation warnings: {source_validation_warnings} queries")
     print(f"{'='*60}\n")
     
     if success_count == 0:
@@ -121,9 +138,11 @@ def main():
     
     output_data = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "dataset_name": args.dataset_name,
         "total_queries": len(queries),
         "successful_queries": success_count,
         "failed_queries": fail_count,
+        "source_validation_warnings": source_validation_warnings if args.validate_sources else None,
         "results": results
     }
     
@@ -131,8 +150,8 @@ def main():
         json.dump(output_data, f, indent=2)
     
     print(f"✓ Query results saved to {output_path}")
-    print(f"\nNext step: Run Stage 2 evaluation")
-    print(f"  python run_ragas_stage2_eval.py --input {output_path} --output {output_path.with_name(output_path.stem + '_evaluated.json')}")
+    print("\nNext step: Run Stage 1B to generate references")
+    print(f"  python run_ragas_stage1b_generate_references.py --input {output_path} --output {output_path.parent / (output_path.stem + '_with_refs.json')}")
 
 if __name__ == "__main__":
     main()
