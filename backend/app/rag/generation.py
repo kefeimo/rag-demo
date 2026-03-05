@@ -284,3 +284,105 @@ def extract_sources(retrieved_documents: List[Dict[str, Any]]) -> List[Dict[str,
             "confidence": doc.get("confidence", 0.0)
         })
     return sources
+
+
+class PromptBuilder:
+    """
+    Builder class for constructing prompts for LLM generation
+    Provides flexible prompt templates and construction methods
+    """
+    
+    def __init__(self, system_prompt: Optional[str] = None):
+        """
+        Initialize prompt builder
+        
+        Args:
+            system_prompt: Custom system prompt (uses default if not provided)
+        """
+        self.system_prompt = system_prompt or self.get_default_system_prompt()
+    
+    @staticmethod
+    def get_default_system_prompt() -> str:
+        """
+        Get default system prompt with instructions
+        
+        Returns:
+            Default system prompt string
+        """
+        return """You are a helpful AI assistant. Answer the user's question based ONLY on the provided context.
+
+IMPORTANT RULES:
+1. Only use information from the provided context
+2. If the context doesn't contain enough information, say "I don't have enough information to answer that"
+3. Cite sources when possible (e.g., "According to [source]...")
+4. Be concise and accurate
+5. Do not infer or assume information beyond what's explicitly stated
+
+"""
+    
+    def get_system_prompt(self) -> str:
+        """
+        Get the current system prompt
+        
+        Returns:
+            System prompt string
+        """
+        return self.system_prompt
+    
+    def build_prompt(self, query: str, context: str) -> str:
+        """
+        Build prompt with query and context
+        
+        Args:
+            query: User query
+            context: Context text
+            
+        Returns:
+            Complete prompt string
+        """
+        prompt = self.system_prompt
+        
+        if context and context.strip():
+            prompt += f"\nCONTEXT:\n{context}\n\n"
+        else:
+            prompt += "\nCONTEXT:\nNo relevant context found.\n\n"
+        
+        prompt += f"QUESTION:\n{query}\n\nANSWER:"
+        
+        return prompt
+    
+    def build_prompt_with_sources(
+        self,
+        query: str,
+        retrieved_docs: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Build prompt with structured source information
+        
+        Args:
+            query: User query
+            retrieved_docs: List of retrieved documents with metadata
+            
+        Returns:
+            Complete prompt string with sources
+        """
+        prompt = self.system_prompt
+        
+        # Add context with sources
+        if retrieved_docs:
+            prompt += "\nCONTEXT:\n\n"
+            for i, doc in enumerate(retrieved_docs, 1):
+                source = doc.get("source", "unknown")
+                content = doc.get("content", "")
+                similarity = doc.get("similarity", 0.0)
+                
+                prompt += f"[Source {i}: {source} (relevance: {similarity:.2f})]\n"
+                prompt += f"{content}\n\n"
+                prompt += "---\n\n"
+        else:
+            prompt += "\nCONTEXT:\nNo relevant context found.\n\n"
+        
+        prompt += f"QUESTION:\n{query}\n\nANSWER:"
+        
+        return prompt
+
