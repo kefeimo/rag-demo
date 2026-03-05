@@ -48,24 +48,29 @@ This project fulfills the following deliverables:
 
 ### **Prerequisites**
 
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose (optional)
+- Python 3.12+
+- Node.js 20+ (use nvm for easy version management)
+- Docker & Docker Compose (optional, for containerized deployment)
 - 8GB RAM minimum (for GPT4All model)
 
 ### **Installation**
 
-#### **Option 1: Local Development (Recommended for Day 1)**
+#### **Option 1: Local Development**
 
 ```bash
 # Clone repository
-git clone git@github.com:kefeimo/ai-engineer-coding-exercise.git
-cd ai-engineer-coding-exercise
+git clone https://github.com/kefeimo/resume.git
+cd resume/project/visa-full-stack-ai-engineer/ai-engineer-coding-exercise
+
+# Setup Node.js with nvm (recommended)
+nvm install  # Reads .nvmrc file (Node 20)
+nvm use
 
 # Backend setup
 cd backend
 python -m venv venv
 source venv/bin/activate  # On Linux/Mac
+# On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Configure environment
@@ -77,6 +82,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Frontend setup (in new terminal)
 cd ../frontend
+nvm use  # Ensure Node 20 is active
 npm install
 npm run dev
 
@@ -86,18 +92,48 @@ npm run dev
 # API Docs: http://localhost:8000/docs
 ```
 
-#### **Option 2: Docker Compose (Coming Soon)**
+#### **Option 2: Docker Compose** ✅
 
+**Production Build:**
 ```bash
-# Start with Docker Compose
+# Build and start (optimized production build)
+docker-compose up --build
+
+# Or run in background
 docker-compose up -d
+```
+
+**Development Mode (Hot Reload):**
+```bash
+# Start with hot reloading (changes reflect instantly)
+docker-compose -f docker-compose-dev.yml up --build
+
+# Code changes auto-reload without rebuild!
+```
+
+**Common Commands:**
+```bash
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
 
 # Access the application
 # Frontend: http://localhost:5173
 # Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
-**Note:** Docker Compose will be available after Stage 1B (Hour 6-7).
+**Docker Benefits:**
+- ✅ No Python/Node.js installation needed
+- ✅ Consistent environment across machines
+- ✅ Easy deployment to cloud
+- ✅ Volume mounts for data persistence
+- ✅ Health checks and auto-restart
+- ✅ Development mode with hot reloading
+
+See **[DOCKER.md](DOCKER.md)** for detailed Docker documentation and **[DOCKER-COMPOSE.md](DOCKER-COMPOSE.md)** for production vs development comparison.
 
 ---
 
@@ -107,6 +143,9 @@ docker-compose up -d
 - **[Progress Tracking](docs/progress-tracking.md)** - Real-time development progress and metrics
 - **[Deliverables Checklist](docs/DELIVERABLES.md)** - All submission requirements tracked
 - **[Assignment](docs/assignment.md)** - Original requirements
+- **[Docker Guide](DOCKER.md)** - Docker deployment and troubleshooting ✅
+- **[Backend README](backend/README.md)** - Backend API documentation
+- **[Frontend Setup](frontend/SETUP.md)** - Frontend development guide
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and component descriptions *(Day 2)*
 - **[Evaluation Report](docs/EVALUATION-REPORT.md)** - RAGAS metrics and improvements *(Day 2)*
 - **[Future Improvements](docs/FUTURE-IMPROVEMENTS.md)** - Production scaling plans *(Day 2)*

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+# package-lock.json is needed for npm ci in Docker builds
+
+# Build output
+dist/
+build/
+
+# Development
+.vite/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+.env.production.local
+
+# Testing
+coverage/
+
+# Documentation
+*.md
+!README.md

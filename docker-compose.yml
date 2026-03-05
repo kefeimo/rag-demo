@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  backend:
+    # Use consistent image name to share cache with dev mode
+    image: rag-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # LLM Configuration
+      - LLM_PROVIDER=gpt4all
+      - GPT4ALL_MODEL=mistral-7b-instruct-v0.1.Q4_0.gguf
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      
+      # RAG Parameters
+      - CHUNK_SIZE=500
+      - CHUNK_OVERLAP=50
+      - TOP_K_RESULTS=5
+      - CONFIDENCE_THRESHOLD=0.65
+      
+      # ChromaDB Configuration
+      - CHROMA_PERSIST_DIRECTORY=./data/chroma_db
+      - CHROMA_COLLECTION_NAME=fastapi_docs
+      
+      # API Configuration
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      # Mount documents directory
+      - ./data/documents:/app/data/documents
+      # Cache GPT4All models to avoid re-downloading
+      - ~/.cache/gpt4all:/root/.cache/gpt4all
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    # Use consistent image name
+    image: rag-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rag-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Note: When accessing from browser (outside Docker), use localhost:8000
+      # The frontend is a client-side app, so it makes requests from the user's browser
+      - VITE_API_BASE_URL=http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: rag-network
