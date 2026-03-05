@@ -42,9 +42,32 @@ class GPT4AllClient(LLMClient):
         logger.info("Note: First run will download model (~4GB) to ~/.cache/gpt4all/")
         
         try:
-            # Initialize GPT4All (auto-downloads if needed)
-            self.model = GPT4All(self.model_name)
-            logger.info("GPT4All model loaded successfully")
+            # Set up CUDA library paths for GPU support
+            import os
+            import sys
+            cuda_libs = []
+            site_packages = [p for p in sys.path if 'site-packages' in p]
+            if site_packages:
+                sp = site_packages[0]
+                cuda_runtime = os.path.join(sp, 'nvidia', 'cuda_runtime', 'lib')
+                cuda_blas = os.path.join(sp, 'nvidia', 'cublas', 'lib')
+                if os.path.exists(cuda_runtime):
+                    cuda_libs.append(cuda_runtime)
+                if os.path.exists(cuda_blas):
+                    cuda_libs.append(cuda_blas)
+            
+            if cuda_libs:
+                os.environ['LD_LIBRARY_PATH'] = ':'.join(cuda_libs) + ':' + os.environ.get('LD_LIBRARY_PATH', '')
+                logger.info("Set CUDA library path for GPU support")
+            
+            # Try GPU first, fall back to CPU if unavailable
+            try:
+                self.model = GPT4All(self.model_name, device='cuda')
+                logger.info("GPT4All model loaded successfully with GPU acceleration")
+            except (ValueError, RuntimeError) as e:
+                logger.warning(f"GPU initialization failed ({str(e)}), falling back to CPU")
+                self.model = GPT4All(self.model_name)
+                logger.info("GPT4All model loaded successfully (CPU mode)")
         except Exception as e:
             logger.error(f"Failed to load GPT4All model: {str(e)}")
             raise

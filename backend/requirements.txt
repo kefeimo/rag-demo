@@ -16,6 +16,10 @@ chromadb==0.4.22
 # Local LLM
 gpt4all>=2.1.0
 
+# CUDA 11 libraries for GPT4All GPU support (WSL2/Linux)
+nvidia-cuda-runtime-cu11==11.8.89
+nvidia-cublas-cu11==11.11.3.6
+
 # Embeddings
 sentence-transformers==2.3.1
 

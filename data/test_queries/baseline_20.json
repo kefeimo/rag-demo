@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "query": "What is FastAPI?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["web framework", "Python", "API", "high performance"]
+  },
+  {
+    "id": 2,
+    "query": "How do I install FastAPI?",
+    "category": "setup",
+    "difficulty": "easy",
+    "expected_aspects": ["pip install", "fastapi", "uvicorn"]
+  },
+  {
+    "id": 3,
+    "query": "What is uvicorn?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["ASGI server", "FastAPI", "async"]
+  },
+  {
+    "id": 4,
+    "query": "What is ASGI?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["asynchronous", "server gateway interface", "Python"]
+  },
+  {
+    "id": 5,
+    "query": "What is Pydantic?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["data validation", "type hints", "models"]
+  },
+  {
+    "id": 6,
+    "query": "What are FastAPI's main features?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["fast", "automatic docs", "type validation", "async"]
+  },
+  {
+    "id": 7,
+    "query": "How do I create a path parameter in FastAPI?",
+    "category": "routing",
+    "difficulty": "medium",
+    "expected_aspects": ["function parameter", "path operation", "curly braces"]
+  },
+  {
+    "id": 8,
+    "query": "How do I use query parameters?",
+    "category": "routing",
+    "difficulty": "medium",
+    "expected_aspects": ["function parameters", "optional", "default values"]
+  },
+  {
+    "id": 9,
+    "query": "How do I handle request body in FastAPI?",
+    "category": "request",
+    "difficulty": "medium",
+    "expected_aspects": ["Pydantic model", "BaseModel", "POST"]
+  },
+  {
+    "id": 10,
+    "query": "How do I validate data in FastAPI?",
+    "category": "validation",
+    "difficulty": "medium",
+    "expected_aspects": ["Pydantic", "automatic", "type hints"]
+  },
+  {
+    "id": 11,
+    "query": "How do I return JSON responses?",
+    "category": "response",
+    "difficulty": "medium",
+    "expected_aspects": ["automatic", "Pydantic model", "dict"]
+  },
+  {
+    "id": 12,
+    "query": "How do I add middleware in FastAPI?",
+    "category": "middleware",
+    "difficulty": "medium",
+    "expected_aspects": ["app.middleware", "decorator", "request/response"]
+  },
+  {
+    "id": 13,
+    "query": "How do I handle errors in FastAPI?",
+    "category": "errors",
+    "difficulty": "medium",
+    "expected_aspects": ["HTTPException", "exception handler", "status code"]
+  },
+  {
+    "id": 14,
+    "query": "How do I use dependencies in FastAPI?",
+    "category": "dependencies",
+    "difficulty": "medium",
+    "expected_aspects": ["Depends", "dependency injection", "reusable"]
+  },
+  {
+    "id": 15,
+    "query": "How do I test FastAPI endpoints?",
+    "category": "testing",
+    "difficulty": "medium",
+    "expected_aspects": ["TestClient", "pytest", "requests"]
+  },
+  {
+    "id": 16,
+    "query": "How do I deploy FastAPI?",
+    "category": "deployment",
+    "difficulty": "medium",
+    "expected_aspects": ["uvicorn", "Docker", "server", "production"]
+  },
+  {
+    "id": 17,
+    "query": "How do I implement authentication in FastAPI?",
+    "category": "security",
+    "difficulty": "hard",
+    "expected_aspects": ["OAuth2", "JWT", "dependencies", "security"]
+  },
+  {
+    "id": 18,
+    "query": "What are FastAPI's best practices?",
+    "category": "best-practices",
+    "difficulty": "hard",
+    "expected_aspects": ["async", "dependencies", "validation", "documentation"]
+  },
+  {
+    "id": 19,
+    "query": "How do I optimize FastAPI performance?",
+    "category": "performance",
+    "difficulty": "hard",
+    "expected_aspects": ["async", "database connections", "caching", "profiling"]
+  },
+  {
+    "id": 20,
+    "query": "How do I structure large FastAPI applications?",
+    "category": "architecture",
+    "difficulty": "hard",
+    "expected_aspects": ["routers", "APIRouter", "modules", "organization"]
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "query": "What is FastAPI?",
+    "category": "basics",
+    "difficulty": "easy",
+    "expected_aspects": ["web framework", "Python", "API", "high performance"]
+  },
+  {
+    "id": 2,
+    "query": "How do I create a path parameter in FastAPI?",
+    "category": "routing",
+    "difficulty": "medium",
+    "expected_aspects": ["function parameter", "path operation", "curly braces"]
+  },
+  {
+    "id": 3,
+    "query": "How do I implement authentication in FastAPI?",
+    "category": "security",
+    "difficulty": "hard",
+    "expected_aspects": ["OAuth2", "JWT", "dependencies", "security"]
+  }
+]
