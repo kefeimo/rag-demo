@@ -27,12 +27,16 @@ class Settings(BaseSettings):
     
     # ChromaDB Configuration
     chroma_persist_directory: str = Field(
-        default="../data/chroma_db",
+        default="./data/chroma_db",
         description="ChromaDB persistence directory (relative to backend/)"
     )
     chroma_collection_name: str = Field(
         default="fastapi_docs",
         description="ChromaDB collection name"
+    )
+    anonymized_telemetry: bool = Field(
+        default=False,
+        description="Enable/disable ChromaDB telemetry"
     )
     
     # RAG Configuration

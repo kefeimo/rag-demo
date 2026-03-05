@@ -1,18 +1,33 @@
 import SourceCard from './SourceCard';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 /**
  * ResponseDisplay Component
  * Shows the answer and sources from a RAG query
  */
-function ResponseDisplay({ response }) {
+function ResponseDisplay({ response, ragSystem }) {
   if (!response) return null;
 
   return (
     <div className="w-full space-y-4">
       {/* Query Display */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm font-medium text-blue-900 mb-1">Your Question:</p>
-        <p className="text-gray-800">{response.query}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-900 mb-1">Your Question:</p>
+            <p className="text-gray-800">{response.query}</p>
+          </div>
+          {ragSystem && (
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+              ragSystem === 'vcc' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-blue-100 text-blue-800'
+            }`}>
+              {ragSystem === 'vcc' ? 'VCC Docs' : 'FastAPI Docs'}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Answer Display */}
@@ -28,8 +43,30 @@ function ResponseDisplay({ response }) {
             )}
           </div>
         </div>
-        <div className="prose prose-sm max-w-none">
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{response.answer}</p>
+        <div className="prose prose-sm max-w-none text-gray-700">
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code: ({node, inline, className, children, ...props}) => (
+                inline ? (
+                  <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-red-600" {...props}>
+                    {children}
+                  </code>
+                ) : (
+                  <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props}>
+                    {children}
+                  </code>
+                )
+              ),
+              a: ({node, children, ...props}) => (
+                <a className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer" {...props}>
+                  {children}
+                </a>
+              )
+            }}
+          >
+            {response.answer}
+          </ReactMarkdown>
         </div>
       </div>
 

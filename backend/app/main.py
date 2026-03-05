@@ -162,6 +162,42 @@ async def ingest_endpoint(request: IngestRequest):
         raise HTTPException(status_code=500, detail=f"Error ingesting documents: {str(e)}")
 
 
+@app.post("/api/v1/ingest/visa-docs", response_model=IngestResponse, tags=["Admin"])
+async def ingest_visa_docs_endpoint(force_reingest: bool = True):
+    """
+    Ingest Visa Chart Components documentation into ChromaDB
+    
+    This endpoint ingests all extracted Visa documentation:
+    - Repository docs (53): README, CONTRIBUTING, CHANGELOGs
+    - Code docs (210): Auto-generated API documentation
+    - Issue Q&A (13): GitHub issue discussions
+    
+    Args:
+        force_reingest: If True, reset collection before ingestion (default: True)
+        
+    Returns:
+        IngestResponse with ingestion statistics
+    """
+    logger.info(f"Visa docs ingestion requested (force_reingest={force_reingest})")
+    
+    try:
+        # Import the visa docs ingestion function
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from ingest_visa_docs import ingest_visa_docs
+        
+        # Call ingestion pipeline
+        result = ingest_visa_docs(force_reingest=force_reingest)
+        
+        # Return result
+        return IngestResponse(**result)
+        
+    except Exception as e:
+        logger.error(f"Error ingesting Visa docs: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error ingesting Visa docs: {str(e)}")
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Global exception handler for unhandled errors"""

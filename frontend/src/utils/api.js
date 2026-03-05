@@ -17,8 +17,20 @@ const apiClient = axios.create({
  * @returns {Promise<Object>} Health status object
  */
 export const checkHealth = async () => {
-  const response = await apiClient.get('/health');
-  return response.data;
+  try {
+    console.log('Checking health at:', `${API_BASE_URL}/health`);
+    const response = await apiClient.get('/health');
+    console.log('Health check response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Health check failed:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw error;
+  }
 };
 
 /**

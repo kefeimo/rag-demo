@@ -6,18 +6,23 @@ React + Vite frontend for the FastAPI RAG system with beautiful UI and real-time
 
 ### Prerequisites
 
-- **Node.js 20+**: Use nvm (recommended) or install Node.js 20+ directly
-- **nvm** (optional but recommended): [Install nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Node.js 20+**: ⚠️ **REQUIRED** - Vite 7 requires Node 20.19+ or 22.12+
+- **nvm** (recommended): [Install nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 ### Setup & Run
+
+> **⚠️ IMPORTANT**: You MUST use Node.js 20+ or you will get `crypto.hash is not a function` error!
 
 ```bash
 # Navigate to project root first
 cd /path/to/ai-engineer-coding-exercise
 
 # Install and use Node 20 (reads .nvmrc from parent directory)
-nvm install
-nvm use
+nvm install 20
+nvm use 20
+
+# Verify Node version (should be 20.x)
+node --version
 
 # Install dependencies
 cd frontend

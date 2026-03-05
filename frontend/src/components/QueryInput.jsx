@@ -4,8 +4,15 @@ import { useState } from 'react';
  * QueryInput Component
  * Text input and submit button for RAG queries
  */
-function QueryInput({ onSubmit, isLoading }) {
+function QueryInput({ onSubmit, isLoading, ragSystem = 'fastapi' }) {
   const [query, setQuery] = useState('');
+
+  const getPlaceholder = () => {
+    if (ragSystem === 'vcc') {
+      return "Ask a question about Visa Chart Components... (e.g., 'How do I create a bar chart?')";
+    }
+    return "Ask a question about FastAPI... (e.g., 'What is FastAPI?')";
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,7 +36,7 @@ function QueryInput({ onSubmit, isLoading }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a question about FastAPI... (e.g., 'What is FastAPI?')"
+          placeholder={getPlaceholder()}
           className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           rows={3}
           disabled={isLoading}

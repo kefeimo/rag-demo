@@ -9,6 +9,7 @@ function App() {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [ragSystem, setRagSystem] = useState('vcc'); // 'fastapi' or 'vcc'
 
   // Check backend health on mount
   useEffect(() => {
@@ -30,6 +31,9 @@ function App() {
     setResponse(null);
 
     try {
+      // TODO: Pass ragSystem to backend to filter by document source
+      // For now, backend returns all documents (FastAPI + VCC mixed)
+      // Future: Add `rag_system` parameter to API call
       const data = await queryRAG(query);
       setResponse(data);
       setBackendStatus('connected');
@@ -70,15 +74,46 @@ function App() {
         <header className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
             <h1 className="text-4xl font-bold text-gray-900">
-              FastAPI RAG System
+              {ragSystem === 'fastapi' ? 'FastAPI' : 'Visa Chart Components'} RAG System
             </h1>
             <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-gray-200">
               <div className={`w-2 h-2 rounded-full ${getStatusColor()} animate-pulse`}></div>
               <span className="text-xs font-medium text-gray-600">{getStatusText()}</span>
             </div>
           </div>
+          
+          {/* RAG System Toggle */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-sm font-medium text-gray-600">RAG System:</span>
+            <div className="relative inline-flex items-center bg-white border-2 border-gray-300 rounded-full p-1 shadow-sm">
+              <button
+                onClick={() => setRagSystem('fastapi')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  ragSystem === 'fastapi'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                FastAPI Docs
+              </button>
+              <button
+                onClick={() => setRagSystem('vcc')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  ragSystem === 'vcc'
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                VCC Docs
+              </button>
+            </div>
+          </div>
+          
           <p className="text-gray-600">
-            Ask questions about FastAPI and get AI-powered answers with sources
+            {ragSystem === 'fastapi' 
+              ? 'Ask questions about FastAPI and get AI-powered answers with sources'
+              : 'Ask questions about Visa Chart Components and get AI-powered answers with sources'
+            }
           </p>
         </header>
 
@@ -86,7 +121,7 @@ function App() {
         <div className="space-y-6">
           {/* Query Input */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <QueryInput onSubmit={handleQuery} isLoading={isLoading} />
+            <QueryInput onSubmit={handleQuery} isLoading={isLoading} ragSystem={ragSystem} />
           </div>
 
           {/* Error Display */}
@@ -96,7 +131,7 @@ function App() {
 
           {/* Response Display */}
           {response && (
-            <ResponseDisplay response={response} />
+            <ResponseDisplay response={response} ragSystem={ragSystem} />
           )}
 
           {/* Welcome/Empty State */}
@@ -109,30 +144,61 @@ function App() {
                 Ready to Answer Your Questions
               </h3>
               <p className="text-gray-600 mb-4">
-                Try asking about FastAPI features, usage examples, or best practices
+                {ragSystem === 'fastapi'
+                  ? 'Try asking about FastAPI features, usage examples, or best practices'
+                  : 'Try asking about Visa Chart Components, chart creation, or API usage'
+                }
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  onClick={() => handleQuery('What is FastAPI?')}
-                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                  disabled={backendStatus !== 'connected'}
-                >
-                  What is FastAPI?
-                </button>
-                <button
-                  onClick={() => handleQuery('How do I create a path parameter?')}
-                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                  disabled={backendStatus !== 'connected'}
-                >
-                  How do I create a path parameter?
-                </button>
-                <button
-                  onClick={() => handleQuery('What are FastAPI\'s main features?')}
-                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                  disabled={backendStatus !== 'connected'}
-                >
-                  What are FastAPI's main features?
-                </button>
+                {ragSystem === 'fastapi' ? (
+                  <>
+                    <button
+                      onClick={() => handleQuery('What is FastAPI?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      What is FastAPI?
+                    </button>
+                    <button
+                      onClick={() => handleQuery('How do I create a path parameter?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      How do I create a path parameter?
+                    </button>
+                    <button
+                      onClick={() => handleQuery('What are FastAPI\'s main features?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      What are FastAPI's main features?
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleQuery('How do I create a bar chart with Visa Chart Components?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      How do I create a bar chart?
+                    </button>
+                    <button
+                      onClick={() => handleQuery('What are the props for IDataTableProps?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      What are IDataTableProps?
+                    </button>
+                    <button
+                      onClick={() => handleQuery('How do I use VCC with React?')}
+                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={backendStatus !== 'connected'}
+                    >
+                      How to use with React?
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
