@@ -12,7 +12,7 @@
 | Phase | Status | Progress | Time Spent | Notes |
 |-------|--------|----------|------------|-------|
 | **Stage 0: Setup** | ✅ Complete | 100% | 0.5h | Requirements & environment |
-| **Stage 1A: Backend Core** | ⬜ Not Started | 0% | 0h | FastAPI + ChromaDB + GPT4All |
+| **Stage 1A: Backend Core** | ✅ Complete | 100% | 3.0h | FastAPI + ChromaDB + GPT4All - All endpoints working |
 | **Stage 1B: Frontend + Docker** | ⬜ Not Started | 0% | 0h | React UI + Tailwind + Docker Compose |
 | **Stage 1C: Basic Evaluation** | ⬜ Not Started | 0% | 0h | RAGAS baseline |
 | **Stage 2A: Code Quality** | ⬜ Not Started | 0% | 0h | Refactoring + Testing |
@@ -22,7 +22,7 @@
 
 **Legend:** ⬜ Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
 
-**Total Progress:** 1/8 stages complete (12.5%)
+**Total Progress:** 2/8 stages complete (25.0%)
 
 ---
 
@@ -49,67 +49,82 @@
 
 ---
 
-### **Stage 1A: Backend Core (Hours 1-5)** ⬜
+### **Stage 1A: Backend Core (Hours 1-5)** ✅
 
-#### **Document Ingestion Pipeline (Hour 1-2)**
-- [ ] Install backend dependencies
-  - [ ] fastapi, uvicorn, chromadb
-  - [ ] sentence-transformers
-  - [ ] python-dotenv, pydantic
-  - [ ] langchain, langchain-community, gpt4all
-- [ ] Implement document loader
-  - [ ] Parse FastAPI markdown docs
-  - [ ] Text chunking (500 chars, 50 overlap)
-  - [ ] Metadata extraction
-- [ ] Implement ChromaDB ingestion
-  - [ ] Collection creation
-  - [ ] Embedding generation
-  - [ ] Batch insertion
-- [ ] Test ingestion with 10 docs
+#### **Document Ingestion Pipeline (Hour 1-2)** ✅
+- [x] Install backend dependencies
+  - [x] fastapi, uvicorn, chromadb
+  - [x] sentence-transformers
+  - [x] python-dotenv, pydantic
+  - [x] langchain, langchain-community, gpt4all
+- [x] Implement document loader
+  - [x] Parse FastAPI markdown docs
+  - [x] Text chunking (500 chars, 50 overlap)
+  - [x] Metadata extraction
+- [x] Implement ChromaDB ingestion
+  - [x] Collection creation
+  - [x] Embedding generation (sentence-transformers/all-MiniLM-L6-v2)
+  - [x] Batch insertion (100 per batch)
+- [x] Test ingestion with 13 docs → 252 chunks in 0.94s
 
-#### **RAG Query Pipeline (Hour 2-3)**
-- [ ] Implement `/query` endpoint
-  - [ ] Input validation (Pydantic models)
-  - [ ] Retrieval logic (top-k=5)
-  - [ ] Context formatting
-  - [ ] Error handling
-- [ ] Implement retrieval confidence scoring
-  - [ ] Based on similarity scores
-  - [ ] Threshold: <0.65 = "unknown"
+#### **RAG Query Pipeline (Hour 2-3)** ✅
+- [x] Implement `/query` endpoint
+  - [x] Input validation (Pydantic models)
+  - [x] Retrieval logic (top-k=5)
+  - [x] Context formatting
+  - [x] Error handling
+- [x] Implement retrieval confidence scoring
+  - [x] Based on similarity scores (cosine distance)
+  - [x] Threshold: <0.65 = "unknown"
 
-#### **LLM Integration (Hour 3-4)**
-- [ ] Setup GPT4All client
-  - [ ] Download mistral-7b-instruct model
-  - [ ] Test connection
-- [ ] Implement prompt construction
-  - [ ] System prompt: "Use ONLY provided context"
-  - [ ] User prompt template with sources
-  - [ ] "Unknown" instruction
-- [ ] Implement generation endpoint
-  - [ ] Call GPT4All
-  - [ ] Parse response
-  - [ ] Extract source citations
-- [ ] Add OpenAI-ready config
-  - [ ] Environment variable toggle
-  - [ ] Abstracted LLM client interface
+#### **LLM Integration (Hour 3-4)** ✅
+- [x] Setup GPT4All client
+  - [x] Download mistral-7b-instruct model (~4GB to ~/.cache/gpt4all/)
+  - [x] Test connection
+- [x] Implement prompt construction
+  - [x] System prompt: "Use ONLY provided context"
+  - [x] User prompt template with sources
+  - [x] "Unknown" instruction
+- [x] Implement generation endpoint
+  - [x] Call GPT4All
+  - [x] Parse response
+  - [x] Extract source citations
+- [x] Add OpenAI-ready config
+  - [x] Environment variable toggle
+  - [x] Abstracted LLM client interface
 
-#### **Production Patterns (Hour 4-5)**
-- [ ] Add logging
-  - [ ] Request/response logging
-  - [ ] Error logging
-  - [ ] Performance metrics (latency)
-- [ ] Add error handling
-  - [ ] Try-except blocks
-  - [ ] Graceful degradation
-  - [ ] User-friendly error messages
-- [ ] Config management
-  - [ ] .env file structure
-  - [ ] Config validation
-  - [ ] Defaults for all settings
+#### **Production Patterns (Hour 4-5)** ✅
+- [x] Add logging
+  - [x] Request/response logging
+  - [x] Error logging
+  - [x] Performance metrics (latency)
+- [x] Add error handling
+  - [x] Try-except blocks
+  - [x] Graceful degradation
+  - [x] User-friendly error messages
+- [x] Config management
+  - [x] .env file structure
+  - [x] Config validation
+  - [x] Defaults for all settings
+- [x] ChromaDB singleton pattern (avoid client conflicts)
 
-**Status:** ⬜ Not Started  
-**Time Spent:** 0h  
-**Blockers:** None
+**Status:** ✅ Complete  
+**Time Spent:** 3.0h  
+**Blockers:** None  
+**Test Results:**
+- ✅ Health endpoint: Working (200 OK)
+- ✅ Ingestion: 13 docs → 252 chunks in 0.94s
+- ✅ Query 1 "What is FastAPI?": 98.81s, confidence 0.810, accurate answer
+- ✅ Query 2 "How do I create a path parameter?": 85.68s, confidence 0.847, accurate answer  
+- ✅ Query 3 "What are FastAPI's main features?": 80.78s, confidence 0.804, accurate answer
+- ✅ All 3 test queries passed with proper source attribution
+
+**Notes:** 
+- All RAG pipeline components working end-to-end
+- GPT4All running on CPU (CUDA 11.0 not available, falls back gracefully)
+- Response times 80-99s acceptable for local LLM on CPU
+- Confidence scores all above 0.80 (well above 0.65 threshold)
+- Source attribution working correctly with chunk metadata
 
 ---
 
@@ -157,15 +172,15 @@
 
 ### **🎯 Day 1 Success Criteria**
 
-- [ ] Can ingest FastAPI docs
-- [ ] Can query and get responses
+- [x] Can ingest FastAPI docs ✅
+- [x] Can query and get responses ✅
 - [ ] Frontend displays results with sources
 - [ ] Docker Compose works
 - [ ] Baseline RAGAS scores documented
 - [ ] Could submit this if needed
 
-**Day 1 Status:** ⬜ Not Complete  
-**Day 1 Time Spent:** 0h / 8-10h
+**Day 1 Status:** 🟡 In Progress (Backend Complete)  
+**Day 1 Time Spent:** 3.5h / 8-10h
 
 ---
 
@@ -383,11 +398,46 @@
 ### **Technical Decisions**
 *Document key decisions made during implementation*
 
-**Example:**
-- ✅ **Decision:** Use chunk size 500 chars
-  - **Reason:** FastAPI docs have clear section boundaries
+**March 4, 2026 - Stage 1A Implementation:**
+
+- ✅ **Decision:** ChromaDB singleton pattern (app/rag/utils.py)
+  - **Reason:** Avoid "instance already exists" errors when initializing multiple clients
+  - **Implementation:** Global _chroma_client with get_chroma_client() factory
+  - **Time:** Hour 2.5
+
+- ✅ **Decision:** Chunk size 500 chars with 50 overlap
+  - **Reason:** FastAPI docs have clear section boundaries, 500 chars ≈ 1-2 paragraphs
   - **Alternative Considered:** 800 chars (rejected: too large for focused retrieval)
+  - **Result:** 13 docs → 252 chunks, avg confidence 0.81
+  - **Time:** Hour 1
+
+- ✅ **Decision:** Smart boundary detection in chunking
+  - **Reason:** Avoid breaking mid-sentence or mid-word
+  - **Implementation:** Try sentence endings (., !, ?) within last 100 chars, fallback to word boundaries
+  - **Impact:** Improved context quality for LLM
+  - **Time:** Hour 1.5
+
+- ✅ **Decision:** Confidence threshold 0.65
+  - **Reason:** Balance between "too permissive" (hallucinations) and "too strict" (too many unknowns)
+  - **Alternative Considered:** 0.70 (rejected: too strict for baseline)
+  - **Actual Performance:** All test queries 0.80-0.85 (well above threshold)
   - **Time:** Hour 2
+
+- ✅ **Decision:** GPT4All mistral-7b-instruct over llama
+  - **Reason:** Better instruction following, aligned with Day 1 project
+  - **Tradeoff:** 80-99s generation time on CPU (acceptable for demo)
+  - **Alternative:** OpenAI API (implemented as config option)
+  - **Time:** Hour 3
+
+- ✅ **Decision:** Batch insertion 100 chunks at a time
+  - **Reason:** ChromaDB performance optimization
+  - **Impact:** 252 chunks ingested in 0.94s
+  - **Time:** Hour 2
+
+- ✅ **Decision:** Separate LLM client classes (GPT4AllClient, OpenAIClient)
+  - **Reason:** Clean abstraction, easy to switch providers
+  - **Pattern:** Factory function get_llm_client() based on config
+  - **Time:** Hour 3.5
 
 ### **Lessons Learned**
 *Document insights for future reference*
@@ -455,9 +505,9 @@
 
 | Day | Planned | Actual | Variance | Status |
 |-----|---------|--------|----------|--------|
-| Day 1 | 8-10h | 0.5h | - | 🟡 In Progress |
+| Day 1 | 8-10h | 3.5h | -4.5h to -6.5h | 🟡 In Progress |
 | Day 2 | 8-10h | 0h | - | ⬜ Not Started |
-| **Total** | **16-20h** | **0.5h** | **-** | **12.5% Complete** |
+| **Total** | **16-20h** | **3.5h** | **-** | **25.0% Complete** |
 
 ---
 
@@ -493,6 +543,45 @@
 ---
 
 ## 📝 Update Log
+
+### March 4, 2026 - 20:30
+- ✅ **Stage 1A Complete** - Backend Core RAG System Fully Functional
+- **Components Implemented:**
+  - Document ingestion pipeline (app/rag/ingestion.py)
+    - DocumentLoader: Recursive .md file loading, smart chunking (500/50)
+    - ChromaDBIngestion: Embedding generation, batch insertion
+  - Vector retrieval (app/rag/retrieval.py)
+    - Semantic search with sentence-transformers
+    - Confidence scoring (cosine similarity)
+    - Singleton ChromaDB client pattern
+  - LLM generation (app/rag/generation.py)
+    - GPT4All client (mistral-7b-instruct)
+    - OpenAI client (optional)
+    - Prompt construction with source attribution
+  - Shared utilities (app/rag/utils.py)
+    - ChromaDB singleton to avoid client conflicts
+  - FastAPI endpoints (app/main.py)
+    - GET /health - Working
+    - POST /api/v1/ingest - Working (13 docs → 252 chunks in 0.94s)
+    - POST /api/v1/query - Working (3/3 test queries passed)
+  - Configuration (app/config.py, .env)
+    - Pydantic Settings with validation
+    - All 15+ parameters documented
+- **Test Results (test_rag.py):**
+  - ✅ Health check: PASSED (200 OK)
+  - ✅ Query 1 "What is FastAPI?": 98.81s, confidence 0.810, accurate answer with 3 sources
+  - ✅ Query 2 "How do I create a path parameter?": 85.68s, confidence 0.847, accurate answer with 3 sources
+  - ✅ Query 3 "What are FastAPI's main features?": 80.78s, confidence 0.804, accurate answer with 3 sources
+- **Performance:**
+  - Ingestion: 0.94s for 13 documents
+  - Query latency: 80-99s (GPT4All on CPU)
+  - Confidence: All queries >0.80 (above 0.65 threshold)
+- **Documentation:**
+  - Updated backend/README.md with real examples
+  - Streamlined from ~500 lines to concise format
+  - Added actual test results and response samples
+- 🎯 **Backend RAG pipeline production-ready**
+- 🎯 **Ready to begin Stage 1B: Frontend + Docker**
 
 ### March 4, 2026 - 00:30
 - ✅ **Stage 0 Complete**
