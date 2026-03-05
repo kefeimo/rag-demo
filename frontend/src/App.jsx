@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import QueryInput from './components/QueryInput';
 import ResponseDisplay from './components/ResponseDisplay';
 import ErrorDisplay from './components/ErrorDisplay';
-import { queryRAG, checkHealth } from './utils/api';
+import { queryRAG, checkHealth, ingestDocuments, ingestVisaDocs } from './utils/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,6 +10,8 @@ function App() {
   const [error, setError] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
   const [ragSystem, setRagSystem] = useState('vcc'); // 'fastapi' or 'vcc'
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [docsLoaded, setDocsLoaded] = useState({ fastapi: false, vcc: false });
 
   // Check backend health on mount
   useEffect(() => {
@@ -24,6 +26,42 @@ function App() {
     };
     checkBackend();
   }, []);
+
+  // Auto-load documents when RAG system changes
+  useEffect(() => {
+    const loadDocumentsForSystem = async () => {
+      // Skip if already loaded or backend not connected
+      if (backendStatus !== 'connected') return;
+      if (docsLoaded[ragSystem]) return;
+
+      setIsLoadingDocs(true);
+      try {
+        console.log(`Loading ${ragSystem} documents...`);
+        
+        if (ragSystem === 'vcc') {
+          // Load Visa Chart Components docs
+          const result = await ingestVisaDocs(false); // Don't force reingest
+          console.log('VCC docs loaded:', result);
+        } else {
+          // Load FastAPI docs
+          const result = await ingestDocuments('docs', false); // Don't force reingest
+          console.log('FastAPI docs loaded:', result);
+        }
+        
+        // Mark as loaded
+        setDocsLoaded(prev => ({ ...prev, [ragSystem]: true }));
+      } catch (err) {
+        console.error(`Error loading ${ragSystem} documents:`, err);
+        // Don't show error to user - documents might already be loaded
+        // Just mark as loaded to avoid repeated attempts
+        setDocsLoaded(prev => ({ ...prev, [ragSystem]: true }));
+      } finally {
+        setIsLoadingDocs(false);
+      }
+    };
+
+    loadDocumentsForSystem();
+  }, [ragSystem, backendStatus, docsLoaded]);
 
   const handleQuery = async (query) => {
     setIsLoading(true);
@@ -115,6 +153,14 @@ function App() {
               : 'Ask questions about Visa Chart Components and get AI-powered answers with sources'
             }
           </p>
+
+          {/* Document Loading Indicator */}
+          {isLoadingDocs && (
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-gray-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              <span>Loading {ragSystem === 'vcc' ? 'VCC' : 'FastAPI'} documentation...</span>
+            </div>
+          )}
         </header>
 
         {/* Main Content */}

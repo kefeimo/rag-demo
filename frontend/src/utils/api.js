@@ -48,7 +48,7 @@ export const queryRAG = async (query, topK = 3) => {
 };
 
 /**
- * Ingest documents into the RAG system
+ * Ingest FastAPI documents into the RAG system
  * @param {string} documentPath - Path to documents to ingest
  * @param {boolean} forceReingest - Whether to force re-ingestion
  * @returns {Promise<Object>} Ingestion response with statistics
@@ -59,6 +59,38 @@ export const ingestDocuments = async (documentPath, forceReingest = false) => {
     force_reingest: forceReingest,
   });
   return response.data;
+};
+
+/**
+ * Ingest Visa Chart Components documentation into the RAG system
+ * @param {boolean} forceReingest - Whether to force re-ingestion
+ * @returns {Promise<Object>} Ingestion response with statistics
+ */
+export const ingestVisaDocs = async (forceReingest = false) => {
+  const response = await apiClient.post(`/api/v1/ingest/visa-docs?force_reingest=${forceReingest}`);
+  return response.data;
+};
+
+/**
+ * Check collection status (document count)
+ * @returns {Promise<Object>} Collection status with count
+ */
+export const checkCollectionStatus = async () => {
+  try {
+    // Use a simple query to check if collection has documents
+    const response = await apiClient.post('/api/v1/query', {
+      query: 'test',
+      top_k: 1,
+    });
+    // If we get sources, collection has documents
+    return {
+      hasDocuments: response.data?.sources?.length > 0,
+      sourceCount: response.data?.sources?.length || 0
+    };
+  } catch (error) {
+    // If error, assume collection is empty
+    return { hasDocuments: false, sourceCount: 0 };
+  }
 };
 
 export default apiClient;
