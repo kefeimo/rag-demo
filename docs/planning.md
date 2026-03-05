@@ -414,6 +414,11 @@ Response + Sources + Confidence Score
 **Hour 19-20: FUTURE-IMPROVEMENTS.md**
 - [ ] Stage 3 documentation (60 min)
   - **Scaling:** Caching strategy, load balancing, vector DB optimization
+    - **ChromaDB Scale-up Path:**
+      - Current: SQLite persistence (suitable for < 1M vectors, single-server deployment)
+      - Medium scale: ChromaDB server mode (1M-10M vectors, multiple clients, HTTP API)
+      - Large scale: Distributed ChromaDB with PostgreSQL (10M+ vectors, multi-region, HA)
+      - Enterprise: ChromaDB Cloud or migrate to Pinecone/Weaviate for full managed solution
   - **CI/CD:** GitHub Actions pipeline, automated testing, deployment
   - **Kubernetes:** Deployment manifests, horizontal pod autoscaling
   - **Security:** Authentication, rate limiting, input sanitization
@@ -630,7 +635,7 @@ ai-engineer-coding-exercise/
 > "I used a three-phase approach: First, baseline evaluation with 20 queries and 3 core RAGAS metrics to establish initial quality. Second, I expanded to 50 queries covering diverse scenarios including adversarial cases. Third, I implemented an improvement (specific change made) and demonstrated measurable improvement from X to Y. The evaluation isn't just about scores—it drove specific technical decisions like chunk size and confidence thresholding."
 
 **Q: "How would you handle this at production scale?"**
-> "I've documented this in FUTURE-IMPROVEMENTS.md. Key areas: One, implement caching for embeddings and frequent queries to reduce latency and cost. Two, add horizontal scaling with load balancing for the API layer. Three, move to a production vector database like Pinecone or Weaviate with replication. Four, implement comprehensive monitoring and alerting on RAGAS metrics. Five, add A/B testing framework to validate changes before rollout. The architecture I built is designed to scale—it's not overengineered for the assignment, but the patterns extend naturally."
+> "I've documented this in FUTURE-IMPROVEMENTS.md. Key areas: One, implement caching for embeddings and frequent queries to reduce latency and cost. Two, add horizontal scaling with load balancing for the API layer. Three, scale the vector database—currently using ChromaDB with SQLite which is appropriate for < 1M vectors, but production would move to ChromaDB server mode (1M-10M vectors) or distributed setup with PostgreSQL for enterprise scale. Four, implement comprehensive monitoring and alerting on RAGAS metrics. Five, add A/B testing framework to validate changes before rollout. The architecture I built is designed to scale—it's not overengineered for the assignment, but the patterns extend naturally."
 
 **Q: "Show me how you'd add [new feature]."**
 > [This is the adaptability test they mentioned]
