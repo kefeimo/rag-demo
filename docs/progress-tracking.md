@@ -16,13 +16,14 @@
 | **Stage 1B: Frontend + Docker** | ✅ Complete | 100% | 3.5h | React + Vite + Tailwind + Docker Compose - Both services healthy |
 | **Stage 1C: Basic Evaluation** | ✅ Complete | 100% | 5.0h | 3-stage RAGAS pipeline + 20-query baseline complete |
 | **Stage 2A: Code Quality** | ✅ Complete | 100% | 2.0h | Refactoring + Testing |
-| **Stage 2B: Evaluation Enhancement** | � In Progress | 15% | 1.0h | Baseline complete, enhanced analytics + improvements pending |
-| **Stage 2C: Production Features** | ⬜ Not Started | 0% | 0h | Unknown handling + Hallucination detection |
-| **Stage 2D: Documentation** | ⬜ Not Started | 0% | 0h | README + Report + Architecture |
+| **Stage 2B: Evaluation Enhancement** | 🟡 In Progress | 15% | 1.0h | Baseline complete, enhanced analytics + improvements pending |
+| **Stage 2C: RAG Data Pipeline** | 📝 Planning | 0% | 0h | Data acquisition framework (Visa repos) ⭐ NEW |
+| **Stage 2D: Production Features** | ⬜ Not Started | 0% | 0h | Unknown handling + Hallucination detection |
+| **Stage 2E: Documentation** | ⬜ Not Started | 0% | 0h | README + Report + Architecture |
 
 **Legend:** ⬜ Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked | 📝 Planning Enhanced
 
-**Total Progress:** 3/8 stages complete (37.5%) + Stage 1C ✅ COMPLETE, Stage 2B 15%
+**Total Progress:** 3/8 stages complete (37.5%) + Stage 1C ✅ COMPLETE, Stage 2A ✅ COMPLETE, Stage 2B 15%, Stage 2C in planning
 
 ---
 
@@ -373,7 +374,111 @@
 
 ---
 
-### **Stage 2C: Production Differentiation (Hours 13-16)** ⬜
+### **Stage 2C: RAG Data Pipeline Framework (Hours 14-16)** 📝 PLAN PIVOT
+
+**🔄 Strategic Addition:** Showcase data engineering skills by building reusable framework for RAG dataset generation
+
+**Goal:** Differentiate from candidates who only tune prompts/models by demonstrating end-to-end data acquisition thinking
+
+#### **Hour 14: Framework Development**
+- [ ] Research Visa repositories
+  - [ ] Identify 2-3 suitable repos (java-sample-code, openapi, developer-recipes)
+  - [ ] Assess documentation quality and structure
+  - [ ] Check GitHub API rate limits
+- [ ] Create `data-pipeline/` directory structure
+  ```
+  data-pipeline/
+  ├── extractors/
+  │   ├── repo_docs_extractor.py        # Pillar 1: Clone & extract .md files
+  │   ├── code_doc_generator.py         # Pillar 2: Generate API docs from code
+  │   └── issue_qa_converter.py         # Pillar 3: GitHub Issues → Q&A pairs
+  ├── processors/
+  │   ├── markdown_cleaner.py           # Remove HTML, normalize formatting
+  │   ├── code_snippet_extractor.py    # Extract code examples
+  │   └── metadata_enricher.py         # Add source, type, timestamp
+  ├── pipeline_orchestrator.py          # Main pipeline runner
+  └── config.yaml                        # Repo URLs, patterns, filters
+  ```
+- [ ] Implement Pillar 1: Repository Documentation Extraction
+  - [ ] `repo_docs_extractor.py`: git clone, find .md/.rst/.txt files
+  - [ ] Handle authentication (public repos first, token optional)
+  - [ ] Metadata: repo_name, file_path, commit_hash, last_modified
+- [ ] Implement Pillar 2: Code Documentation Generation
+  - [ ] `code_doc_generator.py`: Extract docstrings/comments from source
+  - [ ] Support: Python (docstrings), Java (JavaDoc), JavaScript (JSDoc)
+  - [ ] Generate: Class/method descriptions, parameters, return types
+- [ ] Implement Pillar 3: Issue-to-Q&A Conversion
+  - [ ] `issue_qa_converter.py`: GitHub API → closed issues with accepted answers
+  - [ ] Filter: resolved/closed status, has accepted answer
+  - [ ] Format: (question: issue title, answer: top comment, context: issue body)
+- [ ] Create `config.yaml`
+  - [ ] Visa repo URLs (e.g., visa/java-sample-code)
+  - [ ] File patterns (*.md, *.java, *.py)
+  - [ ] Issue filters (labels, date ranges)
+
+#### **Hour 15: Demo with Visa Repositories**
+- [ ] Select target Visa repos
+  - Option A: `visa/java-sample-code` (backend samples)
+  - Option B: `visa/openapi` (API specifications)
+  - Option C: `visa/developer-recipes` (integration guides)
+- [ ] Run data pipeline
+  - [ ] Extract documentation (Pillar 1)
+  - [ ] Generate code docs (Pillar 2)
+  - [ ] Convert issues to Q&A (Pillar 3)
+  - [ ] Merge datasets with metadata
+- [ ] Metrics collection
+  - [ ] Document count: Before (13 FastAPI) vs. After (150+ with Visa)
+  - [ ] Chunk count: Before (252) vs. After (1000+)
+  - [ ] Source distribution: FastAPI vs. Visa content
+- [ ] Ingest into existing RAG system
+  - [ ] Run `ingest.py` with new dataset
+  - [ ] Verify ChromaDB collection size
+- [ ] Test Visa-specific queries
+  - [ ] "How do I authenticate with Visa API?"
+  - [ ] "What are the rate limits for Visa Developer API?"
+  - [ ] "Show me a Java example for payment processing"
+
+#### **Hour 16: Documentation & Polish**
+- [ ] Create `docs/DATA-PIPELINE.md`
+  - [ ] Architecture diagram (3 pillars → processors → RAG)
+  - [ ] Usage guide: `python pipeline_orchestrator.py --config config.yaml`
+  - [ ] Extensibility: Add new repos, new extractors
+  - [ ] Performance: Caching, incremental updates
+- [ ] Update `docs/lesson-learned.md`
+  - [ ] New section: "Building RAG Datasets from Scratch"
+  - [ ] Challenges: GitHub rate limits, parsing edge cases
+  - [ ] Best practices: Metadata enrichment, deduplication
+- [ ] Update main `README.md`
+  - [ ] Add "Data Pipeline" section
+  - [ ] Showcase: "Dataset includes actual Visa repositories"
+- [ ] Create example configs
+  - [ ] `config.examples/github-org.yaml` (any GitHub org)
+  - [ ] `config.examples/gitlab-project.yaml` (GitLab support)
+  - [ ] `config.examples/bitbucket-repo.yaml` (Bitbucket support)
+- [ ] Polish & commit
+  - [ ] Code cleanup, type hints, docstrings
+  - [ ] Test with 2-3 different repos
+  - [ ] Git commit: "feat(data): RAG Data Pipeline Framework"
+
+**Status:** 📝 Planning  
+**Time Spent:** 0h  
+**Blockers:** None
+
+**Value Propositions:**
+1. ✅ "Built reusable data pipeline, not just one-time script"
+2. ✅ "Used YOUR actual Visa repos as demo (shows initiative)"
+3. ✅ "3 data sources: docs + code + issues (comprehensive)"
+4. ✅ "Framework works for any GitHub org in 5 minutes"
+5. ✅ "Demonstrates data engineering skills, not just prompt tuning"
+
+**Success Metrics:**
+- Before: 13 FastAPI docs → 252 chunks
+- After: 150+ docs (FastAPI + Visa) → 1000+ chunks
+- Visa-specific queries answered with confidence >0.75
+
+---
+
+### **Stage 2D: Production Differentiation (Hours 13-16)** ⬜
 
 #### **Constrained Generation Features (Hour 13-14)**
 - [ ] Enhance "Unknown/TBD" handling

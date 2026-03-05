@@ -736,6 +736,107 @@ ai-engineer-coding-exercise/
 
 ---
 
+## 🔄 **PLAN PIVOT: RAG Data Pipeline Framework** (March 5, 2026)
+
+### **Strategic Addition: Stage 2C - Data Acquisition Framework**
+
+**Rationale:** Differentiate by showcasing **data engineering skills** for RAG systems, not just model/prompt tuning.
+
+**New Stage 2C: RAG Data Pipeline (3 hours)**
+
+#### **Goals:**
+1. Build reusable framework for generating RAG datasets from real codebases
+2. Demo with actual Visa repositories (show initiative + research)
+3. Showcase end-to-end thinking: data acquisition → processing → ingestion → RAG
+
+#### **Three-Pillar Data Sources:**
+
+**Pillar 1: Repository Documentation Extraction**
+- Clone Visa open-source repos (e.g., visa/java-sample-code)
+- Extract existing docs: README, API guides, CHANGELOG, wiki
+- File types: `.md`, `.rst`, `.txt`, `.pdf` (if present)
+- **Output:** Raw documentation corpus
+
+**Pillar 2: Auto-Generated Code Documentation**
+- Parse source code (Java, Python, JavaScript depending on repo)
+- Generate API reference using tools:
+  - Python: `pydoc`, `sphinx`
+  - Java: JavaDoc extraction
+  - JavaScript: JSDoc/TSDoc
+- Extract: Class descriptions, method signatures, parameters, return types
+- **Output:** Structured API documentation
+
+**Pillar 3: Issue/Ticket-Driven Q&A Dataset**
+- Scrape GitHub Issues & PRs from Visa repos
+- Filter: Closed issues with accepted answers
+- Convert to (question, answer, context) triples
+- Extract common pain points and solutions
+- **Output:** Developer Q&A pairs
+
+#### **Architecture:**
+
+```
+data-pipeline/
+├── extractors/
+│   ├── repo_docs_extractor.py        # Clone & extract .md files
+│   ├── code_doc_generator.py         # Generate API docs from code
+│   └── issue_qa_converter.py         # GitHub Issues → Q&A pairs
+├── processors/
+│   ├── markdown_cleaner.py           # Remove HTML, normalize formatting
+│   ├── code_snippet_extractor.py    # Extract code examples
+│   └── metadata_enricher.py         # Add source, type, timestamp
+├── pipeline_orchestrator.py          # Main pipeline runner
+└── config.yaml                        # Repo URLs, patterns, filters
+```
+
+#### **Implementation Plan:**
+
+**Hour 14: Framework Development**
+- [ ] Create `data-pipeline/` directory structure
+- [ ] Implement Pillar 1: `repo_docs_extractor.py` (git clone, find .md files)
+- [ ] Implement Pillar 2: `code_doc_generator.py` (basic docstring extraction)
+- [ ] Implement Pillar 3: `issue_qa_converter.py` (GitHub API → Q&A format)
+- [ ] Create `config.yaml` with Visa repo configurations
+
+**Hour 15: Demo with Visa Repositories**
+- [ ] Select 1-2 Visa repos (e.g., visa/java-sample-code, visa/openapi)
+- [ ] Run pipeline to generate dataset
+- [ ] Metrics: Before (15 FastAPI docs) vs. After (150+ docs including Visa content)
+- [ ] Ingest new dataset into existing RAG system
+- [ ] Test queries: "How do I authenticate with Visa API?"
+
+**Hour 16: Documentation & Polish**
+- [ ] Create `docs/DATA-PIPELINE.md` (architecture, usage, extensibility)
+- [ ] Add section to `lesson-learned.md`: "Building RAG Datasets from Scratch"
+- [ ] Update README with data pipeline showcase
+- [ ] Create example config for other repos (GitHub, GitLab, Bitbucket)
+
+#### **Value Propositions for Interview:**
+
+1. **"I don't just build RAG systems, I build data pipelines to feed them"**
+2. **"Used YOUR actual repos (visa/...) as the demo dataset"**
+3. **"Converted 50 GitHub issues into 50 training Q&A pairs"**
+4. **"Auto-generated 200+ API docs from your Java sample code"**
+5. **"Framework is reusable for any organization's codebase"**
+6. **"Showed how to keep docs fresh: git hooks → auto-regenerate"**
+
+#### **Candidate Visa Repositories:**
+
+Research targets (to be confirmed):
+- `visa/visa-sdk-javascript` - Frontend SDK
+- `visa/java-sample-code` - Backend code samples
+- `visa/developer-recipes` - API integration guides
+- `visa/openapi` - API specifications (OpenAPI/Swagger)
+
+#### **Success Metrics:**
+
+- **Before:** 13 FastAPI docs → 252 chunks
+- **After:** 150+ documents (FastAPI + Visa repos) → 1000+ chunks
+- **Quality:** Demonstrate queries spanning both datasets
+- **Reusability:** Framework can be configured for any GitHub org in 5 minutes
+
+---
+
 ## 🎯 Final Notes
 
 ### **What Makes This Submission Stand Out**
@@ -743,8 +844,10 @@ ai-engineer-coding-exercise/
 1. **Production Mindset:** Not a prototype—built with production patterns from start
 2. **Evaluation Excellence:** Not just "it works"—demonstrated measurement and improvement
 3. **Enterprise Thinking:** Unknown handling, source attribution, confidence scoring
-4. **Clear Communication:** Documentation shows strategic thinking, not just code
-5. **Interview Ready:** Code designed for easy modification, improvements documented
+4. **Data Engineering Skills:** Built reusable pipeline for RAG dataset generation ⭐ NEW
+5. **Visa-Specific Research:** Used actual Visa repositories in the demo ⭐ NEW
+6. **Clear Communication:** Documentation shows strategic thinking, not just code
+7. **Interview Ready:** Code designed for easy modification, improvements documented
 
 ### **Backup Plan**
 
