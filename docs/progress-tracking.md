@@ -326,7 +326,7 @@
 
 ---
 
-### **Stage 2B: Evaluation Enhancement (Hours 10-13)** � PIVOTED
+### **Stage 2B: Evaluation Enhancement (Hours 10-13)** 📖 PIVOTED
 
 #### **FastAPI Baseline (Hour 10-11)** ✅ COMPLETE - ARCHIVED
 - [x] 20-query FastAPI baseline dataset

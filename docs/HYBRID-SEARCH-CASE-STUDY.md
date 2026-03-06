@@ -72,7 +72,7 @@ Query: "What is IDataTableProps?"
 
 ---
 
-#### 2. � Answer Relevancy (Gap: -0.094)
+#### 2. 📖 Answer Relevancy (Gap: -0.094)
 **Status:** ⏭️ Recommendation: Use GPT-3.5/4 instead of GPT4All
 
 **Problem:**

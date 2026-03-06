@@ -220,7 +220,7 @@ black app/
 uvicorn app.main:app --reload
 ```
 
-## � Troubleshooting
+##  Troubleshooting
 
 **Port already in use:**
 ```bash
