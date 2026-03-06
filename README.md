@@ -63,8 +63,8 @@ This project fulfills the following deliverables:
 
 **Step 1: Clone Repository**
 ```bash
-git clone https://github.com/kefeimo/resume.git
-cd resume/project/visa-full-stack-ai-engineer/ai-engineer-coding-exercise
+git clone https://github.com/kefeimo/ai-engineer-coding-exercise.git
+cd ai-engineer-coding-exercise
 ```
 
 **Step 2: Setup Node.js with nvm (Recommended)**
