@@ -212,26 +212,24 @@ The frontend tracks your last 10 queries:
 **📄 Technical Report (start here):**
 - [docs/technical-report.md](docs/technical-report.md) — 2-3 page summary: approach, implementation highlights, and evaluation results
 
+**✨ Recommended reading** (additional context on the solution):
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design with data flow diagrams and component breakdown
+- [docs/HYBRID-SEARCH-CASE-STUDY.md](docs/HYBRID-SEARCH-CASE-STUDY.md) — concrete BM25 + semantic fusion improvement example
+- [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) — full RAGAS analysis (deep-dive appendix)
+- [docs/lesson-learned.md](docs/lesson-learned.md) — development retrospective and reflection
+
 **Setup & Deployment:**
-- [DOCKER.md](docs/DOCKER.md) — Docker commands, GPU support, container management
+- [docs/DOCKER.md](docs/DOCKER.md) — Docker commands, GPU support, container management
 - [docs/DOCKER-COMPOSE.md](docs/DOCKER-COMPOSE.md) — dev vs production compose comparison
 - [docs/DOCKER-GPU.md](docs/DOCKER-GPU.md) — GPU acceleration setup
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — common issues and full reset guide
 
-**Architecture & Design:**
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, data flow, component overview
+**Further Reference:**
 - [docs/TECH-STACK-RATIONALE.md](docs/TECH-STACK-RATIONALE.md) — why each technology was chosen
-
-**Evaluation:**
-- [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) — RAGAS metrics results and analysis
-- [docs/HYBRID-SEARCH-CASE-STUDY.md](docs/HYBRID-SEARCH-CASE-STUDY.md) — BM25 + semantic search improvement study
+- [docs/PROMPT-IMPROVEMENT.md](docs/PROMPT-IMPROVEMENT.md) — prompt engineering iteration notes
 - [docs/RAGAS-METRICS-REFERENCE.md](docs/RAGAS-METRICS-REFERENCE.md) — metrics definitions and interpretation
 - [docs/VCC-BASELINE-SUMMARY.md](docs/VCC-BASELINE-SUMMARY.md) — VCC query baseline results
 - [data-pipeline/GOLDEN-TEST-CASES.md](data-pipeline/GOLDEN-TEST-CASES.md) — curated high-quality test queries
-
-**Lessons & Notes:**
-- [docs/lesson-learned.md](docs/lesson-learned.md) — development retrospective
-- [docs/PROMPT-IMPROVEMENT.md](docs/PROMPT-IMPROVEMENT.md) — prompt engineering notes
 
 ---
 
