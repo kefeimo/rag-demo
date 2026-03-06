@@ -7,6 +7,8 @@ import logging
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 
+from langchain_core.prompts import PromptTemplate
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -191,46 +193,27 @@ def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str
     collection_name = settings.chroma_collection_name.lower()
     
     if "visa" in collection_name or "vcc" in collection_name or "chart" in collection_name:
-        domain_description = "Visa Chart Components (VCC)"
-        domain_suggestions = "chart types, accessibility, data props, integration, etc."
+        domain = "vcc"
     elif "fastapi" in collection_name:
-        domain_description = "FastAPI"
-        domain_suggestions = "routing, dependencies, middleware, etc."
+        domain = "fastapi"
     else:
-        domain_description = "the provided documentation"
-        domain_suggestions = "topics covered in the documentation"
+        domain = "general"
     
-    # System instructions
-    system_prompt = """You are a helpful AI assistant that answers questions based ONLY on the provided context.
-
-IMPORTANT RULES:
-1. Use ONLY information from the context provided below
-2. If the context doesn't contain enough information, say "I don't have enough information to answer that question based on the provided documentation."
-3. Always cite which source(s) you used in your answer
-4. Be concise but complete
-5. Do not make up or infer information not present in the context
-6. If asked about topics outside the context, politely decline and suggest what you can help with
-
-"""
+    # Use PromptBuilder with domain-specific configuration
+    prompt_builder = PromptBuilder(domain=domain)
     
-    # Format context
-    context_text = ""
-    if context_documents:
-        context_text = "CONTEXT:\n\n"
-        for i, doc in enumerate(context_documents, 1):
-            source = doc.get("metadata", {}).get("source", "unknown")
-            content = doc.get("content", "")
-            confidence = doc.get("confidence", 0.0)
-            
-            context_text += f"[Source {i}: {source} (confidence: {confidence:.2f})]\n{content}\n\n---\n\n"
-    else:
-        context_text = "CONTEXT:\n\nNo relevant context found.\n\n"
-    
-    # User query
-    user_query = f"QUESTION:\n{query}\n\nANSWER:"
-    
-    # Combine all parts
-    full_prompt = system_prompt + context_text + user_query
+    # Build prompt with sources
+    full_prompt = prompt_builder.build_prompt_with_sources(
+        query=query,
+        retrieved_docs=[
+            {
+                "source": doc.get("metadata", {}).get("source", "unknown"),
+                "content": doc.get("content", ""),
+                "similarity": doc.get("confidence", 0.0)
+            }
+            for doc in context_documents
+        ]
+    )
     
     return full_prompt
 
@@ -305,46 +288,80 @@ class PromptBuilder:
     Provides flexible prompt templates and construction methods
     """
     
-    def __init__(self, system_prompt: Optional[str] = None):
+    # Domain configurations
+    DOMAIN_CONFIGS = {
+        "vcc": {
+            "domain": "Visa Chart Components (VCC)",
+            "domain_topics": "chart types, accessibility features, data props, API usage, or integration guides",
+            "known_acronyms": "  - VCC = Visa Chart Components\n  - WCAG = Web Content Accessibility Guidelines\n  - a11y = accessibility",
+            "domain_guidance": "- VCC is a charting library focused on accessibility\n- When discussing charts, consider accessibility features\n- Props and interfaces follow TypeScript conventions"
+        },
+        "fastapi": {
+            "domain": "FastAPI web framework",
+            "domain_topics": "path operations, dependencies, middleware, or deployment",
+            "known_acronyms": "  - API = Application Programming Interface\n  - ASGI = Asynchronous Server Gateway Interface\n  - ORM = Object-Relational Mapping",
+            "domain_guidance": "- FastAPI is a modern Python web framework\n- Path operations use decorators (@app.get, @app.post)\n- Type hints are essential for automatic validation"
+        },
+        "general": {
+            "domain": "technical documentation",
+            "domain_topics": "specific features or concepts",
+            "known_acronyms": "  - Common technical abbreviations may be used",
+            "domain_guidance": "- Focus on providing accurate technical information\n- Reference documentation sections when available"
+        }
+    }
+    
+    def __init__(self, domain: str = "general"):
         """
-        Initialize prompt builder
+        Initialize prompt builder with LangChain PromptTemplate
         
         Args:
-            system_prompt: Custom system prompt (uses default if not provided)
+            domain: Domain context for prompt customization (vcc, fastapi, general)
         """
-        self.system_prompt = system_prompt or self.get_default_system_prompt()
+        self.domain = domain
+        self.domain_config = self.DOMAIN_CONFIGS.get(domain, self.DOMAIN_CONFIGS["general"])
+        self.prompt_template = self._create_prompt_template()
     
-    @staticmethod
-    def get_default_system_prompt() -> str:
+    def _create_prompt_template(self) -> PromptTemplate:
         """
-        Get default system prompt with instructions
+        Create LangChain PromptTemplate with domain-specific customization
         
         Returns:
-            Default system prompt string
+            LangChain PromptTemplate instance
         """
-        return """You are a helpful AI assistant. Answer the user's question based ONLY on the provided context.
+        template = """You are a helpful AI assistant specialized in {domain}. Answer the user's question based ONLY on the provided context.
 
 IMPORTANT RULES:
 1. Only use information from the provided context
-2. If the context doesn't contain enough information, say "I don't have enough information to answer that"
+2. If the context doesn't contain enough information, say "I don't have enough information to answer that question based on the provided documentation. Please try rephrasing your question or asking about specific {domain_topics}."
 3. Cite sources when possible (e.g., "According to [source]...")
 4. Be concise and accurate
 5. Do not infer or assume information beyond what's explicitly stated
 
-"""
-    
-    def get_system_prompt(self) -> str:
-        """
-        Get the current system prompt
+QUERY UNDERSTANDING:
+- If the query contains minor spelling variations or typos, try to understand the intent from context
+- Consider common acronyms and abbreviations: {known_acronyms}
+- Look for semantically similar terms in the context even if exact spelling differs
+- If you recognize what the user is asking about despite minor differences, provide the answer
+
+DOMAIN-SPECIFIC GUIDANCE:
+{domain_guidance}
+
+{context}
+
+QUESTION:
+{query}
+
+ANSWER:"""
         
-        Returns:
-            System prompt string
-        """
-        return self.system_prompt
+        return PromptTemplate(
+            template=template,
+            input_variables=["context", "query"],
+            partial_variables=self.domain_config
+        )
     
     def build_prompt(self, query: str, context: str) -> str:
         """
-        Build prompt with query and context
+        Build prompt with query and context using LangChain template
         
         Args:
             query: User query
@@ -353,16 +370,8 @@ IMPORTANT RULES:
         Returns:
             Complete prompt string
         """
-        prompt = self.system_prompt
-        
-        if context and context.strip():
-            prompt += f"\nCONTEXT:\n{context}\n\n"
-        else:
-            prompt += "\nCONTEXT:\nNo relevant context found.\n\n"
-        
-        prompt += f"QUESTION:\n{query}\n\nANSWER:"
-        
-        return prompt
+        context_text = f"CONTEXT:\n{context}" if context and context.strip() else "CONTEXT:\nNo relevant context found."
+        return self.prompt_template.format(query=query, context=context_text)
     
     def build_prompt_with_sources(
         self,
@@ -370,7 +379,7 @@ IMPORTANT RULES:
         retrieved_docs: List[Dict[str, Any]]
     ) -> str:
         """
-        Build prompt with structured source information
+        Build prompt with structured source information using LangChain template
         
         Args:
             query: User query
@@ -379,23 +388,18 @@ IMPORTANT RULES:
         Returns:
             Complete prompt string with sources
         """
-        prompt = self.system_prompt
-        
-        # Add context with sources
+        # Format context with sources
         if retrieved_docs:
-            prompt += "\nCONTEXT:\n\n"
+            context_parts = ["CONTEXT:\n"]
             for i, doc in enumerate(retrieved_docs, 1):
                 source = doc.get("source", "unknown")
                 content = doc.get("content", "")
                 similarity = doc.get("similarity", 0.0)
                 
-                prompt += f"[Source {i}: {source} (relevance: {similarity:.2f})]\n"
-                prompt += f"{content}\n\n"
-                prompt += "---\n\n"
+                context_parts.append(f"[Source {i}: {source} (relevance: {similarity:.2f})]\n{content}\n\n---\n")
+            context_text = "\n".join(context_parts)
         else:
-            prompt += "\nCONTEXT:\nNo relevant context found.\n\n"
+            context_text = "CONTEXT:\nNo relevant context found."
         
-        prompt += f"QUESTION:\n{query}\n\nANSWER:"
-        
-        return prompt
+        return self.prompt_template.format(query=query, context=context_text)
 

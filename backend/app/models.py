@@ -26,6 +26,8 @@ class QueryResponse(BaseModel):
     sources: List[Source] = Field(default_factory=list, description="Source documents used")
     confidence: float = Field(..., description="Overall confidence score", ge=0.0, le=1.0)
     model: str = Field(..., description="LLM model used for generation")
+    response_time: Optional[float] = Field(None, description="Response time in seconds")
+    api_version: Optional[str] = Field(None, description="API version")
 
 
 class IngestRequest(BaseModel):

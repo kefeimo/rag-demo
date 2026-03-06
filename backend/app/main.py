@@ -104,8 +104,11 @@ async def query_rag(request: QueryRequest):
         request: Query request with user question
         
     Returns:
-        QueryResponse with answer, sources, and confidence
+        QueryResponse with answer, sources, confidence, and metadata
     """
+    import time
+    start_time = time.time()
+    
     logger.info(f"Query received: {request.query}")
     
     try:
@@ -134,12 +137,15 @@ async def query_rag(request: QueryRequest):
         # Check for errors
         if "error" in retrieval_result:
             logger.error(f"Retrieval error: {retrieval_result['error']}")
+            response_time = time.time() - start_time
             return QueryResponse(
                 query=request.query,
                 answer=f"Error retrieving documents: {retrieval_result['error']}. Please ensure documents have been ingested first.",
                 sources=[],
                 confidence=0.0,
-                model=settings.llm_provider
+                model=settings.llm_provider,
+                response_time=response_time,
+                api_version=__version__
             )
         
         documents = retrieval_result.get("documents", [])
@@ -152,12 +158,15 @@ async def query_rag(request: QueryRequest):
         if not documents or not is_confident:
             logger.warning(f"Low confidence or no documents: {confidence_msg}")
             help_text = get_help_text_for_collection()
+            response_time = time.time() - start_time
             return QueryResponse(
                 query=request.query,
                 answer=f"I don't have enough information to answer that question based on the provided documentation. {help_text}",
                 sources=[],
                 confidence=overall_confidence,
-                model=settings.llm_provider
+                model=settings.llm_provider,
+                response_time=response_time,
+                api_version=__version__
             )
         
         # Generate answer using LLM
@@ -172,13 +181,16 @@ async def query_rag(request: QueryRequest):
         # Format sources for response
         sources = extract_sources(documents)
         
-        logger.info(f"Query completed successfully (confidence: {overall_confidence:.3f})")
+        response_time = time.time() - start_time
+        logger.info(f"Query completed successfully (confidence: {overall_confidence:.3f}, time: {response_time:.2f}s)")
         return QueryResponse(
             query=request.query,
             answer=answer,
             sources=sources,
             confidence=overall_confidence,
-            model=settings.llm_provider
+            model=settings.llm_provider,
+            response_time=response_time,
+            api_version=__version__
         )
         
     except Exception as e:
