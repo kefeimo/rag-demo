@@ -93,6 +93,21 @@ Hybrid confidence:         0.78 (above threshold → answered correctly)
 
 > 📖 UI cache design: [UI-QUERY-CACHE.md](UI-QUERY-CACHE.md) | Docker setup: [DOCKER.md](DOCKER.md)
 
+### Code Quality & Organization
+
+The backend follows a clean modular structure under `backend/app/rag/` — each concern (ingestion, retrieval, hybrid retrieval, generation, prompt building) is a separate module with no cross-cutting dependencies. Configuration is fully environment-driven via `backend/app/config.py` (Pydantic `BaseSettings`), making the same codebase work locally, in Docker, and with either LLM provider without code changes.
+
+Test coverage: **38 pytest tests** covering the core pipeline, with a dedicated `tests/` directory and `conftest.py` fixtures. Key coverage numbers: `config.py` 93%, `retrieval.py` 58%, `ingestion.py` 51%.
+
+**Creativity highlights worth noting:**
+
+- **VCC dataset choice** — Rather than a generic public corpus, the system was built against a real Visa production repository (`visa/visa-chart-components`), making the demo directly relevant to Visa's own tooling.
+- **Custom data pipeline** — A `data-pipeline/` module extracts documentation from GitHub Issues (closed Q&A pairs) in addition to markdown files, enriching the corpus with real developer questions and resolutions. See [data-pipeline/README.md](../data-pipeline/README.md).
+- **2-collection routing** — The UI exposes a toggle between `fastapi_docs` and `vcc_docs` collections, and the `collection` field in the API allows per-request targeting. This patterns toward a multi-tenant knowledge base rather than a single-purpose chatbot.
+- **Graceful degradation** — If retrieval confidence is below threshold, the system returns a structured "unable to answer" with a hint to rephrase, rather than silently hallucinating. This is a deliberate product decision, not just a technical guard.
+
+> 📖 Module layout: [ARCHITECTURE.md](ARCHITECTURE.md) | Data pipeline: [data-pipeline/README.md](../data-pipeline/README.md) | Tech stack rationale: [TECH-STACK-RATIONALE.md](TECH-STACK-RATIONALE.md)
+
 ---
 
 ## 3. Evaluation Results
