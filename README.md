@@ -209,6 +209,9 @@ The frontend tracks your last 10 queries:
 
 ## 📚 Documentation
 
+**📄 Technical Report (start here):**
+- [docs/technical-report.md](docs/technical-report.md) — 2-3 page summary: approach, implementation highlights, and evaluation results
+
 **Setup & Deployment:**
 - [DOCKER.md](docs/DOCKER.md) — Docker commands, GPU support, container management
 - [docs/DOCKER-COMPOSE.md](docs/DOCKER-COMPOSE.md) — dev vs production compose comparison
