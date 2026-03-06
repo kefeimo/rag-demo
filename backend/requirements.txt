@@ -22,7 +22,6 @@ coverage==7.13.4
 cuda-bindings==12.9.4
 cuda-pathfinder==1.4.0
 dataclasses-json==0.6.7
-datasets==4.6.1
 dill==0.4.0
 distro==1.9.0
 durationpy==0.10
@@ -142,7 +141,6 @@ python-docx==1.1.0
 python-dotenv==1.0.0
 python-multipart==0.0.6
 PyYAML==6.0.3
-ragas==0.1.0
 rank-bm25==0.2.2
 regex==2026.2.28
 requests==2.32.5

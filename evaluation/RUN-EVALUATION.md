@@ -20,8 +20,14 @@ export OPENAI_API_KEY="sk-proj-your-api-key-here"
 ### 2. Activate Evaluation Environment
 
 ```bash
-cd backend/evaluation
+cd evaluation
+
+# Create virtual environment (first time only)
+python3 -m venv venv-eval
+
+# Activate and install dependencies
 source venv-eval/bin/activate
+pip install -r requirements.txt
 ```
 
 ### 3. Run Baseline Evaluation
@@ -126,9 +132,11 @@ uvicorn app.main:app --reload --port 8000
 ```
 ModuleNotFoundError: No module named 'ragas'
 ```
-**Solution**: Activate the correct environment:
+**Solution**: Activate the correct environment and install dependencies:
 ```bash
+cd evaluation
 source venv-eval/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Cost Estimation
@@ -158,7 +166,7 @@ source venv-eval/bin/activate
 
 ```bash
 # Full workflow
-cd backend/evaluation
+cd evaluation
 export OPENAI_API_KEY="sk-proj-your-key"
 source venv-eval/bin/activate
 python run_ragas_baseline.py

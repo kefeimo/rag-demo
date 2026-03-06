@@ -80,7 +80,7 @@ python3 -m venv venv-eval
 source venv-eval/bin/activate
 
 # Install dependencies
-pip install -r requirements-eval.txt
+pip install -r requirements.txt
 
 # Test setup
 python test_openai_key.py
@@ -182,7 +182,7 @@ evaluation/
 ├── run_ragas_stage1b_generate_references.py  # Stage 1B: Gen references
 ├── run_ragas_stage2_eval.py           # Stage 2: Evaluate
 ├── test_openai_key.py                 # Test API key
-├── requirements-eval.txt              # Dependencies
+├── requirements.txt                   # Dependencies
 ├── README.md                          # This file
 ├── RAGAS-GPT4ALL-INVESTIGATION.md    # GPT4All breakthrough
 ├── venv-eval/                         # Virtual environment
