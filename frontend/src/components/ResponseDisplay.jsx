@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import SourceCard from './SourceCard';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,6 +8,8 @@ import remarkGfm from 'remark-gfm';
  * Shows the answer and sources from a RAG query
  */
 function ResponseDisplay({ response, ragSystem }) {
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+
   if (!response) return null;
 
   return (
@@ -130,13 +133,31 @@ function ResponseDisplay({ response, ragSystem }) {
 
       {/* Sources Display */}
       {response.sources && response.sources.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-md font-semibold text-gray-900">Sources ({response.sources.length})</h4>
-          <div className="grid grid-cols-1 gap-3">
-            {response.sources.map((source, index) => (
-              <SourceCard key={index} source={source} index={index} />
-            ))}
-          </div>
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {/* Collapsible header */}
+          <button
+            onClick={() => setSourcesOpen(o => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+          >
+            <span className="text-sm font-semibold text-gray-700">
+              Sources ({response.sources.length})
+            </span>
+            <svg
+              className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${sourcesOpen ? 'rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Collapsible body */}
+          {sourcesOpen && (
+            <div className="p-3 grid grid-cols-1 gap-3 border-t border-gray-200">
+              {response.sources.map((source, index) => (
+                <SourceCard key={index} source={source} index={index} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
