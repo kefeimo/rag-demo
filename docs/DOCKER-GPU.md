@@ -30,7 +30,7 @@ Docker containers can now access the host's GPU after installing NVIDIA Containe
 **What it does:** Allows Docker containers to access host GPU
 
 **Requirements:**
-- ✅ NVIDIA GPU with proper drivers installed (RTX 2000 Ada, Driver 581.95, CUDA 13.0)
+- ✅ NVIDIA GPU with proper drivers installed (Quadro RTX 3000, Driver 595.71, CUDA 13.2)
 - ✅ NVIDIA Container Toolkit installed on host (v1.18.2)
 - ✅ Docker Compose configuration updated
 
@@ -166,6 +166,69 @@ curl -X POST http://localhost:8000/query \
 
 ## Troubleshooting
 
+### ❓ "nvidia-smi shows CUDA 13.x — do I need to downgrade?"
+
+**No. Do not downgrade anything.**
+
+The `CUDA Version` shown in `nvidia-smi` is the **maximum** CUDA version your driver supports — not a requirement. CUDA is fully backward compatible: a driver that supports 13.2 can run binaries compiled for older CUDA versions (11.x, 12.x).
+
+Our stack uses `torch==2.10.0` which ships with its own bundled CUDA 12.8 runtime libraries via pip. The Dockerfile is `python:3.12-slim` (no CUDA base image) — PyTorch brings everything it needs.
+
+```
+Driver (CUDA 13.2 max) → runs → PyTorch CUDA 12.8 runtime → ✅ works fine
+```
+
+**Confirmed working:** Quadro RTX 3000, Driver 595.71, CUDA 13.2 max, PyTorch CUDA 12.8 — verified March 6, 2026.
+
+---
+
+### ❗ GPU not visible in Docker container
+
+**Symptoms:** `docker exec rag-backend-dev nvidia-smi` fails, or logs show `device_name: cpu`
+
+**Checklist:**
+1. **NVIDIA Container Toolkit installed?**
+   ```bash
+   nvidia-ctk --version
+   # Should show: NVIDIA Container Toolkit CLI version 1.x.x
+   ```
+2. **`nvidia` runtime registered in Docker?**
+   ```bash
+   docker info | grep -i runtime
+   # Should show: Runtimes: ... nvidia ...
+   ```
+3. **Did you restart Docker after installing the toolkit?**
+   - On WSL2: restart Docker Desktop from the Windows system tray
+   - On Linux: `sudo systemctl restart docker`
+4. **`deploy.resources` block present in docker-compose?**
+   ```yaml
+   deploy:
+     resources:
+       reservations:
+         devices:
+           - driver: nvidia
+             count: 1
+             capabilities: [gpu]
+   ```
+
+---
+
+### ❗ Verification command fails with image not found or CUDA mismatch
+
+Use an image that matches your PyTorch CUDA runtime (12.8), not an older one:
+
+```bash
+# ✅ Correct — matches PyTorch CUDA 12.8 runtime
+docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu22.04 nvidia-smi
+
+# ❌ Outdated — CUDA 11.4 / Ubuntu 20.04 (unnecessary)
+docker run --rm --gpus all nvidia/cuda:11.4.3-base-ubuntu20.04 nvidia-smi
+```
+
+Both will work if the driver is compatible, but use the matching version to avoid confusion.
+
+---
+
 ### OpenAI API Key Issues
 
 If you see `401 - Incorrect API key provided` errors:
@@ -221,7 +284,7 @@ If you see `401 - Incorrect API key provided` errors:
 
 ---
 
-**Status:** ✅ IMPLEMENTED - GPU acceleration enabled in Docker containers  
+**Status:** ✅ CONFIRMED WORKING - GPU acceleration enabled in Docker containers (verified March 6, 2026)  
 **Priority:** LOW - Not blocking, system works without it  
 **Effort:** MEDIUM - Requires system-level changes  
 **Decision:** Document current approach, add GPU Docker as optional enhancement

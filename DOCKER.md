@@ -48,7 +48,7 @@ sudo nvidia-ctk runtime configure --runtime=docker
 
 **5. Verify GPU is accessible inside containers:**
 ```bash
-docker run --rm --gpus all nvidia/cuda:11.4.3-base-ubuntu20.04 nvidia-smi
+docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu22.04 nvidia-smi
 ```
 
 You should see your GPU listed. The `ERR!` in the `GPU-Util` column is a **known WSL2 cosmetic issue** — it does not affect performance.
@@ -324,4 +324,4 @@ Frontend uses multi-stage build to reduce image size:
 ---
 
 **Status**: Stage 1B Complete ✅  
-**Last Updated**: March 4, 2026
+**Last Updated**: March 6, 2026
