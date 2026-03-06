@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * QueryInput Component
  * Text input and submit button for RAG queries
  */
-function QueryInput({ onSubmit, isLoading, ragSystem = 'fastapi' }) {
+function QueryInput({ onSubmit, onSuggest, isLoading, ragSystem = 'fastapi' }) {
   const [query, setQuery] = useState('');
+
+  // Expose setQuery to parent via ref so suggestion buttons can pre-fill the textarea
+  useEffect(() => {
+    if (onSuggest) onSuggest.current = (text) => setQuery(text);
+  }, [onSuggest]);
 
   const getPlaceholder = () => {
     if (ragSystem === 'vcc') {

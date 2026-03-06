@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import QueryInput from './components/QueryInput';
 import ResponseDisplay from './components/ResponseDisplay';
 import ErrorDisplay from './components/ErrorDisplay';
@@ -14,6 +14,12 @@ function App() {
   const [docsLoaded, setDocsLoaded] = useState({ fastapi: false, vcc: false });
   const [queryHistory, setQueryHistory] = useState([]); // Track query history
   const [queryCache, setQueryCache] = useState({}); // Cache query results {query: responseData}
+  const suggestRef = useRef(null); // Ref to pre-fill QueryInput textarea
+
+  // Pre-fill the textarea without submitting
+  const handleSuggest = (text) => {
+    if (suggestRef.current) suggestRef.current(text);
+  };
 
   // Check backend health on mount
   useEffect(() => {
@@ -168,7 +174,7 @@ function App() {
         <div className="space-y-6">
           {/* Query Input */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <QueryInput onSubmit={handleQuery} isLoading={isLoading} ragSystem={ragSystem} />
+            <QueryInput onSubmit={handleQuery} onSuggest={suggestRef} isLoading={isLoading} ragSystem={ragSystem} />
           </div>
 
           {/* Error Display */}
@@ -200,23 +206,20 @@ function App() {
                 {ragSystem === 'fastapi' ? (
                   <>
                     <button
-                      onClick={() => handleQuery('What is FastAPI?')}
+                      onClick={() => handleSuggest('What is FastAPI?')}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       What is FastAPI?
                     </button>
                     <button
-                      onClick={() => handleQuery('How do I create a path parameter?')}
+                      onClick={() => handleSuggest('How do I create a path parameter?')}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       How do I create a path parameter?
                     </button>
                     <button
-                      onClick={() => handleQuery('What are FastAPI\'s main features?')}
+                      onClick={() => handleSuggest("What are FastAPI's main features?")}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       What are FastAPI's main features?
                     </button>
@@ -224,23 +227,20 @@ function App() {
                 ) : (
                   <>
                     <button
-                      onClick={() => handleQuery('How do I create a bar chart with Visa Chart Components?')}
+                      onClick={() => handleSuggest('How do I create a bar chart with Visa Chart Components?')}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       How do I create a bar chart?
                     </button>
                     <button
-                      onClick={() => handleQuery('What are the props for IDataTableProps?')}
+                      onClick={() => handleSuggest('What are the props for IDataTableProps?')}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       What are IDataTableProps?
                     </button>
                     <button
-                      onClick={() => handleQuery('How do I use VCC with React?')}
+                      onClick={() => handleSuggest('How do I use VCC with React?')}
                       className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={backendStatus !== 'connected'}
                     >
                       How to use with React?
                     </button>
