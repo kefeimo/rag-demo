@@ -8,7 +8,7 @@ without querying the RAG system again.
 
 Metrics Evaluated:
 - Always: Faithfulness, AnswerRelevancy (don't need reference)
-- If references available: ContextPrecision, ContextRecall, ContextEntityRecall
+- If references available: ContextPrecision, ContextRecall, ContextEntityRecall, AnswerCorrectness
 
 Usage:
     # Without references (2 metrics):
@@ -16,7 +16,7 @@ Usage:
         --input ../../data/results/baseline_20_stage1.json \\
         --output ../../data/results/baseline_20_evaluated.json
     
-    # With references (5 metrics):
+    # With references (6 metrics):
     python run_ragas_stage2_eval.py \\
         --input ../../data/results/baseline_20_stage1_with_references.json \\
         --output ../../data/results/baseline_20_evaluated.json
@@ -34,7 +34,8 @@ from ragas.metrics import (
     AnswerRelevancy,
     ContextPrecision,
     ContextRecall,
-    ContextEntityRecall
+    ContextEntityRecall,
+    AnswerCorrectness  # ✅ Added for answer quality evaluation
 )
 from datasets import Dataset
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -130,13 +131,14 @@ def run_ragas_evaluation(dataset: Dataset, has_references: bool) -> Any:
         metrics.extend([
             ContextPrecision(llm=llm),
             ContextRecall(llm=llm),
-            ContextEntityRecall(llm=llm)
+            ContextEntityRecall(llm=llm),
+            AnswerCorrectness(llm=llm)  # ✅ Added: Measures answer quality vs ground truth
         ])
-        metric_names.extend(["ContextPrecision", "ContextRecall", "ContextEntityRecall"])
-        print(f"✓ References found! Evaluating all 5 metrics")
+        metric_names.extend(["ContextPrecision", "ContextRecall", "ContextEntityRecall", "AnswerCorrectness"])
+        print("✓ References found! Evaluating all 6 metrics")
     else:
-        print(f"⚠ No references found. Evaluating 2 metrics only")
-        print(f"  (Run Stage 1B to generate references for full evaluation)")
+        print("⚠ No references found. Evaluating 2 metrics only")
+        print("  (Run Stage 1B to generate references for full evaluation)")
     
     # Run evaluation
     print(f"\nEvaluating {len(dataset)} queries with {len(metrics)} metrics...")

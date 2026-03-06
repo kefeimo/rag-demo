@@ -17,6 +17,10 @@ class Settings(BaseSettings):
         default="mistral-7b-instruct-v0.1.Q4_0.gguf",
         description="GPT4All model name"
     )
+    openai_model: str = Field(
+        default="gpt-3.5-turbo",
+        description="OpenAI model name (gpt-3.5-turbo, gpt-4, etc.)"
+    )
     openai_api_key: str = Field(default="", description="OpenAI API key (optional)")
     
     # Embedding Configuration
