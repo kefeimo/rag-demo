@@ -213,7 +213,8 @@ The frontend tracks your last 10 queries:
 - [docs/technical-report.md](docs/technical-report.md) — 2-3 page summary: approach, implementation highlights, and evaluation results
 
 **✨ Recommended reading** (additional context on the solution):
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design with data flow diagrams and component breakdown
+- [docs/solution-deep-dive.md](docs/solution-deep-dive.md) — **single-doc deep-dive** combining architecture, hybrid search case study, full evaluation, and lessons learned
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — full system design with data flow diagrams and component breakdown
 - [docs/HYBRID-SEARCH-CASE-STUDY.md](docs/HYBRID-SEARCH-CASE-STUDY.md) — concrete BM25 + semantic fusion improvement example
 - [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) — full RAGAS analysis (deep-dive appendix)
 - [docs/lesson-learned.md](docs/lesson-learned.md) — development retrospective and reflection
