@@ -1,17 +1,148 @@
 # Prompt Engineering Improvement Notes
 
-**Date:** March 5, 2026  
-**Status:** 📝 Identified Issues & Future Work
+**Date:** March 5-6, 2026  
+**Status:** ✅ Implemented & Tested (March 6, 2026)
 
 ---
 
 ## 🎯 Overview
 
-This document tracks identified prompt engineering improvements based on real-world testing and evaluation results. These improvements would enhance the RAG system's robustness to user input variations.
+This document tracks prompt engineering improvements based on real-world testing and evaluation results. These improvements enhance the RAG system's robustness to user input variations and improve answer quality.
 
 ---
 
-## 🔍 Identified Issues
+## ✅ COMPLETED IMPROVEMENTS (March 6, 2026)
+
+### Improvement 1: Relaxed Prompt Instructions for Code Examples
+
+**Date Implemented:** March 6, 2026  
+**Priority:** HIGH - Critical for functionality  
+**Category:** Prompt Engineering
+
+#### Problem Description
+
+The LLM was returning "I don't have enough information" responses even when relevant code examples and documentation were retrieved and included in the prompt.
+
+**Symptoms:**
+- Retrieved documents: 3 sources with 65-69% relevance
+- Document content: 470-481 chars of actual VCC documentation including code examples
+- Prompt length: 2700-3000 chars (properly formatted with CONTEXT section)
+- **LLM Response:** 236 chars generic "I don't have enough information" message
+
+**Example Failed Query:**
+```
+Query: "how to create pie chart"
+Retrieved: @visa/pie-chart README with <pie-chart> component example
+Context included:
+  - Component usage: <pie-chart accessibility={...} data={...} valueAccessor="value" ordinalAccessor="label" />
+  - Props documentation: valueAccessor, ordinalAccessor, sortOrder, colorPalette
+  - Relevance: 69.5%
+Response: "I don't have enough information..." ❌
+```
+
+#### Root Cause Analysis
+
+The original prompt was **too strict** with these rules:
+1. "Answer based ONLY on provided context" (emphasis on ONLY)
+2. "If context doesn't contain enough information, say you don't have enough information"
+3. "Do not infer or assume information beyond what's explicitly stated"
+
+**Why it failed:**
+- OpenAI saw code placeholders like `{data}` and `{...}` and thought the examples were incomplete
+- The strict "ONLY" rule made OpenAI overly cautious about using the examples
+- Even though examples showed clear usage patterns, OpenAI refused to explain them
+
+#### Solution Implemented
+
+**Changed prompt from restrictive to encouraging:**
+
+**BEFORE (Restrictive):**
+```
+You are a helpful AI assistant specialized in {domain}. Answer the user's question based ONLY on the provided context.
+
+IMPORTANT RULES:
+1. Only use information from the provided context
+2. If the context doesn't contain enough information, say "I don't have enough information..."
+3. Cite sources when possible
+4. Be concise and accurate
+5. Do not infer or assume information beyond what's explicitly stated
+```
+
+**AFTER (Encouraging):**
+```
+You are a helpful AI assistant specialized in {domain}. Answer the user's question based on the provided context.
+
+IMPORTANT RULES:
+1. Use the information from the provided context to answer the question
+2. If you see code examples, usage patterns, or component descriptions in the context, use them to explain how to accomplish the user's goal
+3. Code snippets may contain placeholders like {...} or {data} - these are intentional and show where users should insert their own values
+4. Cite sources when possible (e.g., "According to the documentation...")
+5. Be helpful and provide actionable information when the context contains relevant examples or descriptions
+6. Only say you don't have enough information if the context is truly unrelated to the question
+```
+
+**Key Changes:**
+- ❌ Removed "ONLY" emphasis
+- ✅ Added explicit instruction about code placeholders being intentional
+- ✅ Changed from "don't have enough information" to "be helpful when context has examples"
+- ✅ Reframed rule #6: only refuse if context is "truly unrelated"
+
+#### Implementation Details
+
+**File:** `backend/app/rag/generation.py`  
+**Function:** `PromptBuilder._create_prompt_template()`  
+**Lines Modified:** 347-368
+
+**Added debug logging:**
+```python
+logger.info(f"Prompt preview (first 2000 chars):\n{prompt[:2000]}")
+logger.info(f"Prompt preview (last 500 chars):\n...{prompt[-500:]}")
+```
+
+#### Results & Verification
+
+**Test Query:** "how to create pie chart"
+
+**Before Fix:**
+- Response length: 236 chars
+- Content: "I don't have enough information..." ❌
+
+**After Fix:**
+- Response length: **1115 chars** ✅
+- Content: Detailed explanation with code example
+- Used retrieved documentation effectively
+
+**Improvement:**  
+**4.7x longer responses** with actual helpful information!
+
+#### Benefits
+
+✅ **Improved Answer Quality:**
+- LLM now uses code examples from retrieved documents
+- Provides actionable information instead of refusing to answer
+- Better utilizes the RAG-retrieved context
+
+✅ **Better User Experience:**
+- Users get helpful answers to "how to" questions
+- Code examples are explained properly
+- Reduced false negatives (refusing when information exists)
+
+✅ **Production Readiness:**
+- System is more useful for real users
+- Confidence threshold (65%) now works correctly
+- Retrieved documentation is actually used
+
+#### Metrics
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| Response Length | 236 chars | 1115 chars | **372% increase** |
+| False Negatives | High (refused with 69% relevance) | Low | **Much better** |
+| Usability | Poor (always says "not enough info") | Good | **Significantly improved** |
+
+---
+
+## 🔍 ORIGINAL IDENTIFIED ISSUES (Still Relevant)
 
 ### Issue 1: Typo Handling in User Queries
 

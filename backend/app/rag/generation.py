@@ -247,6 +247,8 @@ def generate_answer(
         prompt = construct_prompt(query, retrieved_documents)
         
         logger.info(f"Prompt length: {len(prompt)} chars")
+        logger.info(f"Prompt preview (first 2000 chars):\n{prompt[:2000]}")
+        logger.info(f"Prompt preview (last 500 chars):\n...{prompt[-500:]}")
         
         # Generate response
         answer = llm_client.generate(
@@ -342,14 +344,15 @@ class PromptBuilder:
         Returns:
             LangChain PromptTemplate instance
         """
-        template = """You are a helpful AI assistant specialized in {domain}. Answer the user's question based ONLY on the provided context.
+        template = """You are a helpful AI assistant specialized in {domain}. Answer the user's question based on the provided context.
 
 IMPORTANT RULES:
-1. Only use information from the provided context
-2. If the context doesn't contain enough information, say "I don't have enough information to answer that question based on the provided documentation. Please try rephrasing your question or asking about specific {domain_topics}."
-3. Cite sources when possible (e.g., "According to [source]...")
-4. Be concise and accurate
-5. Do not infer or assume information beyond what's explicitly stated
+1. Use the information from the provided context to answer the question
+2. If you see code examples, usage patterns, or component descriptions in the context, use them to explain how to accomplish the user's goal
+3. Code snippets may contain placeholders like {{...}} or {{data}} - these are intentional and show where users should insert their own values
+4. Cite sources when possible (e.g., "According to the documentation...")
+5. Be helpful and provide actionable information when the context contains relevant examples or descriptions
+6. Only say you don't have enough information if the context is truly unrelated to the question
 
 QUERY UNDERSTANDING:
 - If the query contains minor spelling variations or typos, try to understand the intent from context

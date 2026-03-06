@@ -151,12 +151,20 @@ async def query_rag(request: QueryRequest):
         documents = retrieval_result.get("documents", [])
         overall_confidence = retrieval_result.get("confidence", 0.0)
         
+        # Debug: Log document details
+        logger.info(f"Retrieved {len(documents)} documents with confidence {overall_confidence:.3f}")
+        if documents:
+            logger.info(f"First document keys: {list(documents[0].keys())}")
+            logger.info(f"First document content length: {len(documents[0].get('content', ''))} chars")
+        
         # Check confidence threshold (use Retriever for consistency)
         temp_retriever = Retriever()
         is_confident, confidence_msg = temp_retriever.check_confidence(overall_confidence)
+        logger.info(f"Confidence check: is_confident={is_confident}, message={confidence_msg}")
         
         if not documents or not is_confident:
-            logger.warning(f"Low confidence or no documents: {confidence_msg}")
+            logger.warning(f"Rejecting query - documents: {len(documents)}, is_confident: {is_confident}, confidence: {overall_confidence:.3f}")
+            logger.warning(f"Confidence message: {confidence_msg}")
             help_text = get_help_text_for_collection()
             response_time = time.time() - start_time
             return QueryResponse(
