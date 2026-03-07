@@ -14,6 +14,7 @@ from app.models import (
     QueryRequest,
     QueryResponse,
     IngestRequest,
+    VccIngestRequest,
     IngestResponse,
     Source
 )
@@ -245,36 +246,41 @@ async def ingest_endpoint(request: IngestRequest):
 
 
 @app.post("/api/v1/ingest/visa-docs", response_model=IngestResponse, tags=["Admin"])
-async def ingest_visa_docs_endpoint(force_reingest: bool = True):
+async def ingest_visa_docs_endpoint(request: VccIngestRequest = None):
     """
     Ingest Visa Chart Components documentation into ChromaDB
-    
+
     This endpoint ingests all extracted Visa documentation:
     - Repository docs (53): README, CONTRIBUTING, CHANGELOGs
     - Code docs (210): Auto-generated API documentation
     - Issue Q&A (13): GitHub issue discussions
-    
-    Args:
-        force_reingest: If True, reset collection before ingestion (default: True)
-        
+
+    Optionally pass `repo_docs_path`, `code_docs_path`, and `issue_qa_path` in the
+    request body to override the default Docker paths (useful for local development).
+
     Returns:
         IngestResponse with ingestion statistics
     """
-    logger.info(f"Visa docs ingestion requested (force_reingest={force_reingest})")
-    
+    if request is None:
+        request = VccIngestRequest()
+
+    logger.info(f"Visa docs ingestion requested (force_reingest={request.force_reingest})")
+
     try:
-        # Import the visa docs ingestion function
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent.parent))
         from ingest_visa_docs import ingest_visa_docs
-        
-        # Call ingestion pipeline
-        result = ingest_visa_docs(force_reingest=force_reingest)
-        
-        # Return result
+
+        result = ingest_visa_docs(
+            repo_docs_path=request.repo_docs_path,
+            code_docs_path=request.code_docs_path,
+            issue_qa_path=request.issue_qa_path,
+            force_reingest=request.force_reingest,
+        )
+
         return IngestResponse(**result)
-        
+
     except Exception as e:
         logger.error(f"Error ingesting Visa docs: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error ingesting Visa docs: {str(e)}")
