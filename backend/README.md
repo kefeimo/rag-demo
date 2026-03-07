@@ -22,6 +22,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ## 📖 Usage Example
 
 ### 1. Ingest Documents
+
+#### FastAPI Docs (`fastapi_docs` collection)
 ```bash
 curl -X POST http://localhost:8000/api/v1/ingest \
   -H "Content-Type: application/json" \
@@ -32,11 +34,59 @@ curl -X POST http://localhost:8000/api/v1/ingest \
 ```json
 {
   "status": "success",
-  "documents_processed": 13,
-  "chunks_created": 252,
-  "time_elapsed": "0.94s"
+  "documents_processed": 10,
+  "chunks_created": 165,
+  "time_elapsed": "3.06s"
 }
 ```
+
+#### VCC Docs (`vcc_docs` collection)
+
+In Docker the raw JSON files are mounted automatically. Locally, pass the explicit host paths:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/ingest/visa-docs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "force_reingest": false,
+    "repo_docs_path": "../data-pipeline/data/raw/visa_repo_docs.json",
+    "code_docs_path": "../data-pipeline/data/raw/visa_code_docs.json",
+    "issue_qa_path":  "../data-pipeline/data/raw/visa_issue_qa.json"
+  }'
+```
+
+> **Tip:** Use absolute paths if the server is not started from the project root, e.g.
+> `"/home/<user>/project/ai-engineer-coding-exercise/data-pipeline/data/raw/visa_repo_docs.json"`
+
+**Response:**
+```json
+{
+  "status": "success",
+  "documents_processed": 276,
+  "chunks_created": 2696,
+  "time_elapsed": "19.45s"
+}
+```
+
+#### Verify Ingestion
+
+After ingesting, confirm both collections are populated with a quick query:
+
+```bash
+# Verify FastAPI docs
+curl -s -X POST http://localhost:8000/api/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is FastAPI?", "collection": "fastapi_docs", "top_k": 1}' \
+  | python3 -c "import sys,json; r=json.load(sys.stdin); print('confidence:', r['confidence'])"
+
+# Verify VCC docs
+curl -s -X POST http://localhost:8000/api/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is Visa Chart Components?", "collection": "vcc_docs", "top_k": 1}' \
+  | python3 -c "import sys,json; r=json.load(sys.stdin); print('confidence:', r['confidence'])"
+```
+
+Expected: `confidence: 0.8+` for both. A score of `0.0` with an error answer means the collection is empty — re-run the matching ingest command above.
 
 ### 2. Query the System
 

@@ -24,9 +24,17 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", description="OpenAI API key (optional)")
     
     # Embedding Configuration
+    embedding_provider: str = Field(
+        default="openai",
+        description="Embedding provider: openai or sentence-transformers"
+    )
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
-        description="Embedding model for vector search"
+        description="Sentence-transformers model (used when embedding_provider=sentence-transformers)"
+    )
+    openai_embedding_model: str = Field(
+        default="text-embedding-3-small",
+        description="OpenAI embedding model (used when embedding_provider=openai)"
     )
     
     # ChromaDB Configuration

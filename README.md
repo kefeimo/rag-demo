@@ -8,7 +8,18 @@
 
 A Retrieval-Augmented Generation (RAG) system built with FastAPI, ChromaDB, and OpenAI GPT-3.5-turbo, featuring a comprehensive evaluation framework and domain-aware prompt engineering.
 
-**Dataset:** Visa Chart Components (VCC) technical documentation (161 markdown files, 2.14MB)
+### **Why RAG?**
+
+Large Language Models (LLMs) are powerful but have critical limitations: their knowledge is frozen at training time, they cannot access proprietary or domain-specific documentation, and they are prone to hallucination when asked about information outside their training data. **RAG addresses all three problems** by coupling retrieval with generation:
+
+- 🔍 **Grounded answers** — responses are anchored to retrieved source documents, dramatically reducing hallucination
+- 📚 **Up-to-date knowledge** — the retrieval corpus can be updated independently of the model, keeping answers current
+- 🏢 **Domain specialization** — private or niche documentation (e.g., Visa Chart Components) can be indexed and queried without fine-tuning the LLM
+- 🔎 **Traceable sources** — every answer includes citations, enabling users to verify claims against the original documents
+- 💰 **Cost-effective** — achieves domain expertise without the expense of fine-tuning or retraining large models
+
+This project demonstrates a production-ready RAG pipeline applied to the **Visa Chart Components (VCC)** documentation, showcasing how RAG unlocks accurate, trustworthy, and auditable question-answering over specialized knowledge bases.
+
 
 ### **Key Features**
 

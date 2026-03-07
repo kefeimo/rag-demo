@@ -5,9 +5,8 @@ Vector search and document retrieval from ChromaDB
 
 import logging
 from typing import List, Dict, Any, Tuple
-from sentence_transformers import SentenceTransformer
-
 from app.config import settings
+from app.rag.embeddings import EmbeddingProvider
 from app.rag.utils import get_chroma_client
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ class Retriever:
         
         # Load embedding model
         logger.info(f"Loading embedding model: {self.embedding_model_name}")
-        self.embedding_model = SentenceTransformer(self.embedding_model_name)
+        self.embedding_model = EmbeddingProvider()
         
         # Get collection
         try:
@@ -49,11 +48,7 @@ class Retriever:
         Returns:
             Embedding vector as list of floats
         """
-        embedding = self.embedding_model.encode(
-            query,
-            convert_to_numpy=True
-        )
-        return embedding.tolist()
+        return self.embedding_model.encode(query)
     
     def retrieve(self, query: str, top_k: int = None) -> Dict[str, Any]:
         """

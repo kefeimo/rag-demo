@@ -37,6 +37,14 @@ class IngestRequest(BaseModel):
     force_reingest: bool = Field(default=False, description="Force re-ingestion even if exists")
 
 
+class VccIngestRequest(BaseModel):
+    """Request model for Visa Chart Components ingestion endpoint"""
+    force_reingest: bool = Field(default=False, description="Force re-ingestion even if exists")
+    repo_docs_path: Optional[str] = Field(default=None, description="Override path to visa_repo_docs.json")
+    code_docs_path: Optional[str] = Field(default=None, description="Override path to visa_code_docs.json")
+    issue_qa_path: Optional[str] = Field(default=None, description="Override path to visa_issue_qa.json")
+
+
 class IngestResponse(BaseModel):
     """Response model for document ingestion endpoint"""
     status: str = Field(..., description="Ingestion status")

@@ -9,10 +9,10 @@ from typing import List, Dict, Any, Tuple
 from pathlib import Path
 import chromadb
 from chromadb.config import Settings as ChromaSettings
-from sentence_transformers import SentenceTransformer
 import time
 
 from app.config import settings
+from app.rag.embeddings import EmbeddingProvider
 from app.rag.utils import get_chroma_client
 
 logger = logging.getLogger(__name__)
@@ -187,9 +187,7 @@ class ChromaDBIngestion:
         self.client = get_chroma_client()
         
         # Load embedding model
-        logger.info(f"Loading embedding model: {self.embedding_model_name}")
-        self.embedding_model = SentenceTransformer(self.embedding_model_name)
-        
+        self.embedding_model = EmbeddingProvider()
         logger.info(f"ChromaDB initialized (persist_dir={self.persist_directory})")
     
     def get_or_create_collection(self, reset: bool = False):
@@ -228,12 +226,7 @@ class ChromaDBIngestion:
             List of embedding vectors
         """
         logger.info(f"Generating embeddings for {len(texts)} texts...")
-        embeddings = self.embedding_model.encode(
-            texts,
-            show_progress_bar=True,
-            convert_to_numpy=True
-        )
-        return embeddings.tolist()
+        return self.embedding_model.encode(texts)
     
     def ingest_chunks(self, chunks: List[Dict[str, Any]], force_reingest: bool = False) -> Tuple[int, float]:
         """
