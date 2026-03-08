@@ -19,8 +19,9 @@ class EmbeddingProvider:
       - Single string input  → returns List[float]  (one embedding vector)
       - List[str] input      → returns List[List[float]]  (batch of vectors)
 
-    This mirrors the SentenceTransformer.encode() convention so existing
-    callers in ingestion.py and retrieval.py need only minimal changes.
+    Backend is selected via the EMBEDDING_PROVIDER env var:
+      - ``openai``               — uses ``text-embedding-3-small`` (or configured model)
+      - anything else (default)  — uses sentence-transformers locally
     """
 
     def __init__(self):
