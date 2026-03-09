@@ -50,6 +50,7 @@ React Frontend (Vite + Tailwind)
   ▼
 FastAPI Backend  (backend/app/main.py)
   │  Retriever / HybridRetriever
+  │  query_classifier.py  ← classifies query type to set BM25/semantic weights
   ▼
 ChromaDB  ◄─── reads embeddings written by ingestion
   │  top-k chunks  (frontend sends k=3, backend default k=5, threshold=0.65)
@@ -174,45 +175,75 @@ provider.encode(["str1", "str2"])    # → List[List[float]]  (batch)
 
 ### 3 — Retrieval (`backend/app/rag/retrieval.py`, `hybrid_retrieval.py`)
 
-#### Semantic-only path (`Retriever`)
+#### Semantic retriever — the primary path (`Retriever`)
+
+This is the core RAG retriever used on every query. It operates entirely in **vector space** — text is never compared directly.
 
 ```
 Retriever.retrieve(query)
-  └── embed_query(query)                # single .encode() call
-  └── collection.query(                 # ChromaDB
+  └── EmbeddingProvider.encode(query)   # query text → dense float vector
+  └── collection.query(                 # ChromaDB ANN search
         query_embeddings=[vector],
-        n_results=top_k,                # default 5
+        n_results=top_k,                # default 5; frontend sends 3
         include=["documents","metadatas","distances"]
       )
-  └── confidence = 1.0 - (distance / 2.0)   # cosine: 0=identical, 2=opposite
+  └── confidence = 1.0 - (distance / 2.0)   # cosine distance ∈ [0, 2] → confidence ∈ [0, 1]
   └── overall_confidence = mean(top-k confidences)
 ```
 
-**Confidence threshold:** `0.65` — queries below this threshold return a "not enough information" message rather than a hallucinated answer.
+**How the query becomes a vector:**
+The embedding model internally tokenizes the query into subword pieces (BPE), passes them through transformer layers, and *compresses the entire meaning* into a single dense vector (1536 floats for OpenAI, 384 for sentence-transformers). The tokens are consumed — what enters ChromaDB is only the vector, not the words. ChromaDB then finds the stored chunk vectors geometrically closest to the query vector using HNSW approximate nearest-neighbour search.
 
-#### Hybrid path (`HybridRetriever`)
+This is fundamentally different from keyword search: `"install"` and `"setup"` produce nearby vectors and will match each other; `IDataTableProps` produces a vector close to *other API interface names*, not the specific one the user wants (a weakness that hybrid search compensates for — see Appendix).
+
+> **Cosine similarity vs. cosine distance:** Cosine *similarity* ranges from $-1$ (opposite) to $1$ (identical). ChromaDB returns cosine *distance* = $1 - \text{similarity}$, which ranges from $0$ to $2$. The formula `1.0 - (distance / 2.0)` maps it back to a $[0, 1]$ confidence score. The collection is configured with `"hnsw:space": "cosine"`.
+
+**Confidence threshold:** `0.65` — queries below this return "not enough information" rather than a hallucinated answer.
+
+#### Hybrid path (`HybridRetriever`) — fallback for exact keywords
 
 The system uses a **two-phase strategy** (visible in `main.py`):
 
 1. Try semantic-only first (handles most queries well, cheaper)
-2. If `confidence < 0.65`, try hybrid (handles exact API names, keywords)
+2. If `confidence < 0.65`, fall back to hybrid (BM25 + semantic fusion)
 3. Keep whichever result has higher confidence
 
-**Hybrid fusion algorithm:**
+The hybrid path adds BM25 keyword scoring on top of the semantic score. BM25 is a pure lexical algorithm — it scores chunks by exact token overlap and word rarity, with no understanding of meaning. It compensates precisely where semantic search is weakest: exact API identifiers like `IDataTableProps` or `visa-charts-react`.
+
 ```
-BM25 ranking (rank_bm25.BM25Okapi)
-  └── tokenize corpus at startup (expensive, done once in lifespan)
-  └── score query against all docs
-  └── normalize scores to [0, 1]
-
-Semantic ranking (ChromaDB)
-  └── same as Retriever above
-
-Fusion:
-  combined_score = (semantic_weight × semantic_score) + (bm25_weight × bm25_score)
+combined_score = (semantic_weight × semantic_score) + (bm25_weight × bm25_score)
 ```
 
-**Adaptive weights via `query_classifier.py`:**
+Weights are adaptive per query type, determined by `query_classifier.py`.
+
+**What `query_classifier` does and how it connects to retrieval:**
+
+`classify_query(query)` is a fast, purely keyword-based function — no ML model, no embedding. It counts keyword matches and returns one of four types:
+
+```python
+api_keywords      = ['interface', 'props', 'api', 'class', 'what is', ...]
+howto_keywords    = ['how', 'create', 'use', 'implement', 'example', ...]
+trouble_keywords  = ['error', 'issue', 'bug', 'not working', 'fix', ...]
+# highest count wins; ties fall through to 'general'
+```
+
+The returned type is immediately passed to `get_search_weights(query_type)` inside `HybridRetriever.retrieve()`, which sets `semantic_weight` and `bm25_weight` for that specific request. Those weights then directly control the fusion formula:
+
+```
+# Inside HybridRetriever.retrieve():
+query_type = classify_query(query)                    # e.g. 'api'
+weights    = get_search_weights(query_type)           # → {semantic: 0.4, bm25: 0.6}
+
+semantic_score = 1.0 - (cosine_distance / 2.0)       # from ChromaDB
+bm25_score     = bm25_index.get_scores(query_tokens)  # from BM25Okapi
+
+combined_score = (0.4 × semantic_score) + (0.6 × bm25_score)  # per chunk
+```
+
+So the classifier's only job is to answer "for this query, how much should exact keyword matching matter vs. meaning matching?" — and that answer directly changes the numbers fed into the fusion math for that request.
+
+**Why it's needed:**
+A fixed split would underserve both extremes. `"What is IDataTableProps?"` needs BM25 to dominate (exact token is the signal). `"What is VCC?"` needs semantic to dominate (no single keyword to match). The classifier makes this routing automatic without adding LLM latency.
 
 | Query type | Example | Semantic weight | BM25 weight |
 |---|---|---|---|
@@ -221,18 +252,15 @@ Fusion:
 | `troubleshooting` | "Why is my chart not rendering?" | 0.6 | 0.4 |
 | `general` | "What is VCC?" | 0.7 | 0.3 |
 
-**API-name boosting in BM25 tokenizer:** Tokens that look like interface names (start with `I`, contain `_` or `-`) are repeated 5× in the BM25 index — giving exact keyword matches on things like `IDataTableProps` or `visa-charts-react` a significant weight boost.
+See **Appendix A** for full BM25 implementation details.
 
 **Design rationale:**
 
 *What if retrieval returns irrelevant chunks?*
-> Debugging order: (1) check embedding model consistency, (2) inspect the raw retrieved chunks with confidence scores, (3) adjust `chunk_size` — too large dilutes signal, (4) adjust `top_k` — more results may include relevant ones but increases noise in prompt, (5) improve with reranking (cross-encoder), (6) metadata filtering if documents have clear categorical structure, (7) query rewriting / HyDE (Hypothetical Document Embeddings).
+> Debugging order: (1) check embedding model consistency, (2) inspect raw retrieved chunks with confidence scores, (3) adjust `chunk_size` — too large dilutes signal, (4) adjust `top_k`, (5) reranking (cross-encoder), (6) metadata filtering, (7) query rewriting / HyDE.
 
-*Why hybrid search instead of just semantic?*
-> Semantic search struggles with exact identifiers — if a user types `IDataTableProps`, the embedding for that token is close to other API names, not specifically the interface they want. BM25 does exact keyword matching and handles this natively. The hybrid approach gets the best of both: BM25 for precision on exact names, semantic for intent/concept matching.
-
-*Why build BM25 at startup instead of per request?*
-> BM25 requires tokenizing the entire corpus (2696 chunks for VCC alone). Building that index takes a few seconds and significant memory. The `lifespan` context manager in `main.py` does this once, and `hybrid_retrievers` dict caches the result per collection for the lifetime of the process.
+*Why semantic-first instead of always hybrid?*
+> Semantic handles the majority of natural-language queries well and is cheaper (no BM25 index lookup). Hybrid is reserved as a fallback because it adds latency and the BM25 index must be held in memory.
 
 ---
 
@@ -432,3 +460,40 @@ This repo uses **both**: semantic for intent, BM25 for exact identifier precisio
 ## Development Notes
 
 This project uses AI tools to accelerate implementation. The architecture decisions — hybrid retrieval strategy, confidence-gating logic, domain-aware prompt routing, two-stage evaluation pipeline — are deliberate design choices. The AI assisted with writing implementation code; the system design and tradeoff reasoning drove those choices.
+
+---
+
+## Appendix A — BM25 Keyword Retriever (Hybrid Detail)
+
+BM25 (`rank_bm25.BM25Okapi`) is a pure **lexical** algorithm — it scores by exact token overlap and word rarity, with no semantic understanding. It is **not** the primary retriever; it only activates as part of `HybridRetriever` when semantic confidence falls below `0.65`.
+
+**How it works — token space only:**
+```
+At startup (index building):
+  chunk text  →  lowercase + split  →  ["how", "do", "i", "install", "fastapi"]
+                                              ↓
+                              BM25 term-frequency table
+                              (token → {chunk_id: TF×IDF} for all chunks)
+
+At query time:
+  query text  →  same tokenizer  →  ["install", "fastapi"]
+                                              ↓
+              look up each token in the TF-IDF table
+              score each chunk_id → normalize → [0, 1]
+              fuse with semantic score by chunk_id
+```
+
+BM25 scores never touch the chunk text directly — it operates entirely in token space and references chunks only by ID at the end.
+
+**API-name boosting:** Tokens that look like interface names (start with `I`, or contain `_`/`-`) are repeated 5× in the BM25 index, giving exact matches on `IDataTableProps` or `visa-charts-react` a strong weight boost.
+
+**Why built at startup:** Tokenizing 2696 VCC chunks takes seconds and significant memory. The `lifespan` context manager in `main.py` builds the index once and caches it in `hybrid_retrievers` dict for the process lifetime. Per-request rebuilding would add unacceptable latency.
+
+**Semantic vs. BM25 — key distinction:**
+
+| | BM25 (lexical) | Semantic (vector) |
+|---|---|---|
+| Internal rep | sparse token frequency table | dense float vector |
+| `"install"` vs `"setup"` | different tokens → no match | nearby vectors → matched |
+| `IDataTableProps` | exact match → strong | similar to all API names → weak |
+| Operates in | token space | vector space |
