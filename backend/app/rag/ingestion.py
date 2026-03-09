@@ -245,7 +245,7 @@ class ChromaDBIngestion:
         self.embedding_model = EmbeddingProvider()
         logger.info(f"ChromaDB initialized (persist_dir={self.persist_directory})")
     
-    def get_or_create_collection(self, reset: bool = False):
+    def get_or_create_collection(self, reset: bool = False) -> chromadb.Collection:
         """
         Get or create ChromaDB collection
         
@@ -297,7 +297,7 @@ class ChromaDBIngestion:
         start_time = time.time()
         
         # Get or create collection
-        collection = self.get_or_create_collection(reset=force_reingest)
+        collection: chromadb.Collection = self.get_or_create_collection(reset=force_reingest)
         
         # Check if collection already has documents
         if collection.count() > 0 and not force_reingest:

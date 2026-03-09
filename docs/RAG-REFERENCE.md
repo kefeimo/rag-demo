@@ -120,6 +120,9 @@ chunk_overlap: int = 50      # overlap between adjacent chunks
 - Only then allows a hard cut at exactly `chunk_size`
 - Each chunk stores `chunk_id`, `start_char`, `end_char`, `chunk_count` in metadata
 
+**Known asymmetry — end is snapped, start is not:**
+The boundary-snapping logic only adjusts the *end* of each chunk. The *start* of the next chunk always advances by the fixed formula `chunk_size - chunk_overlap`, regardless of where the previous chunk actually ended. This means the overlap region can begin mid-sentence or mid-word, and the effective overlap may differ from `chunk_overlap`. A boundary-aware fix would base the advance on `len(actual_chunk_text) - chunk_overlap` instead.
+
 **Design rationale:**
 
 *Why chunk at all?*
