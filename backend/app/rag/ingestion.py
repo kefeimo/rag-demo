@@ -19,7 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentLoader:
-    """Load and process markdown documents"""
+    """
+    Load and process documents for ingestion.
+
+    Supports two source formats:
+    - Markdown files via load_documents()      — used for FastAPI docs corpus
+    - JSON files via load_json_documents()     — used for VCC docs corpus
+    """
     
     def __init__(self, chunk_size: int = None, chunk_overlap: int = None):
         """
@@ -80,7 +86,56 @@ class DocumentLoader:
         
         logger.info(f"Successfully loaded {len(documents)} documents")
         return documents
-    
+
+    def load_json_documents(self, *json_paths: str) -> List[Dict[str, Any]]:
+        """
+        Load pre-structured documents from one or more JSON files.
+
+        Each JSON file must be a list of objects with 'content' and 'metadata' keys,
+        which is the format produced by the data-pipeline extractors:
+            visa_repo_docs.json, visa_code_docs.json, visa_issue_qa.json
+
+        Args:
+            *json_paths: One or more paths to JSON files. Non-existent paths are
+                         skipped with a warning so partial loads still succeed.
+
+        Returns:
+            Combined list of document dicts from all supplied files.
+        """
+        import json
+
+        all_documents: List[Dict[str, Any]] = []
+
+        for json_path in json_paths:
+            path = Path(json_path)
+            if not path.exists():
+                logger.warning(f"JSON file not found, skipping: {json_path}")
+                continue
+
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    docs = json.load(f)
+
+                if not isinstance(docs, list):
+                    raise ValueError(f"Expected a JSON array, got {type(docs).__name__}")
+
+                # Validate first few entries
+                for i, doc in enumerate(docs[:3]):
+                    if "content" not in doc or "metadata" not in doc:
+                        raise ValueError(
+                            f"{path.name}[{i}] is missing 'content' or 'metadata' keys"
+                        )
+
+                logger.info(f"Loaded {len(docs)} documents from {path.name}")
+                all_documents.extend(docs)
+
+            except Exception as e:
+                logger.error(f"Error loading {json_path}: {e}")
+                raise
+
+        logger.info(f"Successfully loaded {len(all_documents)} documents from {len(json_paths)} JSON file(s)")
+        return all_documents
+
     def chunk_text(self, text: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Split text into overlapping chunks
@@ -322,4 +377,76 @@ def ingest_documents(document_path: str, force_reingest: bool = False) -> Dict[s
             "chunks_created": 0,
             "chunks_added": 0,
             "time_elapsed": "0s"
+        }
+
+
+def ingest_vcc_documents(
+    repo_docs_path: str = None,
+    code_docs_path: str = None,
+    issue_qa_path: str = None,
+    force_reingest: bool = True,
+) -> Dict[str, Any]:
+    """
+    Load, chunk, and store VCC documentation into the 'vcc_docs' collection.
+
+    Reads up to three JSON files produced by the data-pipeline extractors:
+      - visa_repo_docs.json  — README, CONTRIBUTING, CHANGELOGs (53 docs)
+      - visa_code_docs.json  — auto-generated API docs from source (210 docs)
+      - visa_issue_qa.json   — GitHub issue Q&A pairs (13 docs)
+
+    Missing files are skipped with a warning; at least one must exist.
+    Always targets the 'vcc_docs' collection regardless of CHROMA_COLLECTION_NAME.
+
+    Args:
+        repo_docs_path: Path to visa_repo_docs.json (default: Docker path)
+        code_docs_path: Path to visa_code_docs.json (default: Docker path)
+        issue_qa_path:  Path to visa_issue_qa.json  (default: Docker path)
+        force_reingest: If True, reset collection before ingestion
+
+    Returns:
+        Dictionary with ingestion statistics
+    """
+    # Default to paths baked into the Docker image
+    repo_docs_path = repo_docs_path or "/app/data-pipeline/data/raw/visa_repo_docs.json"
+    code_docs_path = code_docs_path or "/app/data-pipeline/data/raw/visa_code_docs.json"
+    issue_qa_path  = issue_qa_path  or "/app/data-pipeline/data/raw/visa_issue_qa.json"
+
+    try:
+        loader    = DocumentLoader()
+        ingestion = ChromaDBIngestion(collection_name="vcc_docs")
+
+        # Load all JSON sources; non-existent paths are skipped with a warning
+        documents = loader.load_json_documents(
+            repo_docs_path,
+            code_docs_path,
+            issue_qa_path,
+        )
+
+        if not documents:
+            raise FileNotFoundError(
+                "No VCC documents found. Check that at least one JSON path exists."
+            )
+
+        chunks = loader.process_documents(documents)
+        chunks_added, elapsed_time = ingestion.ingest_chunks(chunks, force_reingest)
+
+        collection = ingestion.get_or_create_collection()
+        return {
+            "status": "success",
+            "documents_processed": len(documents),
+            "chunks_created": len(chunks),
+            "chunks_added": chunks_added,
+            "collection_count": collection.count(),
+            "time_elapsed": f"{elapsed_time:.2f}s",
+        }
+
+    except Exception as e:
+        logger.error(f"VCC ingestion failed: {str(e)}", exc_info=True)
+        return {
+            "status": "error",
+            "error": str(e),
+            "documents_processed": 0,
+            "chunks_created": 0,
+            "chunks_added": 0,
+            "time_elapsed": "0s",
         }

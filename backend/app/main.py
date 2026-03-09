@@ -20,7 +20,7 @@ from app.models import (
     Source
 )
 from app import __version__
-from app.rag.ingestion import ingest_documents
+from app.rag.ingestion import ingest_documents, ingest_vcc_documents
 from app.rag.retrieval import Retriever
 from app.rag.hybrid_retrieval import HybridRetriever
 from app.rag.generation import get_llm_client, generate_answer, extract_sources
@@ -272,12 +272,7 @@ async def ingest_visa_docs_endpoint(request: VccIngestRequest = None):
     logger.info(f"Visa docs ingestion requested (force_reingest={request.force_reingest})")
 
     try:
-        import sys
-        from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent))
-        from ingest_visa_docs import ingest_visa_docs
-
-        result = ingest_visa_docs(
+        result = ingest_vcc_documents(
             repo_docs_path=request.repo_docs_path,
             code_docs_path=request.code_docs_path,
             issue_qa_path=request.issue_qa_path,
