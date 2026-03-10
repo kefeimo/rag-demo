@@ -25,6 +25,7 @@ This project demonstrates a production-ready RAG pipeline applied to the **Visa 
 
 - ✅ **FastAPI Backend** with production patterns (error handling, logging, config management)
 - ✅ **Vector Database** (ChromaDB) for semantic search with sentence-transformers embeddings
+- ✅ **Vector Store Abstraction** (`backend/app/rag/chromadb_store.py`) as a single interface for ChromaDB client/collection operations
 - ✅ **OpenAI GPT-3.5-turbo** with LangChain prompt templates and domain awareness
 - ✅ **React Frontend** (Vite + Tailwind CSS) with query history and confidence indicators
 - ✅ **LangChain** orchestration for RAG pipeline with domain-specific prompts
@@ -270,6 +271,7 @@ For a detailed breakdown of components and data flow, see **[docs/ARCHITECTURE.m
 **Backend:**
 - **FastAPI 0.115.6** - Modern async REST API framework
 - **ChromaDB 0.4.24** - Vector database for semantic search
+- **ChromaDBStore abstraction** - Centralized vector-store layer used by ingestion/retrieval/hybrid modules
 - **OpenAI GPT-3.5-turbo** - Production LLM for generation
 - **LangChain 0.3.14** - Prompt templates and RAG orchestration
 - **sentence-transformers** - all-MiniLM-L6-v2 embeddings (384 dimensions)
@@ -292,7 +294,7 @@ For a detailed breakdown of components and data flow, see **[docs/ARCHITECTURE.m
 
 **Key Libraries:**
 - `langchain_core.prompts.PromptTemplate` - Structured prompt engineering
-- `chromadb.Client` - Vector database client
+- `chromadb.PersistentClient` - ChromaDB client (encapsulated by `ChromaDBStore`)
 - `sentence_transformers.SentenceTransformer` - Embedding generation
 - `openai.OpenAI` - OpenAI API client
 - `pytest` - Testing framework with 98%+ coverage
@@ -370,4 +372,4 @@ All code is original work by Kefei Mo, March 2026.
 
 ---
 
-*Last Updated: March 6, 2026 - README restructure: Docker-first quickstart, simplified sections*
+*Last Updated: March 10, 2026 - Added ChromaDBStore vector-store abstraction references*

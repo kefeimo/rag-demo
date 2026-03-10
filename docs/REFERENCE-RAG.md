@@ -72,6 +72,7 @@ React Frontend  (ResponseDisplay component)
 | `backend/app/main.py` | FastAPI app, lifespan startup, all routes |
 | `backend/app/rag/ingestion.py` | `DocumentLoader` — load → chunk → embed → store |
 | `backend/app/rag/embeddings.py` | `EmbeddingProvider` — OpenAI or sentence-transformers |
+| `backend/app/rag/chromadb_store.py` | `ChromaDBStore` — single abstraction for all ChromaDB client/collection operations |
 | `backend/app/rag/retrieval.py` | `Retriever` — semantic-only search via ChromaDB |
 | `backend/app/rag/hybrid_retrieval.py` | `HybridRetriever` — BM25 + semantic fusion |
 | `backend/app/rag/query_classifier.py` | Keyword-based query type → weight tuning |
@@ -95,7 +96,7 @@ ingest_documents(document_path)
   └── DocumentLoader.load_documents()      # glob *.md recursively from directory
   └── DocumentLoader.chunk_text()          # overlapping character windows
   └── EmbeddingProvider.encode(batch)      # batch encode all chunks
-  └── collection.add(ids, embeddings, documents, metadatas)
+  └── ChromaDBStore.add(ids, embeddings, documents, metadatas)
 ```
 
 **VCC docs (JSON → `vcc_docs` collection):**
@@ -104,8 +105,10 @@ ingest_vcc_documents(repo_docs_path, code_docs_path, issue_qa_path)
   └── DocumentLoader.load_json_documents() # reads up to 3 JSON files, skips missing
   └── DocumentLoader.chunk_text()          # same chunking pipeline
   └── EmbeddingProvider.encode(batch)      # same embedding pipeline
-  └── collection.add(ids, embeddings, documents, metadatas)
+  └── ChromaDBStore.add(ids, embeddings, documents, metadatas)
 ```
+
+`ChromaDBIngestion` now delegates all vector-store operations to `ChromaDBStore` instead of calling `chromadb` collection APIs directly.
 
 JSON files are pre-structured `[{"content": "...", "metadata": {...}}]` arrays produced by the data-pipeline extractors — no parsing step needed before chunking.
 
@@ -182,8 +185,8 @@ This is the core RAG retriever used on every query. It operates entirely in **ve
 ```
 Retriever.retrieve(query)
   └── EmbeddingProvider.encode(query)   # query text → dense float vector
-  └── collection.query(                 # ChromaDB ANN search
-        query_embeddings=[vector],
+    └── ChromaDBStore.query(              # ChromaDB ANN search
+      query_embedding=vector,
         n_results=top_k,                # default 5; frontend sends 3
         include=["documents","metadatas","distances"]
       )
@@ -197,6 +200,23 @@ The embedding model internally tokenizes the query into subword pieces (BPE), pa
 This is fundamentally different from keyword search: `"install"` and `"setup"` produce nearby vectors and will match each other; `IDataTableProps` produces a vector close to *other API interface names*, not the specific one the user wants (a weakness that hybrid search compensates for — see Appendix).
 
 > **Cosine similarity vs. cosine distance:** Cosine *similarity* ranges from $-1$ (opposite) to $1$ (identical). ChromaDB returns cosine *distance* = $1 - \text{similarity}$, which ranges from $0$ to $2$. The formula `1.0 - (distance / 2.0)` maps it back to a $[0, 1]$ confidence score. The collection is configured with `"hnsw:space": "cosine"`.
+
+#### Vector store abstraction (`chromadb_store.py`)
+
+ChromaDB access was extracted into `backend/app/rag/chromadb_store.py` as a dedicated store layer.
+
+**What lives there now:**
+- `get_chroma_client()` singleton (`PersistentClient`) to avoid client duplication and reduce SQLite lock issues
+- `HNSW_SPACE` as the single source of truth for distance metric configuration (`"cosine"`)
+- `ChromaDBStore.get_or_create_collection(reset=...)`
+- `ChromaDBStore.get_collection()`
+- `ChromaDBStore.add(...)` (batched inserts)
+- `ChromaDBStore.query(...)` (ANN retrieval)
+- `ChromaDBStore.get_all(...)` (bulk fetch for BM25 index build)
+
+**Effect on module boundaries:**
+- `ingestion.py`, `retrieval.py`, and `hybrid_retrieval.py` no longer own low-level ChromaDB client/collection logic.
+- If the vector backend changes (e.g., Pinecone/Weaviate/Qdrant), the primary change surface is this single file.
 
 **Relevance threshold:** `0.65` (`RELEVANCE_THRESHOLD` env var) — this is a **retrieval relevance gate**, not answer-level confidence. It measures whether the retrieved chunks are close enough to the query in embedding space to be worth sending to the LLM. Queries below this are rejected with "not enough information" rather than risking a hallucinated answer. The number is computed entirely before the LLM is called and has no relation to how correct or faithful the generated answer will be.
 

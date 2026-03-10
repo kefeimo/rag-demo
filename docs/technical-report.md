@@ -22,7 +22,7 @@ The system is a standard RAG pipeline with two noteworthy design choices:
 
 ```
 Query → Embedding (all-MiniLM-L6-v2, 384-dim, GPU-accelerated)
-      → Vector Retrieval (ChromaDB, cosine similarity, top-5)
+    → Vector Retrieval (`ChromaDBStore` over ChromaDB, cosine similarity, top-5)
       → [Hybrid Fallback: BM25 + semantic fusion if confidence < 0.65]
       → Confidence Check (threshold: 0.65 — reject or proceed)
       → Domain-Aware Prompt (LangChain template with VCC acronym mappings)
@@ -95,7 +95,7 @@ Hybrid confidence:         0.78 (above threshold → answered correctly)
 
 ### Code Quality & Organization
 
-The backend follows a clean modular structure under `backend/app/rag/` — each concern (ingestion, retrieval, hybrid retrieval, generation, prompt building) is a separate module with no cross-cutting dependencies. Configuration is fully environment-driven via `backend/app/config.py` (Pydantic `BaseSettings`), making the same codebase work locally, in Docker, and with either LLM provider without code changes.
+The backend follows a clean modular structure under `backend/app/rag/` — each concern (ingestion, retrieval, hybrid retrieval, generation, prompt building) is a separate module with no cross-cutting dependencies. ChromaDB access is centralized in `backend/app/rag/chromadb_store.py` (`ChromaDBStore`), which encapsulates client/collection operations for both ingestion and retrieval paths. Configuration is fully environment-driven via `backend/app/config.py` (Pydantic `BaseSettings`), making the same codebase work locally, in Docker, and with either LLM provider without code changes.
 
 Test coverage: **38 pytest tests** covering the core pipeline, with a dedicated `tests/` directory and `conftest.py` fixtures. Key coverage numbers: `config.py` 93%, `retrieval.py` 58%, `ingestion.py` 51%.
 

@@ -73,7 +73,7 @@ This document consolidates the four supporting references into one readable deep
     ↓
  3. Query Embedding   (all-MiniLM-L6-v2 → 384-dim vector)
     ↓
- 4. Semantic Retrieval (ChromaDB cosine similarity, top-5)
+ 4. Semantic Retrieval (`ChromaDBStore` abstraction over ChromaDB cosine similarity, top-5)
     ↓
  5. Confidence Check  (1 − mean(distances), threshold 0.65)
     │
@@ -88,6 +88,16 @@ This document consolidates the four supporting references into one readable deep
 ```
 
 ### 1.3 Key Design Decisions
+
+#### Vector Store Abstraction
+
+ChromaDB access is centralized in `backend/app/rag/chromadb_store.py` (`ChromaDBStore`).
+This module owns client singleton initialization, collection lifecycle, batched inserts,
+ANN query, and bulk reads for BM25 index building. `ingestion.py`, `retrieval.py`, and
+`hybrid_retrieval.py` now depend on this abstraction instead of calling ChromaDB directly.
+
+This narrows the backend swap surface: if the vector store changes in the future, most
+changes are isolated to one module.
 
 #### Embedding Model
 
@@ -428,5 +438,5 @@ The evaluation framework was the highest single time investment — and the high
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** March 6, 2026  
+**Last Updated:** March 10, 2026  
 **Status:** Complete — standalone deep-dive companion
