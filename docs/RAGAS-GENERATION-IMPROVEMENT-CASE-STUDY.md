@@ -1156,7 +1156,7 @@ data/results/
 docs/
 ├── RAGAS-GENERATION-IMPROVEMENT-CASE-STUDY.md   # This document ✅ FINALIZED (with integrated analysis)
 ├── progress-tracking.md                          # ✅ UPDATED: March 5, 17:40 entry
-├── RAGAS-METRICS-REFERENCE.md                    # ✅ UPDATED: Added Context Entity Recall
+├── REFERENCE-RAGAS-METRICS.md                    # ✅ UPDATED: Added Context Entity Recall
 └── HYBRID-SEARCH-CASE-STUDY.md                   # Previous: Retrieval improvements
 ```
 

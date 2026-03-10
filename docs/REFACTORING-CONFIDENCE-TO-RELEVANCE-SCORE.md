@@ -85,9 +85,9 @@ None of these are implemented at request time. The RAGAS evaluation pipeline (`e
 
 | File | Change |
 |---|---|
-| `docs/RAG-REFERENCE.md` | Threshold note clarified as retrieval relevance gate, not answer confidence |
+| `docs/REFERENCE-RAG.md` | Threshold note clarified as retrieval relevance gate, not answer confidence |
 | `backend/README.md` | Updated (user-edited) |
-| `docs/BACKEND-FASTAPI-REFERENCE.md` | Updated (user-edited) |
+| `docs/REFERENCE-BACKEND-FASTAPI.md` | Updated (user-edited) |
 
 **Archive files left unchanged** (`evaluation/archive/`).
 

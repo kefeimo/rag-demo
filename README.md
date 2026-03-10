@@ -238,8 +238,8 @@ The frontend tracks your last 10 queries:
 
 **Further Reference:**
 - [docs/TECH-STACK-RATIONALE.md](docs/TECH-STACK-RATIONALE.md) — why each technology was chosen
-- [docs/PROMPT-IMPROVEMENT.md](docs/PROMPT-IMPROVEMENT.md) — prompt engineering iteration notes
-- [docs/RAGAS-METRICS-REFERENCE.md](docs/RAGAS-METRICS-REFERENCE.md) — metrics definitions and interpretation
+- [docs/REFACOTRING-PROMPT-IMPROVEMENT.md](docs/REFACOTRING-PROMPT-IMPROVEMENT.md) — prompt engineering iteration notes
+- [docs/REFERENCE-RAGAS-METRICS.md](docs/REFERENCE-RAGAS-METRICS.md) — metrics definitions and interpretation
 - [docs/VCC-BASELINE-SUMMARY.md](docs/VCC-BASELINE-SUMMARY.md) — VCC query baseline results
 - [data-pipeline/GOLDEN-TEST-CASES.md](data-pipeline/GOLDEN-TEST-CASES.md) — curated high-quality test queries
 

@@ -669,7 +669,7 @@
 #### **Additional Documentation Created** ✅
 - [x] `/docs/DOCKER-GPU.md` - GPU setup and troubleshooting
 - [x] `/docs/HYBRID-SEARCH-CASE-STUDY.md` - Semantic + BM25 hybrid retrieval
-- [x] `/docs/RAGAS-METRICS-REFERENCE.md` - Evaluation metrics guide
+- [x] `/docs/REFERENCE-RAGAS-METRICS.md` - Evaluation metrics guide
 - [x] `/docs/VCC-BASELINE-SUMMARY.md` - Baseline evaluation results
 - [x] `/docs/DELIVERABLES.md` - Project deliverables checklist
 - [x] `/evaluation/README.md` - Evaluation pipeline setup and usage
@@ -1240,7 +1240,7 @@
     - Not part of standard RAGAS 5-core metrics
     - Correct metric: "Answer Correctness" (requires ground truth)
   - **Documentation Created:**
-    - `docs/RAGAS-METRICS-REFERENCE.md` (comprehensive reference)
+    - `docs/REFERENCE-RAGAS-METRICS.md` (comprehensive reference)
       - All 5 standard RAGAS metrics with examples
       - VCC baseline performance summary
       - Interpretation guidelines and targets
@@ -1469,7 +1469,7 @@
   - [x] Changed refusal condition from "not enough info" to "truly unrelated"
   - [x] Response quality improved: 236 chars → 1115 chars (4.7x improvement, 372% increase)
   - [x] Added debug logging: prompt preview (first 2000 + last 500 chars), document content length
-  - [x] Updated documentation: `docs/PROMPT-IMPROVEMENT.md` (renamed from TODO-PROMPT-IMPROVEMENT-NOTES.md)
+  - [x] Updated documentation: `docs/REFACOTRING-PROMPT-IMPROVEMENT.md` (renamed from TODO-PROMPT-IMPROVEMENT-NOTES.md)
 - **Performance Impact:**
   - Cache hits: <10ms response time (vs 1.5-3s for API calls)
   - Cost savings: $0.002 per cached query avoided
@@ -1478,7 +1478,7 @@
   - False negatives dramatically reduced (no more "I don't have enough information" with relevant context)
 - **Documentation:**
   - Created `docs/UI-QUERY-CACHE.md` (comprehensive cache implementation guide)
-  - Updated `docs/PROMPT-IMPROVEMENT.md` with completed improvements section
+  - Updated `docs/REFACOTRING-PROMPT-IMPROVEMENT.md` with completed improvements section
   - Renamed file from TODO-PROMPT-IMPROVEMENT-NOTES.md for clarity
 - **Commits:**
   - `53212e3`: feat: Add frontend query caching for instant repeated queries
