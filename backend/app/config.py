@@ -55,9 +55,9 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=500, description="Text chunk size in characters")
     chunk_overlap: int = Field(default=50, description="Overlap between chunks")
     top_k_results: int = Field(default=5, description="Number of results to retrieve")
-    confidence_threshold: float = Field(
+    relevance_threshold: float = Field(
         default=0.65,
-        description="Minimum confidence for known answers"
+        description="Minimum retrieval relevance score to attempt answer generation (below this the query is rejected)"
     )
     
     # API Configuration

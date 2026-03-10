@@ -198,7 +198,7 @@ This is fundamentally different from keyword search: `"install"` and `"setup"` p
 
 > **Cosine similarity vs. cosine distance:** Cosine *similarity* ranges from $-1$ (opposite) to $1$ (identical). ChromaDB returns cosine *distance* = $1 - \text{similarity}$, which ranges from $0$ to $2$. The formula `1.0 - (distance / 2.0)` maps it back to a $[0, 1]$ confidence score. The collection is configured with `"hnsw:space": "cosine"`.
 
-**Confidence threshold:** `0.65` — queries below this return "not enough information" rather than a hallucinated answer.
+**Relevance threshold:** `0.65` (`RELEVANCE_THRESHOLD` env var) — this is a **retrieval relevance gate**, not answer-level confidence. It measures whether the retrieved chunks are close enough to the query in embedding space to be worth sending to the LLM. Queries below this are rejected with "not enough information" rather than risking a hallucinated answer. The number is computed entirely before the LLM is called and has no relation to how correct or faithful the generated answer will be.
 
 #### Hybrid path (`HybridRetriever`) — fallback for exact keywords
 

@@ -24,19 +24,19 @@ def test_retriever_initialization():
 
 
 @pytest.mark.unit
-def test_confidence_calculation_inline():
-    """Test that confidence is calculated correctly in retrieve() method"""
+def test_relevance_calculation_inline():
+    """Test that relevance score is calculated correctly in retrieve() method"""
     retriever = Retriever()
     
     # Mock results from retrieval
-    # Distance 0.0 should give confidence 1.0: confidence = 1 - (0.0 / 2) = 1.0
-    # Distance 1.0 should give confidence 0.5: confidence = 1 - (1.0 / 2) = 0.5
-    # Distance 2.0 should give confidence 0.0: confidence = 1 - (2.0 / 2) = 0.0
+    # Distance 0.0 should give relevance_score 1.0: relevance_score = 1 - (0.0 / 2) = 1.0
+    # Distance 1.0 should give relevance_score 0.5: relevance_score = 1 - (1.0 / 2) = 0.5
+    # Distance 2.0 should give relevance_score 0.0: relevance_score = 1 - (2.0 / 2) = 0.0
     
-    # We test this indirectly by verifying the retrieve method returns proper confidence values
+    # We test this indirectly by verifying the retrieve method returns proper relevance_score values
     # This is a simple test to ensure the basic structure is correct
     assert hasattr(retriever, 'retrieve')
-    assert hasattr(retriever, 'confidence_threshold')
+    assert hasattr(retriever, 'relevance_threshold')
 
 
 @pytest.mark.unit
@@ -49,12 +49,12 @@ def test_format_context():
         {
             "content": "FastAPI is a modern web framework.",
             "metadata": {"source": "intro.md", "chunk_id": 0},
-            "confidence": 0.95
+            "relevance_score": 0.95
         },
         {
             "content": "It provides automatic API documentation.",
             "metadata": {"source": "features.md", "chunk_id": 0},
-            "confidence": 0.85
+            "relevance_score": 0.85
         }
     ]
     
@@ -82,18 +82,18 @@ def test_retrieval_returns_results(sample_retrieval_results):
     assert "documents" in results
     assert "metadatas" in results
     assert "distances" in results
-    assert "confidence" in results
+    assert "relevance_score" in results
     assert "retrieval_count" in results
     
     # Verify data types
     assert isinstance(results["documents"], list)
     assert isinstance(results["metadatas"], list)
     assert isinstance(results["distances"], list)
-    assert isinstance(results["confidence"], float)
+    assert isinstance(results["relevance_score"], float)
     assert isinstance(results["retrieval_count"], int)
     
-    # Verify confidence is in valid range
-    assert 0.0 <= results["confidence"] <= 1.0
+    # Verify relevance_score is in valid range
+    assert 0.0 <= results["relevance_score"] <= 1.0
     
     # Verify counts match
     assert len(results["documents"]) == results["retrieval_count"]
@@ -112,24 +112,24 @@ def test_retrieval_empty_collection():
     
     # Should return error structure
     assert result["retrieval_count"] == 0
-    assert result["confidence"] == 0.0
+    assert result["relevance_score"] == 0.0
     assert "error" in result
 
 
 @pytest.mark.unit
-def test_check_confidence_method():
-    """Test the check_confidence method"""
+def test_check_relevance_method():
+    """Test the check_relevance method"""
     retriever = Retriever()
     
-    # High confidence should pass threshold
-    is_confident, message = retriever.check_confidence(0.75)
-    assert is_confident is True
+    # High relevance should pass threshold
+    is_relevant, message = retriever.check_relevance(0.75)
+    assert is_relevant is True
     assert "meets threshold" in message.lower()
     
-    # Low confidence should not pass threshold (default threshold is 0.6)
-    is_confident, message = retriever.check_confidence(0.30)
-    assert is_confident is False
-    assert "below threshold" in message.lower() or "unreliable" in message.lower()
+    # Low relevance should not pass threshold (default threshold is 0.65)
+    is_relevant, message = retriever.check_relevance(0.30)
+    assert is_relevant is False
+    assert "below threshold" in message.lower() or "weakly matched" in message.lower()
 
 
 @pytest.mark.unit
@@ -177,7 +177,7 @@ def test_full_retrieval_pipeline():
     # retriever = Retriever()
     # result = retriever.retrieve("What is FastAPI?")
     # assert result["retrieval_count"] > 0
-    # assert result["confidence"] > 0.0
+    # assert result["relevance_score"] > 0.0
     # assert len(result["documents"]) > 0
 
 

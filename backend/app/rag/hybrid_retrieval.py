@@ -169,7 +169,7 @@ class HybridRetriever:
             boost_config: Metadata-based boost configuration
         
         Returns:
-            Dict with documents, confidence, and metadata (same format as Retriever.retrieve)
+            Dict with documents, relevance_score, and metadata (same format as Retriever.retrieve)
         """
         logger.info(f"Hybrid search: query='{query}', top_k={top_k}")
         
@@ -278,26 +278,26 @@ class HybridRetriever:
         
         # 6. Format results in same format as Retriever.retrieve()
         final_documents = []
-        total_confidence = 0.0
+        total_relevance = 0.0
         
         for doc_id, doc_data in sorted_docs:
             final_documents.append({
                 'id': doc_id,
                 'content': doc_data['content'],
                 'metadata': doc_data['metadata'],
-                'score': doc_data['score'],
+                'relevance_score': doc_data['score'],
                 'semantic_score': doc_data['semantic_score'],
                 'bm25_score': doc_data['bm25_score'],
                 'distance': 1.0 - doc_data['semantic_score']  # For compatibility
             })
-            total_confidence += doc_data['score']
+            total_relevance += doc_data['score']
         
-        # Calculate average confidence
-        avg_confidence = total_confidence / len(final_documents) if final_documents else 0.0
+        # Calculate average relevance score
+        avg_relevance = total_relevance / len(final_documents) if final_documents else 0.0
         
         result = {
             "documents": final_documents,
-            "confidence": avg_confidence,
+            "relevance_score": avg_relevance,
             "retrieval_method": "hybrid",
             "weights": {
                 "semantic": semantic_weight,
@@ -305,7 +305,7 @@ class HybridRetriever:
             }
         }
         
-        logger.info(f"Hybrid search returned {len(final_documents)} documents (avg confidence: {avg_confidence:.3f})")
+        logger.info(f"Hybrid search returned {len(final_documents)} documents (avg relevance score: {avg_relevance:.3f})")
         
         return result
     

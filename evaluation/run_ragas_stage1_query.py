@@ -79,7 +79,7 @@ def main():
             # Extract information
             answer = rag_response.get('answer', '')
             sources = rag_response.get('sources', [])
-            confidence = rag_response.get('confidence', 0.0)
+            relevance_score = rag_response.get('relevance_score', 0.0)
             
             # Format contexts for RAGAS
             contexts = [source.get('content', '') for source in sources]
@@ -99,7 +99,7 @@ def main():
                 "category": query_item.get('category', 'unknown'),
                 "answer": answer,
                 "contexts": contexts,
-                "confidence": confidence,
+                "relevance_score": relevance_score,
                 "num_sources": len(sources),
                 "response_time": round(elapsed, 2),
                 "source_files": source_files,
@@ -109,7 +109,7 @@ def main():
             success_count += 1
             
             print(f"  ✓ Answer: {answer[:80]}...")
-            print(f"  ✓ Confidence: {confidence:.3f}")
+            print(f"  ✓ Relevance score: {relevance_score:.3f}")
             print(f"  ✓ Sources: {len(sources)} chunks")
             print(f"  ✓ Time: {elapsed:.1f}s\n")
             

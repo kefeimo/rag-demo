@@ -17,7 +17,7 @@ class Source(BaseModel):
     """Source document with metadata"""
     content: str = Field(..., description="Document content/chunk")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Document metadata")
-    confidence: float = Field(..., description="Relevance confidence score", ge=0.0, le=1.0)
+    relevance_score: float = Field(..., description="Retrieval relevance score (cosine similarity, computed before LLM generation)", ge=0.0, le=1.0)
 
 
 class QueryResponse(BaseModel):
@@ -25,7 +25,7 @@ class QueryResponse(BaseModel):
     query: str = Field(..., description="Original user query")
     answer: str = Field(..., description="Generated answer")
     sources: List[Source] = Field(default_factory=list, description="Source documents used")
-    confidence: float = Field(..., description="Overall confidence score", ge=0.0, le=1.0)
+    relevance_score: float = Field(..., description="Overall retrieval relevance score — average cosine similarity of top-k retrieved chunks to the query, computed before LLM generation", ge=0.0, le=1.0)
     model: str = Field(..., description="LLM model used for generation")
     response_time: Optional[float] = Field(None, description="Response time in seconds")
     api_version: Optional[str] = Field(None, description="API version")

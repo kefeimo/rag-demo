@@ -115,7 +115,7 @@ async def query_rag(request: QueryRequest):
         request: Query request with user question
         
     Returns:
-        QueryResponse with answer, sources, confidence, and metadata
+        QueryResponse with answer, sources, relevance_score, and metadata
     """
     import time
     start_time = time.time()
@@ -128,25 +128,25 @@ async def query_rag(request: QueryRequest):
 
     try:
         # Strategy: Try semantic-only first (handles most queries well)
-        # If confidence is low, try hybrid search (handles edge cases like exact API names)
+        # If retrieval relevance is low, try hybrid search (handles edge cases like exact API names)
         retriever = Retriever(collection_name=collection)
         logger.info("Trying semantic-only search first")
         retrieval_result = retriever.retrieve(request.query, top_k=request.top_k)
 
-        # If confidence is low and a hybrid retriever exists for this collection, try it
+        # If retrieval relevance is low and a hybrid retriever exists for this collection, try it
         hybrid_retriever = hybrid_retrievers.get(collection)
-        if retrieval_result.get("confidence", 0.0) < 0.65 and hybrid_retriever is not None:
-            logger.info(f"Semantic confidence {retrieval_result['confidence']:.3f} < 0.65, trying hybrid search")
+        if retrieval_result.get("relevance_score", 0.0) < 0.65 and hybrid_retriever is not None:
+            logger.info(f"Semantic relevance score {retrieval_result['relevance_score']:.3f} < 0.65, trying hybrid search")
             hybrid_result = hybrid_retriever.search(request.query, top_k=request.top_k)
 
-            # Use whichever has higher confidence
-            if hybrid_result.get("confidence", 0.0) > retrieval_result.get("confidence", 0.0):
-                logger.info(f"Using hybrid search (conf={hybrid_result['confidence']:.3f} > semantic={retrieval_result['confidence']:.3f})")
+            # Use whichever has higher relevance score
+            if hybrid_result.get("relevance_score", 0.0) > retrieval_result.get("relevance_score", 0.0):
+                logger.info(f"Using hybrid search (relevance={hybrid_result['relevance_score']:.3f} > semantic={retrieval_result['relevance_score']:.3f})")
                 retrieval_result = hybrid_result
             else:
-                logger.info(f"Keeping semantic-only (conf={retrieval_result['confidence']:.3f} >= hybrid={hybrid_result['confidence']:.3f})")
-        elif retrieval_result.get("confidence", 0.0) >= 0.65:
-            logger.info(f"Semantic confidence {retrieval_result['confidence']:.3f} >= 0.65, using semantic-only")
+                logger.info(f"Keeping semantic-only (relevance={retrieval_result['relevance_score']:.3f} >= hybrid={hybrid_result['relevance_score']:.3f})")
+        elif retrieval_result.get("relevance_score", 0.0) >= 0.65:
+            logger.info(f"Semantic relevance score {retrieval_result['relevance_score']:.3f} >= 0.65, using semantic-only")
         else:
             logger.info("Hybrid retriever not available for this collection, using semantic-only result")
         
@@ -158,36 +158,36 @@ async def query_rag(request: QueryRequest):
                 query=request.query,
                 answer=f"Error retrieving documents: {retrieval_result['error']}. Please ensure documents have been ingested first.",
                 sources=[],
-                confidence=0.0,
+                relevance_score=0.0,
                 model=settings.llm_provider,
                 response_time=response_time,
                 api_version=__version__
             )
         
         documents = retrieval_result.get("documents", [])
-        overall_confidence = retrieval_result.get("confidence", 0.0)
+        overall_relevance = retrieval_result.get("relevance_score", 0.0)
         
         # Debug: Log document details
-        logger.info(f"Retrieved {len(documents)} documents with confidence {overall_confidence:.3f}")
+        logger.info(f"Retrieved {len(documents)} documents with relevance score {overall_relevance:.3f}")
         if documents:
             logger.info(f"First document keys: {list(documents[0].keys())}")
             logger.info(f"First document content length: {len(documents[0].get('content', ''))} chars")
         
-        # Check confidence threshold (use Retriever for consistency)
+        # Check relevance threshold (use Retriever for consistency)
         temp_retriever = Retriever()
-        is_confident, confidence_msg = temp_retriever.check_confidence(overall_confidence)
-        logger.info(f"Confidence check: is_confident={is_confident}, message={confidence_msg}")
+        is_relevant, relevance_msg = temp_retriever.check_relevance(overall_relevance)
+        logger.info(f"Relevance check: is_relevant={is_relevant}, message={relevance_msg}")
         
-        if not documents or not is_confident:
-            logger.warning(f"Rejecting query - documents: {len(documents)}, is_confident: {is_confident}, confidence: {overall_confidence:.3f}")
-            logger.warning(f"Confidence message: {confidence_msg}")
+        if not documents or not is_relevant:
+            logger.warning(f"Rejecting query - documents: {len(documents)}, is_relevant: {is_relevant}, relevance_score: {overall_relevance:.3f}")
+            logger.warning(f"Relevance message: {relevance_msg}")
             help_text = get_help_text_for_collection()
             response_time = time.time() - start_time
             return QueryResponse(
                 query=request.query,
                 answer=f"I don't have enough information to answer that question based on the provided documentation. {help_text}",
                 sources=[],
-                confidence=overall_confidence,
+                relevance_score=overall_relevance,
                 model=settings.llm_provider,
                 response_time=response_time,
                 api_version=__version__
@@ -206,12 +206,12 @@ async def query_rag(request: QueryRequest):
         sources = extract_sources(documents)
         
         response_time = time.time() - start_time
-        logger.info(f"Query completed successfully (confidence: {overall_confidence:.3f}, time: {response_time:.2f}s)")
+        logger.info(f"Query completed successfully (relevance_score: {overall_relevance:.3f}, time: {response_time:.2f}s)")
         return QueryResponse(
             query=request.query,
             answer=answer,
             sources=sources,
-            confidence=overall_confidence,
+            relevance_score=overall_relevance,
             model=settings.llm_provider,
             response_time=response_time,
             api_version=__version__

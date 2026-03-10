@@ -1,17 +1,17 @@
 /**
  * SourceCard Component
- * Displays a single source citation with confidence score and metadata
+ * Displays a single source citation with relevance score and metadata
  */
 function SourceCard({ source, index }) {
-  const getConfidenceColor = (confidence) => {
-    if (confidence >= 0.8) return 'bg-green-100 text-green-800 border-green-300';
-    if (confidence >= 0.65) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+  const getRelevanceColor = (relevance_score) => {
+    if (relevance_score >= 0.8) return 'bg-green-100 text-green-800 border-green-300';
+    if (relevance_score >= 0.65) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     return 'bg-red-100 text-red-800 border-red-300';
   };
 
-  const getConfidenceLabel = (confidence) => {
-    if (confidence >= 0.8) return 'High Relevance';
-    if (confidence >= 0.65) return 'Medium Relevance';
+  const getRelevanceLabel = (relevance_score) => {
+    if (relevance_score >= 0.8) return 'High Relevance';
+    if (relevance_score >= 0.65) return 'Medium Relevance';
     return 'Low Relevance';
   };
 
@@ -33,20 +33,20 @@ function SourceCard({ source, index }) {
           <span className="text-sm font-semibold text-gray-900">Source {index + 1}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${getConfidenceColor(source.confidence)}`}>
+          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${getRelevanceColor(source.relevance_score)}`}>
             <svg className="w-3 h-3 inline mr-1 -mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              {source.confidence >= 0.8 ? (
+              {source.relevance_score >= 0.8 ? (
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              ) : source.confidence >= 0.65 ? (
+              ) : source.relevance_score >= 0.65 ? (
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               ) : (
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               )}
             </svg>
-            {getConfidenceLabel(source.confidence)}
+            {getRelevanceLabel(source.relevance_score)}
           </span>
           <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-            {(source.confidence * 100).toFixed(1)}%
+            {(source.relevance_score * 100).toFixed(1)}%
           </span>
         </div>
       </div>

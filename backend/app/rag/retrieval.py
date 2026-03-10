@@ -21,7 +21,7 @@ class Retriever:
         self.collection_name = collection_name or settings.chroma_collection_name
         self.embedding_model_name = settings.embedding_model
         self.top_k = settings.top_k_results
-        self.confidence_threshold = settings.confidence_threshold
+        self.relevance_threshold = settings.relevance_threshold
         
         # Use singleton ChromaDB client
         self.client = get_chroma_client()
@@ -59,13 +59,13 @@ class Retriever:
             top_k: Number of results to retrieve (overrides default)
             
         Returns:
-            Dictionary with retrieved documents, confidence, and metadata
+            Dictionary with retrieved documents, relevance_score, and metadata
         """
         if self.collection is None:
             logger.error("Collection not initialized. Run document ingestion first.")
             return {
                 "documents": [],
-                "confidence": 0.0,
+                "relevance_score": 0.0,
                 "retrieval_count": 0,
                 "error": "Collection not initialized"
             }
@@ -74,7 +74,7 @@ class Retriever:
             logger.error("Collection is empty. Run document ingestion first.")
             return {
                 "documents": [],
-                "confidence": 0.0,
+                "relevance_score": 0.0,
                 "retrieval_count": 0,
                 "error": "Collection is empty"
             }
@@ -103,28 +103,28 @@ class Retriever:
                     results['distances'][0]
                 )):
                     # Convert distance to similarity score (cosine: 0=identical, 2=opposite)
-                    # similarity = 1 - (distance / 2)
-                    confidence = max(0.0, 1.0 - (distance / 2.0))
+                    # relevance_score = 1 - (distance / 2)
+                    relevance_score = max(0.0, 1.0 - (distance / 2.0))
                     
                     documents.append({
                         "content": doc,
                         "metadata": metadata,
-                        "confidence": round(confidence, 4),
+                        "relevance_score": round(relevance_score, 4),
                         "distance": round(distance, 4),
                         "rank": i + 1
                     })
             
-            # Calculate overall confidence (average of top results)
+            # Calculate overall relevance score (average of top results)
             if documents:
-                overall_confidence = sum(d["confidence"] for d in documents) / len(documents)
+                overall_relevance = sum(d["relevance_score"] for d in documents) / len(documents)
             else:
-                overall_confidence = 0.0
+                overall_relevance = 0.0
             
-            logger.info(f"Retrieved {len(documents)} documents (avg confidence: {overall_confidence:.3f})")
+            logger.info(f"Retrieved {len(documents)} documents (avg relevance score: {overall_relevance:.3f})")
             
             return {
                 "documents": documents,
-                "confidence": round(overall_confidence, 4),
+                "relevance_score": round(overall_relevance, 4),
                 "retrieval_count": len(documents),
                 "query": query
             }
@@ -133,7 +133,7 @@ class Retriever:
             logger.error(f"Retrieval error: {str(e)}", exc_info=True)
             return {
                 "documents": [],
-                "confidence": 0.0,
+                "relevance_score": 0.0,
                 "retrieval_count": 0,
                 "error": str(e)
             }
@@ -155,31 +155,31 @@ class Retriever:
         for i, doc in enumerate(documents, 1):
             source = doc["metadata"].get("source", "unknown")
             chunk_id = doc["metadata"].get("chunk_id", 0)
-            confidence = doc.get("confidence", 0.0)
+            relevance_score = doc.get("relevance_score", 0.0)
             
             context_parts.append(
-                f"[Source {i}: {source} (chunk {chunk_id}, confidence: {confidence:.2f})]\n"
+                f"[Source {i}: {source} (chunk {chunk_id}, relevance: {relevance_score:.2f})]\n"
                 f"{doc['content']}\n"
             )
         
         return "\n---\n".join(context_parts)
     
-    def check_confidence(self, confidence: float) -> Tuple[bool, str]:
+    def check_relevance(self, relevance_score: float) -> Tuple[bool, str]:
         """
-        Check if confidence meets threshold
+        Check if retrieval relevance score meets threshold
         
         Args:
-            confidence: Confidence score to check
+            relevance_score: Retrieval relevance score to check
             
         Returns:
-            Tuple of (is_confident, message)
+            Tuple of (is_relevant, message)
         """
-        is_confident = confidence >= self.confidence_threshold
+        is_relevant = relevance_score >= self.relevance_threshold
         
-        if is_confident:
-            message = f"Confidence {confidence:.3f} meets threshold {self.confidence_threshold}"
+        if is_relevant:
+            message = f"Relevance score {relevance_score:.3f} meets threshold {self.relevance_threshold}"
         else:
-            message = f"Confidence {confidence:.3f} below threshold {self.confidence_threshold} - answer may be unreliable"
+            message = f"Relevance score {relevance_score:.3f} below threshold {self.relevance_threshold} - retrieved documents too weakly matched"
         
         logger.info(message)
-        return is_confident, message
+        return is_relevant, message

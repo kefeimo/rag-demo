@@ -212,18 +212,18 @@ class ConfigValidator:
         return True, None
     
     @classmethod
-    def validate_confidence_threshold(cls, threshold: float) -> Tuple[bool, Optional[str]]:
+    def validate_relevance_threshold(cls, threshold: float) -> Tuple[bool, Optional[str]]:
         """
-        Validate confidence threshold
+        Validate retrieval relevance threshold
         
         Args:
-            threshold: Confidence threshold value
+            threshold: Relevance threshold value
             
         Returns:
             Tuple of (is_valid, error_message)
         """
         if not 0.0 <= threshold <= 1.0:
-            return False, "Confidence threshold must be between 0.0 and 1.0"
+            return False, "Relevance threshold must be between 0.0 and 1.0"
         
         return True, None
 

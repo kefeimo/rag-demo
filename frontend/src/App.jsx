@@ -79,7 +79,7 @@ function App() {
         const newHistory = [{
           query: data.query,
           timestamp: new Date().toISOString(),
-          confidence: data.confidence,
+          relevance_score: data.relevance_score,
           ragSystem: ragSystem,
           collection,
           responseTime: data.response_time
@@ -310,13 +310,13 @@ function App() {
                   <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        {item.confidence >= 0.8 ? (
+                        {item.relevance_score >= 0.8 ? (
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         ) : (
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         )}
                       </svg>
-                      {(item.confidence * 100).toFixed(0)}%
+                      {(item.relevance_score * 100).toFixed(0)}%
                     </span>
                     {item.responseTime && (
                       <span className="flex items-center gap-1">

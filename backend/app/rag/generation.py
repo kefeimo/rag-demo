@@ -209,7 +209,7 @@ def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str
             {
                 "source": doc.get("metadata", {}).get("source", "unknown"),
                 "content": doc.get("content", ""),
-                "similarity": doc.get("confidence", 0.0)
+                "similarity": doc.get("relevance_score", 0.0)
             }
             for doc in context_documents
         ]
@@ -293,7 +293,7 @@ def extract_sources(retrieved_documents: List[Dict[str, Any]]) -> List[Dict[str,
         sources.append({
             "content": doc.get("content", ""),
             "metadata": doc.get("metadata", {}),
-            "confidence": doc.get("confidence", 0.0)
+            "relevance_score": doc.get("relevance_score", 0.0)
         })
     return sources
 
