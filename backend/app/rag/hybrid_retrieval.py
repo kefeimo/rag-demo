@@ -102,50 +102,50 @@ class HybridRetriever:
     def _build_bm25_index(self):
         """Build BM25 index from ChromaDB documents with metadata enrichment and smart tokenization"""
         logger.info("Building BM25 index with stopword filtering...")
-        
+
         try:
             # Get all documents from ChromaDB
-            all_docs = self.semantic_retriever.collection.get(
+            all_docs = self.semantic_retriever.store.get_all(
                 include=['documents', 'metadatas']
             )
-            
+
             if not all_docs or not all_docs.get('documents'):
                 logger.warning("No documents found in collection for BM25 index")
                 return
-            
+
             self.documents = all_docs['documents']
             self.document_ids = all_docs['ids']
             self.metadatas = all_docs.get('metadatas', [{}] * len(self.documents))
-            
+
             # Enrich documents with metadata for better BM25 matching
             # Combine document content with important metadata fields
             enriched_docs = []
             for doc, metadata in zip(self.documents, self.metadatas):
                 # Start with original document
                 enriched = doc
-                
+
                 # Add api_name if present (important for API queries)
                 # Repeat api_name 5 times to HEAVILY boost its importance
                 api_name = metadata.get('api_name', '')
                 if api_name and api_name != 'N/A':
                     enriched = f"{api_name} {api_name} {api_name} {api_name} {api_name} {enriched}"
-                
+
                 # Add doc_type for context
                 doc_type = metadata.get('doc_type', '')
                 if doc_type:
                     enriched = f"{doc_type} {enriched}"
-                
+
                 enriched_docs.append(enriched)
-            
+
             # Tokenize enriched documents with stopword filtering and API boosting
             tokenized_docs = [
-                tokenize_with_stopword_filter(doc, remove_stopwords=True) 
+                tokenize_with_stopword_filter(doc, remove_stopwords=True)
                 for doc in enriched_docs
             ]
             self.bm25_index = BM25Okapi(tokenized_docs)
-            
+
             logger.info(f"✓ BM25 index built: {len(self.documents)} documents (metadata enriched + stopword filtered)")
-            
+
         except Exception as e:
             logger.error(f"Failed to build BM25 index: {e}")
             raise
