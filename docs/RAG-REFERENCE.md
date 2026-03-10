@@ -202,19 +202,27 @@ This is fundamentally different from keyword search: `"install"` and `"setup"` p
 
 #### Hybrid path (`HybridRetriever`) — fallback for exact keywords
 
-The system uses a **two-phase strategy** (visible in `main.py`):
+There are **two separate levels** here — it's easy to conflate them.
 
-1. Try semantic-only first (handles most queries well, cheaper)
-2. If `confidence < 0.65`, fall back to hybrid (BM25 + semantic fusion)
-3. Keep whichever result has higher confidence
+**Level 1 — the confidence gate (`main.py`): which retriever runs?**
 
-The hybrid path adds BM25 keyword scoring on top of the semantic score. BM25 is a pure lexical algorithm — it scores chunks by exact token overlap and word rarity, with no understanding of meaning. It compensates precisely where semantic search is weakest: exact API identifiers like `IDataTableProps` or `visa-charts-react`.
+```
+main.py:
+  1. Always run Retriever (semantic-only) first
+  2. If semantic confidence >= 0.65 → done, return semantic result
+  3. If semantic confidence < 0.65  → also run HybridRetriever
+  4. Keep whichever result has higher confidence
+```
+
+This gate is a binary choice: semantic-only OR semantic+BM25. BM25 is never the *only* retriever — it only activates as an additive component when semantic confidence is too low.
+
+**Level 2 — the fusion weights (inside `HybridRetriever`): what's the BM25/semantic ratio?**
+
+Once inside `HybridRetriever`, *both* semantic search and BM25 always run in parallel. The `query_classifier` only operates at this second level — it decides the weighting ratio for the fusion formula, not whether BM25 runs at all:
 
 ```
 combined_score = (semantic_weight × semantic_score) + (bm25_weight × bm25_score)
 ```
-
-Weights are adaptive per query type, determined by `query_classifier.py`.
 
 **What `query_classifier` does and how it connects to retrieval:**
 
@@ -242,8 +250,8 @@ combined_score = (0.4 × semantic_score) + (0.6 × bm25_score)  # per chunk
 
 So the classifier's only job is to answer "for this query, how much should exact keyword matching matter vs. meaning matching?" — and that answer directly changes the numbers fed into the fusion math for that request.
 
-**Why it's needed:**
-A fixed split would underserve both extremes. `"What is IDataTableProps?"` needs BM25 to dominate (exact token is the signal). `"What is VCC?"` needs semantic to dominate (no single keyword to match). The classifier makes this routing automatic without adding LLM latency.
+**Why it's needed (for Level 2):**
+A fixed 50/50 split inside the hybrid retriever would underserve both extremes. `"What is IDataTableProps?"` needs BM25 to dominate (exact token is the signal). `"What is VCC?"` needs semantic to dominate (no single keyword to match). The classifier makes this ratio automatic without adding LLM latency.
 
 | Query type | Example | Semantic weight | BM25 weight |
 |---|---|---|---|
@@ -260,7 +268,7 @@ See **Appendix A** for full BM25 implementation details.
 > Debugging order: (1) check embedding model consistency, (2) inspect raw retrieved chunks with confidence scores, (3) adjust `chunk_size` — too large dilutes signal, (4) adjust `top_k`, (5) reranking (cross-encoder), (6) metadata filtering, (7) query rewriting / HyDE.
 
 *Why semantic-first instead of always hybrid?*
-> Semantic handles the majority of natural-language queries well and is cheaper (no BM25 index lookup). Hybrid is reserved as a fallback because it adds latency and the BM25 index must be held in memory.
+> `HybridRetriever` runs two searches and builds a BM25 index in memory — more latency and memory than the pure semantic `Retriever`. The confidence gate means most queries (the ones semantic handles well) never pay that cost. Hybrid is reserved for the cases where the semantic-only result was too weak to trust.
 
 ---
 
