@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import QueryInput from './components/QueryInput';
 import ResponseDisplay from './components/ResponseDisplay';
 import ErrorDisplay from './components/ErrorDisplay';
+import GraphViewer from './components/GraphViewer';
 import { queryRAG, checkHealth, ingestDocuments, ingestVisaDocs } from './utils/api';
 
 function App() {
@@ -253,86 +254,93 @@ function App() {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Query History */}
-        {queryHistory.length > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow-md p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Recent Queries ({queryHistory.length})
-              </h3>
-              <button
-                onClick={() => setQueryHistory([])}
-                className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {queryHistory.map((item, index) => {
-                const cacheKey = `${item.query.trim().toLowerCase()}`;
-                const isCached = queryCache[cacheKey] !== undefined;
-                
-                return (
-                <div
-                  key={index}
-                  onClick={() => handleQuery(item.query)}
-                  className="group p-3 bg-gray-50 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors border border-gray-200 hover:border-blue-300"
+          {/* Query History */}
+          {queryHistory.length > 0 && (
+            <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Recent Queries ({queryHistory.length})
+                </h3>
+                <button
+                  onClick={() => setQueryHistory([])}
+                  className="text-xs text-gray-500 hover:text-red-600 transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm text-gray-800 flex-1 line-clamp-2 group-hover:text-blue-900">
-                      {item.query}
-                    </p>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {isCached && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 flex items-center gap-1" title="Cached - instant response">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-                            <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-                            <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-                          </svg>
-                          Cached
+                  Clear
+                </button>
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {queryHistory.map((item, index) => {
+                  const cacheKey = `${item.query.trim().toLowerCase()}`;
+                  const isCached = queryCache[cacheKey] !== undefined;
+                  
+                  return (
+                  <div
+                    key={index}
+                    onClick={() => handleQuery(item.query)}
+                    className="group p-3 bg-gray-50 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors border border-gray-200 hover:border-blue-300"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm text-gray-800 flex-1 line-clamp-2 group-hover:text-blue-900">
+                        {item.query}
+                      </p>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {isCached && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 flex items-center gap-1" title="Cached - instant response">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
+                              <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
+                              <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
+                            </svg>
+                            Cached
+                          </span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          item.ragSystem === 'vcc' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {item.ragSystem === 'vcc' ? 'VCC' : 'API'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          {item.relevance_score >= 0.8 ? (
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        {(item.relevance_score * 100).toFixed(0)}%
+                      </span>
+                      {item.responseTime && (
+                        <span className="flex items-center gap-1">
+                          ⚡ {item.responseTime.toFixed(1)}s
                         </span>
                       )}
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        item.ragSystem === 'vcc' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {item.ragSystem === 'vcc' ? 'VCC' : 'API'}
+                      <span className="flex-1 text-right">
+                        {new Date(item.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        {item.relevance_score >= 0.8 ? (
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        ) : (
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        )}
-                      </svg>
-                      {(item.relevance_score * 100).toFixed(0)}%
-                    </span>
-                    {item.responseTime && (
-                      <span className="flex items-center gap-1">
-                        ⚡ {item.responseTime.toFixed(1)}s
-                      </span>
-                    )}
-                    <span className="flex-1 text-right">
-                      {new Date(item.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          
+          {/* LangGraph Visualization */}
+          <GraphViewer />
+
+
+        </div>
+
+
 
         {/* Footer */}
         <footer className="text-center mt-12 text-sm text-gray-500">

@@ -62,23 +62,23 @@ This document consolidates the four supporting references into one readable deep
 | Embeddings | sentence-transformers/all-MiniLM-L6-v2 | 384-dim |
 | LLM (primary) | OpenAI GPT-3.5-turbo | cloud API |
 | LLM (fallback) | GPT4All Mistral 7B | local CPU |
-| Orchestration | Docker Compose | — |
+| Orchestration | LangGraph (`StateGraph`) + Docker Compose | — |
 
 ### 1.2 RAG Pipeline Flow
 
 ```
  1. Query Input
     ↓
- 2. Domain Detection  (VCC / FastAPI / General — triggers template selection)
+ 2. Planner Node  (LangGraph rule-based strategy: semantic-first vs hybrid-first)
     ↓
  3. Query Embedding   (all-MiniLM-L6-v2 → 384-dim vector)
     ↓
- 4. Semantic Retrieval (`ChromaDBStore` abstraction over ChromaDB cosine similarity, top-5)
+ 4. Retrieval Node(s) (`Retriever` / `HybridRetriever` over `ChromaDBStore`, top-k)
     ↓
- 5. Confidence Check  (1 − mean(distances), threshold 0.65)
+ 5. Evaluate Node  (relevance threshold 0.65)
     │
-    ├─ ≥ 0.65 → use semantic results
-    └─ < 0.65 → Hybrid Fallback (BM25 + semantic, choose best)
+   ├─ relevant → generate
+   └─ not relevant → graceful reject
     ↓
  6. Prompt Construction (LangChain template + domain config + acronym map)
     ↓
@@ -86,6 +86,26 @@ This document consolidates the four supporting references into one readable deep
     ↓
  8. Response Delivery  (answer + sources + confidence + response_time)
 ```
+
+### 1.5 LangGraph Implementation (Stateful Orchestration)
+
+The backend now runs query orchestration through a minimal LangGraph pipeline in
+`backend/app/rag/agent_graph.py`:
+
+- `planner` node: classifies query shape and chooses `semantic_first` or `hybrid_first`
+- retrieval nodes: `semantic_retrieve` and `hybrid_retrieve`
+- `evaluate` node: checks relevance threshold and routes to `generate` or finish
+- `generate` node: wraps prompt construction and LLM generation
+
+State is tracked in `RAGAgentState` (including `planned_strategy`, `query_type`,
+`relevance_score`, and `decision_path`). This gives request-level decision
+traceability without changing API UX.
+
+For demos and inspection:
+
+- Backend exposes Mermaid graph text at `/api/v1/rag/graph/mermaid`
+- Frontend includes an in-app graph viewer (`GraphViewer`) that renders the
+  orchestration diagram directly.
 
 ### 1.3 Key Design Decisions
 
@@ -438,5 +458,5 @@ The evaluation framework was the highest single time investment — and the high
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** March 10, 2026  
+**Last Updated:** March 12, 2026  
 **Status:** Complete — standalone deep-dive companion

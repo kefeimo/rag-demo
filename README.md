@@ -28,7 +28,9 @@ This project demonstrates a production-ready RAG pipeline applied to the **Visa 
 - ✅ **Vector Store Abstraction** (`backend/app/rag/chromadb_store.py`) as a single interface for ChromaDB client/collection operations
 - ✅ **OpenAI GPT-3.5-turbo** with LangChain prompt templates and domain awareness
 - ✅ **React Frontend** (Vite + Tailwind CSS) with query history and confidence indicators
-- ✅ **LangChain** orchestration for RAG pipeline with domain-specific prompts
+- ✅ **LangGraph Stateful Orchestration** (`backend/app/rag/agent_graph.py`) with planner + conditional routing
+- ✅ **Graph Visualization** via backend Mermaid endpoint and frontend in-app graph viewer
+- ✅ **LangChain** prompt orchestration for domain-specific generation
 - ✅ **RAGAS Evaluation** framework with up to 6 metrics (faithfulness, answer relevancy, context precision, context recall, context entity recall, answer correctness)
 - ✅ **Production Differentiation:**
   - Source attribution in all responses with document metadata
@@ -37,7 +39,7 @@ This project demonstrates a production-ready RAG pipeline applied to the **Visa 
   - Query history tracking with last 10 queries
   - Response time monitoring and API versioning
   - Confidence indicators with visual feedback (green/yellow/red)
-  - Agent-style multi-step pipeline with validation (semantic search → confidence check → hybrid BM25 fallback → LLM generation or graceful rejection)
+  - Agent-style graph pipeline with validation (`planner` → retrieval → evaluate → generate/reject)
 
 ---
 
@@ -187,6 +189,11 @@ curl http://localhost:8000/health
 # Response: {"status": "healthy"}
 ```
 
+**LangGraph Mermaid (for demo/inspection):**
+```bash
+curl http://localhost:8000/api/v1/rag/graph/mermaid
+```
+
 **API Documentation:**
 Interactive API docs at http://localhost:8000/docs (Swagger UI)
 
@@ -273,6 +280,7 @@ For a detailed breakdown of components and data flow, see **[docs/ARCHITECTURE.m
 - **ChromaDB 0.4.24** - Vector database for semantic search
 - **ChromaDBStore abstraction** - Centralized vector-store layer used by ingestion/retrieval/hybrid modules
 - **OpenAI GPT-3.5-turbo** - Production LLM for generation
+- **LangGraph 1.x** - Stateful graph orchestration and planner/routing nodes
 - **LangChain 0.3.14** - Prompt templates and RAG orchestration
 - **sentence-transformers** - all-MiniLM-L6-v2 embeddings (384 dimensions)
 - **RAGAS 0.2.8** - Evaluation framework for RAG systems

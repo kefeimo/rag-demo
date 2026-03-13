@@ -93,4 +93,13 @@ export const checkCollectionStatus = async () => {
   }
 };
 
+/**
+ * Fetch LangGraph Mermaid diagram source from backend
+ * @returns {Promise<{graph: string, mermaid: string}>}
+ */
+export const getRagGraphMermaid = async () => {
+  const response = await apiClient.get('/api/v1/rag/graph/mermaid');
+  return response.data;
+};
+
 export default apiClient;

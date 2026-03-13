@@ -21,13 +21,12 @@ VCC was chosen because it represents a real Visa production codebase with divers
 The system is a standard RAG pipeline with two noteworthy design choices:
 
 ```
-Query → Embedding (all-MiniLM-L6-v2, 384-dim, GPU-accelerated)
-    → Vector Retrieval (`ChromaDBStore` over ChromaDB, cosine similarity, top-5)
-      → [Hybrid Fallback: BM25 + semantic fusion if confidence < 0.65]
-      → Confidence Check (threshold: 0.65 — reject or proceed)
-      → Domain-Aware Prompt (LangChain template with VCC acronym mappings)
-      → LLM Generation (OpenAI GPT-3.5-turbo)
-      → Response with sources + confidence score
+Query → Planner Node (LangGraph, rule-based query-shape routing)
+        → Retrieval Node(s) (`Retriever` / `HybridRetriever` via `ChromaDBStore`)
+            → Confidence Evaluation (threshold: 0.65 — reject or proceed)
+            → Domain-Aware Prompt (LangChain template with VCC acronym mappings)
+            → LLM Generation (OpenAI GPT-3.5-turbo)
+            → Response with sources + confidence score
 ```
 
 **Key design decisions:**
@@ -85,6 +84,8 @@ Hybrid confidence:         0.78 (above threshold → answered correctly)
 
 ### Production-Readiness Features
 
+- **Stateful orchestration graph** — query flow runs through `LangGraphRAGPipeline` (`planner` → retrieval → evaluate → generate/reject), with node-path traceability in logs
+- **Graph visualization endpoint + UI** — backend exposes `/api/v1/rag/graph/mermaid`; frontend renders graph for demo/debug
 - **Confidence-gated rejection** — queries below 0.65 receive an explicit "unable to answer" rather than a hallucinated response
 - **UI transparency** — confidence score displayed per response with colour-coded warnings; collapsible source attribution
 - **Query-result caching** — in-memory cache in the React frontend keyed by `collection:query`, eliminating repeat API calls

@@ -21,9 +21,8 @@ from app.models import (
 )
 from app import __version__
 from app.rag.ingestion import ingest_documents, ingest_vcc_documents
-from app.rag.retrieval import Retriever
 from app.rag.hybrid_retrieval import HybridRetriever
-from app.rag.generation import get_llm_client, generate_answer, extract_sources
+from app.rag.agent_graph import LangGraphRAGPipeline
 
 # Configure logging
 logging.basicConfig(
@@ -55,6 +54,9 @@ KNOWN_COLLECTIONS = ["fastapi_docs", "vcc_docs"]
 
 # Per-collection HybridRetriever cache (building BM25 index is expensive)
 hybrid_retrievers: dict = {}
+
+# Minimal LangGraph orchestration wrapper around current RAG flow
+rag_pipeline = LangGraphRAGPipeline(hybrid_retrievers=hybrid_retrievers)
 
 
 @asynccontextmanager
@@ -127,45 +129,35 @@ async def query_rag(request: QueryRequest):
     logger.info(f"Using collection: {collection}")
 
     try:
-        # Strategy: Try semantic-only first (handles most queries well)
-        # If retrieval relevance is low, try hybrid search (handles edge cases like exact API names)
-        retriever = Retriever(collection_name=collection)
-        logger.info("Trying semantic-only search first")
-        retrieval_result = retriever.retrieve(request.query, top_k=request.top_k)
+        pipeline_state = rag_pipeline.run(
+            query=request.query,
+            top_k=request.top_k,
+            collection=collection,
+        )
 
-        # If retrieval relevance is low and a hybrid retriever exists for this collection, try it
-        hybrid_retriever = hybrid_retrievers.get(collection)
-        if retrieval_result.get("relevance_score", 0.0) < 0.65 and hybrid_retriever is not None:
-            logger.info(f"Semantic relevance score {retrieval_result['relevance_score']:.3f} < 0.65, trying hybrid search")
-            hybrid_result = hybrid_retriever.search(request.query, top_k=request.top_k)
+        logger.info(
+            "Orchestration trace: strategy=%s, query_type=%s, path=%s",
+            pipeline_state.get("planned_strategy", "unknown"),
+            pipeline_state.get("query_type", "unknown"),
+            " -> ".join(pipeline_state.get("decision_path", [])),
+        )
 
-            # Use whichever has higher relevance score
-            if hybrid_result.get("relevance_score", 0.0) > retrieval_result.get("relevance_score", 0.0):
-                logger.info(f"Using hybrid search (relevance={hybrid_result['relevance_score']:.3f} > semantic={retrieval_result['relevance_score']:.3f})")
-                retrieval_result = hybrid_result
-            else:
-                logger.info(f"Keeping semantic-only (relevance={retrieval_result['relevance_score']:.3f} >= hybrid={hybrid_result['relevance_score']:.3f})")
-        elif retrieval_result.get("relevance_score", 0.0) >= 0.65:
-            logger.info(f"Semantic relevance score {retrieval_result['relevance_score']:.3f} >= 0.65, using semantic-only")
-        else:
-            logger.info("Hybrid retriever not available for this collection, using semantic-only result")
-        
-        # Check for errors
-        if "error" in retrieval_result:
-            logger.error(f"Retrieval error: {retrieval_result['error']}")
+        # Check for retrieval/generation errors
+        if pipeline_state.get("error"):
+            logger.error(f"RAG pipeline error: {pipeline_state['error']}")
             response_time = time.time() - start_time
             return QueryResponse(
                 query=request.query,
-                answer=f"Error retrieving documents: {retrieval_result['error']}. Please ensure documents have been ingested first.",
+                answer=f"Error retrieving documents: {pipeline_state['error']}. Please ensure documents have been ingested first.",
                 sources=[],
                 relevance_score=0.0,
                 model=settings.llm_provider,
                 response_time=response_time,
                 api_version=__version__
             )
-        
-        documents = retrieval_result.get("documents", [])
-        overall_relevance = retrieval_result.get("relevance_score", 0.0)
+
+        documents = pipeline_state.get("documents", [])
+        overall_relevance = pipeline_state.get("relevance_score", 0.0)
         
         # Debug: Log document details
         logger.info(f"Retrieved {len(documents)} documents with relevance score {overall_relevance:.3f}")
@@ -173,14 +165,11 @@ async def query_rag(request: QueryRequest):
             logger.info(f"First document keys: {list(documents[0].keys())}")
             logger.info(f"First document content length: {len(documents[0].get('content', ''))} chars")
         
-        # Check relevance threshold (use Retriever for consistency)
-        temp_retriever = Retriever()
-        is_relevant, relevance_msg = temp_retriever.check_relevance(overall_relevance)
-        logger.info(f"Relevance check: is_relevant={is_relevant}, message={relevance_msg}")
+        is_relevant = pipeline_state.get("is_relevant", False)
+        logger.info(f"Relevance check: is_relevant={is_relevant}, score={overall_relevance:.3f}")
         
         if not documents or not is_relevant:
             logger.warning(f"Rejecting query - documents: {len(documents)}, is_relevant: {is_relevant}, relevance_score: {overall_relevance:.3f}")
-            logger.warning(f"Relevance message: {relevance_msg}")
             help_text = get_help_text_for_collection()
             response_time = time.time() - start_time
             return QueryResponse(
@@ -193,17 +182,8 @@ async def query_rag(request: QueryRequest):
                 api_version=__version__
             )
         
-        # Generate answer using LLM
-        logger.info("Generating answer with LLM...")
-        llm_client = get_llm_client()
-        answer = generate_answer(
-            query=request.query,
-            retrieved_documents=documents,
-            llm_client=llm_client
-        )
-        
-        # Format sources for response
-        sources = extract_sources(documents)
+        answer = pipeline_state.get("answer", "")
+        sources = pipeline_state.get("sources", [])
         
         response_time = time.time() - start_time
         logger.info(f"Query completed successfully (relevance_score: {overall_relevance:.3f}, time: {response_time:.2f}s)")
@@ -220,6 +200,15 @@ async def query_rag(request: QueryRequest):
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+@app.get("/api/v1/rag/graph/mermaid", tags=["RAG"])
+async def rag_graph_mermaid():
+    """Return the current RAG LangGraph diagram as Mermaid source for demos."""
+    return {
+        "graph": "langgraph",
+        "mermaid": rag_pipeline.get_mermaid(),
+    }
 
 
 @app.post("/api/v1/ingest", response_model=IngestResponse, tags=["Admin"])
