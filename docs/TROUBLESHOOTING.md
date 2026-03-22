@@ -25,8 +25,9 @@ docker compose -f docker-compose-dev.yml up
 
 Or manually trigger ingestion:
 ```bash
-docker compose exec backend python ingest_visa_docs.py
-docker compose exec backend python ingest_fastapi_docs.py
+curl -X POST http://localhost:8000/api/v1/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"document_path": "data/documents", "force_reingest": false}'
 ```
 
 ---
@@ -90,8 +91,8 @@ RUN pip install gpt4all && \
 
 ### 7. Low Confidence Scores (<0.65)
 - Re-ingest documents if collection is empty or stale
-- Rephrase queries: `"What is VCC?"` → `"What is Visa Chart Components?"`
-- The frontend toggle must match the ingested collection (`VCC Docs` vs `FastAPI Docs`)
+- Rephrase queries with more specific terms
+- Ensure documents have been properly ingested
 
 ---
 

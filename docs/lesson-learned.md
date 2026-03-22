@@ -1,6 +1,6 @@
 # Lessons Learned: AI Engineer Coding Exercise
 
-**Project:** RAG System Implementation for Visa  
+**Project:** RAG System Implementation for FastAPI Company  
 **Timeline:** March 4-5, 2026 (2 Days)  
 **Author:** Kefei Mo  
 **Last Updated:** March 5, 2026

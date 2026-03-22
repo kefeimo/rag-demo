@@ -157,15 +157,15 @@ curl -X POST "http://localhost:8000/api/v1/query" \
 **Response Format:**
 ```json
 {
-  "answer": "Visa Chart Components (VCC) is...",
+  "answer": "FastAPI is a modern, fast web framework...",
   "confidence": 0.847,
   "sources": [
     {
-      "content": "VCC provides...",
+      "content": "FastAPI provides...",
       "metadata": {
         "source": "docs/README.md",
         "chunk_id": "chunk_0",
-        "doc_type": "repo_docs"
+        "doc_type": "markdown_docs"
       },
       "confidence": 0.889
     }
@@ -201,10 +201,7 @@ cd backend
 source venv/bin/activate
 
 # Ingest FastAPI docs
-python ingest_fastapi_docs.py
-
-# Or ingest VCC docs
-python ingest_visa_docs.py
+python -m app.rag.ingestion
 ```
 
 2. **Update Query Collection:**
@@ -242,8 +239,6 @@ The frontend tracks your last 10 queries:
 - [docs/TECH-STACK-RATIONALE.md](docs/TECH-STACK-RATIONALE.md) — why each technology was chosen
 - [docs/REFACOTRING-PROMPT-IMPROVEMENT.md](docs/REFACOTRING-PROMPT-IMPROVEMENT.md) — prompt engineering iteration notes
 - [docs/REFERENCE-RAGAS-METRICS.md](docs/REFERENCE-RAGAS-METRICS.md) — metrics definitions and interpretation
-- [docs/VCC-BASELINE-SUMMARY.md](docs/VCC-BASELINE-SUMMARY.md) — VCC query baseline results
-- [data-pipeline/GOLDEN-TEST-CASES.md](data-pipeline/GOLDEN-TEST-CASES.md) — curated high-quality test queries
 
 ---
 
@@ -254,7 +249,6 @@ ai-engineer-coding-exercise/
 ├── backend/          # FastAPI app, RAG pipeline, ingestion scripts
 ├── frontend/         # React + Vite + Tailwind CSS UI
 ├── evaluation/       # RAGAS evaluation framework
-├── data-pipeline/    # VCC document extraction tools
 ├── data/             # ChromaDB persistence, source docs, test queries
 ├── docs/             # Architecture, planning, and evaluation reports
 ├── docker-compose.yml
@@ -359,14 +353,13 @@ Full-Stack AI Engineer Candidate
 
 ## 📄 License
 
-This project is created as a coding exercise for the **Visa Full-Stack AI Engineer** position.  
+This project demonstrates a production-ready RAG system implementation.
 All code is original work by Kefei Mo, March 2026.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Visa Chart Components Team** for the excellent documentation that served as the dataset
 - **FastAPI Community** for the comprehensive tutorials and guides
 - **LangChain** for prompt template abstractions
 - **RAGAS** for the evaluation framework

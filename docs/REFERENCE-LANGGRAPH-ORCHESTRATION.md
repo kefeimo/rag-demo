@@ -147,7 +147,7 @@ app = graph.compile()
 
 result = app.invoke({
     "query": "What is IDataTableProps?",
-    "collection": "vcc_docs",
+    "collection": "fastapi_docs",
     "top_k": 5,
     "decision_path": [],
 })

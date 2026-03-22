@@ -2,11 +2,11 @@
 
 ## Background
 
-The current implementation separates the FastAPI and VCC corpora primarily by **collection name** (`fastapi_docs` vs `vcc_docs`), not by embedding strategy. Both corpora share the same embedding model (`sentence-transformers/all-MiniLM-L6-v2`). The separation is mostly a **metadata and schema concern**, not an embedding concern.
+The current implementation separates the FastAPI and FastAPI corpora primarily by **collection name** (`fastapi_docs` vs `fastapi_docs`), not by embedding strategy. Both corpora share the same embedding model (`sentence-transformers/all-MiniLM-L6-v2`). The separation is mostly a **metadata and schema concern**, not an embedding concern.
 
 ### Current Metadata Richness (Asymmetry)
 
-| Field | FastAPI docs | VCC docs |
+| Field | FastAPI docs | FastAPI docs |
 |---|---|---|
 | `source` | ✅ | ✅ |
 | `filename` / `file_path` | ✅ | ✅ |
@@ -19,7 +19,7 @@ The current implementation separates the FastAPI and VCC corpora primarily by **
 | `component`, `source_language` | — | ✅ (code-docs) |
 | `generation_method` | — | ✅ (code-docs) |
 
-FastAPI metadata is significantly thinner than VCC metadata. This gap is a refactor target.
+FastAPI metadata is significantly thinner than FastAPI metadata. This gap is a refactor target.
 
 ---
 
@@ -30,7 +30,7 @@ FastAPI metadata is significantly thinner than VCC metadata. This gap is a refac
 - The query endpoint correctly selects the collection from the request (falling back to the default setting) and passes it into retrieval. ([`backend/app/main.py`](../backend/app/main.py))
 - However, prompt construction infers the "domain" from `settings.chroma_collection_name` — a **global setting** — not from the actual request collection. ([`backend/app/rag/generation.py`](../backend/app/rag/generation.py))
 
-**Consequence:** If the default env collection is `vcc_docs` and the user queries `fastapi_docs`, retrieval uses the correct collection while prompt construction still thinks it is in the VCC domain (or vice versa). Retrieval and generation are out of sync.
+**Consequence:** If the default env collection is `fastapi_docs` and the user queries `fastapi_docs`, retrieval uses the correct collection while prompt construction still thinks it is in the FastAPI domain (or vice versa). Retrieval and generation are out of sync.
 
 ---
 
@@ -38,7 +38,7 @@ FastAPI metadata is significantly thinner than VCC metadata. This gap is a refac
 
 The current frontend toggle in [`frontend/src/App.jsx`](../frontend/src/App.jsx) simultaneously acts as:
 
-1. **Corpus selector** — switches between `fastapi_docs` and `vcc_docs`
+1. **Corpus selector** — switches between `fastapi_docs` and `fastapi_docs`
 2. **App identity switch** — changes the page title and subtitle
 3. **UX mode switch** — changes placeholder text and example queries
 4. **Evaluation control** — implicitly drives which collection is tested
@@ -56,7 +56,7 @@ This is why the toggle feels like two separate apps stapled together rather than
 Pass the **actual request collection or corpus** into prompt generation, instead of inferring domain from `settings.chroma_collection_name`.
 
 - Add a `corpus` or `collection_name` parameter to the prompt-construction function
-- Derive domain (`fastapi` | `vcc` | `general`) from that parameter at request time
+- Derive domain (`fastapi` | `fastapi` | `general`) from that parameter at request time
 - Remove the global settings dependency for domain selection
 
 **File:** [`backend/app/main.py`](../backend/app/main.py)
@@ -82,13 +82,13 @@ Pass the **actual request collection or corpus** into prompt generation, instead
 
 **File:** [`frontend/src/App.jsx`](../frontend/src/App.jsx)
 
-Change the toggle from a binary `FastAPI ↔ VCC` switch to a three-option scope selector:
+Change the toggle from a binary `FastAPI ↔ FastAPI` switch to a three-option scope selector:
 
 | Option | Collection / Behavior |
 |---|---|
 | All docs *(default)* | Search both corpora (auto-route or merged) |
 | FastAPI only | Filter to `fastapi_docs` |
-| VCC only | Filter to `vcc_docs` |
+| FastAPI only | Filter to `fastapi_docs` |
 
 This answers the UX concern without losing evaluation isolation. Normal review/demo usage defaults to `All docs`; targeted evaluation scripts can still explicitly request a corpus.
 
@@ -98,7 +98,7 @@ This answers the UX concern without losing evaluation isolation. Normal review/d
 
 **File:** [`backend/app/rag/ingestion.py`](../backend/app/rag/ingestion.py)
 
-Enrich FastAPI doc metadata to match the spirit of the VCC side, adding:
+Enrich FastAPI doc metadata to match the spirit of the FastAPI side, adding:
 
 | Field | Value |
 |---|---|
@@ -119,14 +119,14 @@ This enables metadata-driven filtering and better source display in the frontend
 Merge both corpora into a single collection with a normalized metadata schema:
 
 ```
-corpus:          fastapi | vcc
+corpus:          fastapi | fastapi
 doc_family:      repo_docs | code_docs | api_docs | markdown_docs
 doc_type:        (existing values)
-api_type:        (vcc-specific)
-api_name:        (vcc-specific)
-package:         (vcc-specific)
-source_language: (vcc-specific)
-framework:       fastapi | (empty for vcc)
+api_type:        (fastapi-specific)
+api_name:        (fastapi-specific)
+package:         (fastapi-specific)
+source_language: (fastapi-specific)
+framework:       fastapi | (empty for fastapi)
 ```
 
 **Pros:** Single retrieval path, simpler routing, easier `All docs` default  
@@ -134,10 +134,10 @@ framework:       fastapi | (empty for vcc)
 
 ### Option 2: Keep Separate Collections, Add Routing + Optional Scope Filter ✅ Recommended next step
 
-Preserve the existing `fastapi_docs` / `vcc_docs` split (low risk, no re-ingestion needed) and:
+Preserve the existing `fastapi_docs` / `fastapi_docs` split (low risk, no re-ingestion needed) and:
 
 - Default UX = `All docs` (auto-route or fan-out to both collections)
-- Advanced option = `FastAPI only` / `VCC only` scope filters
+- Advanced option = `FastAPI only` / `FastAPI only` scope filters
 - Evaluation scripts continue to run corpus-specific tests cleanly
 
 **Option 2 is the better immediate next step** because it preserves the existing evaluation separation while eliminating the weirdness for normal users.
@@ -157,7 +157,7 @@ Preserve the existing `fastapi_docs` / `vcc_docs` split (low risk, no re-ingesti
 
 ## Interview Framing
 
-> I originally used the toggle to keep FastAPI and VCC evaluation isolated, because the corpora have different structures and different metadata richness. In the current implementation they are separated mostly by collection, not by embedding strategy. The next refactor would be to make the user-facing control a search scope filter instead of switching the app identity, and to pass corpus/domain explicitly through the backend so prompt construction and retrieval stay aligned. Longer term I'd either unify the corpora under a shared metadata schema or keep separate indexes with automatic routing plus optional corpus filters.
+> I originally used the toggle to keep FastAPI and FastAPI evaluation isolated, because the corpora have different structures and different metadata richness. In the current implementation they are separated mostly by collection, not by embedding strategy. The next refactor would be to make the user-facing control a search scope filter instead of switching the app identity, and to pass corpus/domain explicitly through the backend so prompt construction and retrieval stay aligned. Longer term I'd either unify the corpora under a shared metadata schema or keep separate indexes with automatic routing plus optional corpus filters.
 
 ---
 

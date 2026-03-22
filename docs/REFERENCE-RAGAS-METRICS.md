@@ -1,6 +1,6 @@
 # RAGAS Metrics Reference Guide
 
-**Reference Document for VCC RAG Evaluation**  
+**Reference Document for FastAPI RAG Evaluation**  
 **Date:** March 5, 2026  
 **Source:** Day 4 RAGAS Study Materials  
 **Purpose:** Standard RAGAS metric definitions for evaluation consistency
@@ -9,7 +9,7 @@
 
 ## 🎯 Overview
 
-This document defines the **5 core RAGAS metrics** used for evaluating the VCC RAG system, plus one additional metric for entity-heavy domains. All evaluation reports and analysis should reference these standard definitions.
+This document defines the **5 core RAGAS metrics** used for evaluating the FastAPI RAG system, plus one additional metric for entity-heavy domains. All evaluation reports and analysis should reference these standard definitions.
 
 ### The 5 Standard RAGAS Metrics
 
@@ -105,7 +105,7 @@ Context Precision = (1.0 + 0.67 + 0.60) / 3 = 0.757
 | 0.60-0.74 | ⚠️ Fair | Noticeable noise in retrieval |
 | <0.60 | ❌ Poor | Too much noise, tune ranking |
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.75
 - **Current:** 0.989 ✅ (Excellent)
 
@@ -192,7 +192,7 @@ Context Recall = 2/3 = 0.667
 | 0.60-0.74 | ⚠️ Fair | Missing some key info |
 | <0.60 | ❌ Poor | Significant gaps in retrieval |
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.70
 - **Current:** 0.975 ✅ (Excellent)
 
@@ -297,7 +297,7 @@ Context Entity Recall = 1/3 = 0.333
 
 **Example:**
 - Reference: "Use `IDataTableProps` interface with `accessibility` prop"
-- Context mentions: "data table properties interface" and "a11y features"
+- Context mentions: "data table properties interface" and "accessibility features"
 
 **Context Recall**: 1.0 ✅ (can INFER both facts)  
 **Entity Recall**: 0.0 ❌ (neither exact entity string present)
@@ -326,16 +326,16 @@ Context Entity Recall = 1/3 = 0.333
 - Entities are not central to your domain
 - You care more about overall information completeness
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.30 (technical documentation baseline)
 - **Good:** ≥0.50
 - **Current:** 0.446 ⚠️ (Fair - acceptable for API documentation with many exact terms)
 
-### VCC Analysis
+### FastAPI Analysis
 
-**Why VCC's entity recall is lower (0.446):**
+**Why FastAPI's entity recall is lower (0.446):**
 1. **Many exact API names:** IDataTableProps, IAccessibilityType, etc.
-2. **Strict matching:** "accessibility" ≠ "a11y" in entity extraction
+2. **Strict matching:** "accessibility" ≠ "accessibility" in entity extraction
 3. **Technical domain:** Requires precise terminology matching
 
 **This is normal!** Context Recall at 1.000 shows retrieval is comprehensive. Entity recall at 0.446 is acceptable for technical docs.
@@ -424,7 +424,7 @@ Faithfulness = 2/5 = 0.40 (60% hallucination rate! 🚨)
 | 0.60-0.74 | ⚠️ Fair | Noticeable hallucinations |
 | <0.60 | ❌ Poor | Critical hallucination issue |
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.70
 - **Current:** 0.730 ✅ (Good)
 
@@ -514,7 +514,7 @@ Answer: "Use Docker to package the application..."
 | 0.60-0.74 | ⚠️ Fair | Some off-topic content |
 | <0.60 | ❌ Poor | Answer doesn't address question |
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.75
 - **Current:** 0.656 ❌ (Below target - LLM upgrade needed)
 
@@ -611,13 +611,13 @@ Answer Correctness = 0.667
 | 0.60-0.74 | ⚠️ Fair | Some factual errors |
 | <0.60 | ❌ Poor | Significant inaccuracies |
 
-### Target for VCC System
+### Target for FastAPI System
 - **Minimum:** ≥0.70
 - **Current:** Not measured (requires ground truth answers)
 
 ---
 
-## 📊 VCC Baseline Performance Summary
+## 📊 FastAPI Baseline Performance Summary
 
 ### Current Metrics (Semantic-Only Baseline)
 
@@ -703,8 +703,8 @@ The following are **NOT** RAGAS metrics but may be useful for operational monito
 - GitHub: https://github.com/explodinggradients/ragas
 - Docs: https://docs.ragas.io/
 
-**VCC Evaluation Documents:**
-- [VCC-BASELINE-SUMMARY.md](./VCC-BASELINE-SUMMARY.md) - Baseline evaluation results
+**FastAPI Evaluation Documents:**
+- [FastAPI-BASELINE-SUMMARY.md](./FastAPI-BASELINE-SUMMARY.md) - Baseline evaluation results
 - [HYBRID-SEARCH-CASE-STUDY.md](./HYBRID-SEARCH-CASE-STUDY.md) - Retrieval improvements
 
 **Study Materials:**
@@ -716,5 +716,5 @@ The following are **NOT** RAGAS metrics but may be useful for operational monito
 
 **Document Status:** ✅ Reference Standard  
 **Last Updated:** March 5, 2026, 18:00  
-**Maintained By:** VCC RAG Evaluation Team  
+**Maintained By:** FastAPI RAG Evaluation Team  
 **Version:** 1.1 (Added Context Entity Recall definition)

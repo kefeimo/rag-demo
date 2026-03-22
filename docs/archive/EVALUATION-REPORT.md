@@ -27,9 +27,9 @@ This report presents the evaluation results of a Retrieval-Augmented Generation 
 1. **Relevance:** FastAPI is the backend framework used in the assignment, demonstrating domain alignment
 2. **Quality:** Official documentation is well-structured, comprehensive, and authoritative
 3. **Scope:** 13 files provide sufficient content (~252 chunks) without being overwhelming for a 2-day exercise
-4. **Practical:** Saves 2-3 hours compared to exploring unfamiliar Visa repositories
+4. **Practical:** Saves 2-3 hours compared to exploring unfamiliar repositories
 
-**Alternative Considered:** Visa public GitHub repositories
+**Alternative Considered:** Other public GitHub repositories
 - **Rejected because:** Requires significant time to explore, understand context, and select appropriate repos
 - **Trade-off:** More time for evaluation quality and production patterns
 

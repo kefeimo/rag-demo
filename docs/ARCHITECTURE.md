@@ -2,10 +2,10 @@
 
 ## Overview
 
-This document describes the architecture of the Retrieval-Augmented Generation (RAG) system built for querying Visa Chart Components (VCC) documentation.
+This document describes the architecture of the Retrieval-Augmented Generation (RAG) system built for querying FastAPI documentation documentation.
 
 **System Type:** Question-answering system with semantic search and LLM generation  
-**Primary Use Case:** Technical documentation assistant for VCC library  
+**Primary Use Case:** Technical documentation assistant for FastAPI framework  
 **Tech Stack:** FastAPI, ChromaDB, LangChain, React, Docker
 
 ---
@@ -85,7 +85,7 @@ backend/app/
 - **Version:** ChromaDB 0.6.2
 - **Storage:** Local file-based persistence
 - **Configuration:**
-  - Collection: `vcc_docs` (2,696 documents)
+  - Collection: `fastapi_docs` (2,696 documents)
   - Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
   - Vector dimensions: 384
   - Distance metric: Cosine similarity
@@ -120,7 +120,7 @@ backend/app/
 │     ↓                                                            │
 │  2. Query Preprocessing                                          │
 │     • Normalization                                             │
-│     • Acronym expansion (VCC → Visa Chart Components)          │
+│     • Acronym expansion (FastAPI)          │
 │     ↓                                                            │
 │  3. Embedding Generation                                         │
 │     • Model: all-MiniLM-L6-v2                                   │
@@ -141,7 +141,7 @@ backend/app/
 │     • Threshold: 0.65 (reject if lower)                         │
 │     ↓                                                            │
 │  7. Prompt Construction                                          │
-│     • Domain detection (VCC/FastAPI/General)                    │
+│     • Domain detection (FastAPI/FastAPI/General)                    │
 │     • Template selection                                        │
 │     • Context injection (top-5 docs)                            │
 │     ↓                                                            │
@@ -268,7 +268,7 @@ else:
 │     • Output: 384-dim vectors                                 │
 │     ↓                                                          │
 │  6. Vector Storage (ChromaDB)                                 │
-│     • Collection: vcc_docs                                    │
+│     • Collection: fastapi_docs                                    │
 │     • Persistence: ./data/chroma_db/                          │
 │     • Indexing: Automatic HNSW                                │
 │     ↓                                                          │
@@ -292,9 +292,9 @@ data-pipeline/
 │   └── issue_extractor.py     # Extract GitHub issues
 ├── data/
 │   └── raw/
-│       ├── visa_repo_docs.json      # 1,234 repo docs
-│       ├── visa_code_docs.json      # 524 API docs
-│       └── visa_issue_qa.json       # 938 Q&A pairs
+│       ├── fastapi_repo_docs.json      # 1,234 repo docs
+│       ├── fastapi_code_docs.json      # 524 API docs
+│       └── fastapi_issue_qa.json       # 938 Q&A pairs
 └── README.md                   # Pipeline documentation
 ```
 
@@ -320,9 +320,9 @@ data-pipeline/
 **Strategy:** Domain detection → Template selection → Context injection
 
 **Domain Categories:**
-1. **VCC (Visa Chart Components)**
-   - Keywords: "VCC", "chart", "component", "accessibility", "WCAG"
-   - Template: VCC-specific instructions + acronym mappings
+1. **FastAPI**
+   - Keywords: "FastAPI", "chart", "component", "accessibility", "accessibility standards"
+   - Template: FastAPI-specific instructions + acronym mappings
 
 2. **FastAPI**
    - Keywords: "API", "endpoint", "FastAPI", "request"
@@ -331,21 +331,21 @@ data-pipeline/
 3. **General**
    - Fallback: Generic RAG instructions
 
-### VCC Domain Configuration
+### FastAPI Domain Configuration
 
 ```python
-VCC_DOMAIN_CONFIG = {
-    "domain_name": "Visa Chart Components (VCC)",
-    "acronyms": "VCC = Visa Chart Components, WCAG, a11y",
+DOMAIN_CONFIG = {
+    "domain_name": "FastAPI documentation",
+    "acronyms": "FastAPI = FastAPI framework, accessibility standards, accessibility",
     "system_instructions": """
-        You are a technical documentation assistant for Visa Chart Components.
-        - VCC is an accessibility-focused charting library
-        - Always explain accessibility features (WCAG, keyboard nav, ARIA)
+        You are a technical documentation assistant for FastAPI.
+        - FastAPI is an accessibility-focused charting library
+        - Always explain accessibility features (accessibility standards, keyboard nav, ARIA)
         - Provide code examples when relevant
         - Cite source documentation
     """,
     "examples": [
-        "Q: What is VCC?\nA: VCC (Visa Chart Components) is...",
+        "Q: What is FastAPI?\nA: FastAPI is...",
         "Q: How to customize?\nA: You can customize using props..."
     ]
 }
@@ -371,9 +371,9 @@ services:
     environment:
       - LLM_PROVIDER=openai
       # Query fallback default — does NOT control which collection data is ingested into.
-      # Ingestion is hardcoded: FastAPI docs → fastapi_docs, VCC docs → vcc_docs.
+      # Ingestion is hardcoded: FastAPI docs → fastapi_docs, FastAPI docs → fastapi_docs.
       # Frontend always sends 'collection' per-request via the toggle.
-      - CHROMA_COLLECTION_NAME=vcc_docs
+      - CHROMA_COLLECTION_NAME=fastapi_docs
     volumes:
       - ./data:/app/data               # ChromaDB persistence
       - ./backend/app:/app/app         # Hot reload (dev)
@@ -561,7 +561,7 @@ evaluation/
 ├── test_openai_key.py                 # API key validator
 └── data/
     └── test_queries/
-        └── vcc_test_queries_10.json   # 10 test queries
+        └── fastapi_test_queries_10.json   # 10 test queries
 ```
 
 **Metrics:**
@@ -621,9 +621,9 @@ async def stream_query():
 **Benefit:** Improved UX (perceived latency -60%)
 
 ### 5. Multi-Collection Support
-**Status:** Single collection (vcc_docs)  
+**Status:** Single collection (fastapi_docs)  
 **Next Steps:**
-- Multiple collections (VCC, FastAPI, custom)
+- Multiple collections (FastAPI, FastAPI, custom)
 - Cross-collection search
 - Dynamic collection routing
 

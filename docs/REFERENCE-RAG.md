@@ -6,7 +6,7 @@
 
 ## System Summary
 
-> *"This project implements a Retrieval-Augmented Generation system that answers questions over two documentation corpora — FastAPI docs and Visa Chart Components (VCC) docs. The frontend is a React/Vite interface; the backend is a FastAPI service that orchestrates retrieval, prompt construction, and LLM calls. Documents are ingested into ChromaDB using embeddings from either OpenAI or sentence-transformers. At query time the system tries semantic-only retrieval first, and if confidence is below a threshold it falls back to hybrid search combining BM25 keyword scoring with vector similarity. The final prompt is domain-aware — it uses different context and instructions for VCC vs FastAPI queries. I also built a RAGAS-based evaluation pipeline to measure retrieval quality and answer faithfulness against a curated test set."*
+> *"This project implements a Retrieval-Augmented Generation system that answers questions over two documentation corpora — FastAPI docs and FastAPI documentation docs. The frontend is a React/Vite interface; the backend is a FastAPI service that orchestrates retrieval, prompt construction, and LLM calls. Documents are ingested into ChromaDB using embeddings from either OpenAI or sentence-transformers. At query time the system tries semantic-only retrieval first, and if confidence is below a threshold it falls back to hybrid search combining BM25 keyword scoring with vector similarity. The final prompt is domain-aware — it uses different context and instructions for FastAPI vs FastAPI queries. I also built a RAGAS-based evaluation pipeline to measure retrieval quality and answer faithfulness against a curated test set."*
 
 ---
 
@@ -16,16 +16,15 @@ The system has two separate workflows that meet at ChromaDB.
 
 ### Ingestion Workflow (offline, prerequisite)
 
-Must run before the system can answer any query. Triggered manually via `/api/v1/ingest` (FastAPI docs) or `/api/v1/ingest/visa-docs` (VCC docs), or pre-baked into the Docker image.
 
 ```
-FastAPI docs                              VCC docs
+FastAPI docs                              FastAPI docs
 ────────────────────────────────          ──────────────────────────────────────
 Markdown files  (data/documents/)         JSON files  (data-pipeline/data/raw/)
   │  load_documents()  glob *.md            │  load_json_documents()
-  │  glob *.md recursively                  │  visa_repo_docs.json  (53 docs)
-  │                                         │  visa_code_docs.json  (210 docs)
-  │                                         │  visa_issue_qa.json   (13 docs)
+  │  glob *.md recursively                  │  fastapi_repo_docs.json  (53 docs)
+  │                                         │  fastapi_code_docs.json  (210 docs)
+  │                                         │  fastapi_issue_qa.json   (13 docs)
   └──────────────────┬──────────────────────┘
                      ▼
          DocumentLoader.chunk_text()
@@ -37,7 +36,7 @@ Markdown files  (data/documents/)         JSON files  (data-pipeline/data/raw/)
                      │
           ┌──────────┴──────────┐
           ▼                     ▼
-   fastapi_docs            vcc_docs
+   fastapi_docs            fastapi_docs
    collection              collection
    (ChromaDB)              (ChromaDB)
 ```
@@ -99,9 +98,9 @@ ingest_documents(document_path)
   └── ChromaDBStore.add(ids, embeddings, documents, metadatas)
 ```
 
-**VCC docs (JSON → `vcc_docs` collection):**
+**FastAPI docs (JSON → `fastapi_docs` collection):**
 ```
-ingest_vcc_documents(repo_docs_path, code_docs_path, issue_qa_path)
+ingest_fastapi_documents(repo_docs_path, code_docs_path, issue_qa_path)
   └── DocumentLoader.load_json_documents() # reads up to 3 JSON files, skips missing
   └── DocumentLoader.chunk_text()          # same chunking pipeline
   └── EmbeddingProvider.encode(batch)      # same embedding pipeline
@@ -271,14 +270,14 @@ combined_score = (0.4 × semantic_score) + (0.6 × bm25_score)  # per chunk
 So the classifier's only job is to answer "for this query, how much should exact keyword matching matter vs. meaning matching?" — and that answer directly changes the numbers fed into the fusion math for that request.
 
 **Why it's needed (for Level 2):**
-A fixed 50/50 split inside the hybrid retriever would underserve both extremes. `"What is IDataTableProps?"` needs BM25 to dominate (exact token is the signal). `"What is VCC?"` needs semantic to dominate (no single keyword to match). The classifier makes this ratio automatic without adding LLM latency.
+A fixed 50/50 split inside the hybrid retriever would underserve both extremes. `"What is IDataTableProps?"` needs BM25 to dominate (exact token is the signal). `"What is FastAPI?"` needs semantic to dominate (no single keyword to match). The classifier makes this ratio automatic without adding LLM latency.
 
 | Query type | Example | Semantic weight | BM25 weight |
 |---|---|---|---|
 | `api` | "What does IDataTableProps do?" | 0.4 | 0.6 |
 | `how_to` | "How do I add a tooltip?" | 0.7 | 0.3 |
 | `troubleshooting` | "Why is my chart not rendering?" | 0.6 | 0.4 |
-| `general` | "What is VCC?" | 0.7 | 0.3 |
+| `general` | "What is FastAPI?" | 0.7 | 0.3 |
 
 See **Appendix A** for full BM25 implementation details.
 
@@ -330,7 +329,7 @@ ANSWER:
 
 | Collection name contains | Domain | Acronyms injected |
 |---|---|---|
-| `visa`, `vcc`, `chart` | `vcc` | VCC, WCAG, a11y |
+| `fastapi`, `fastapi`, `chart` | `fastapi` | FastAPI, accessibility standards, accessibility |
 | `fastapi` | `fastapi` | API, ASGI, ORM |
 | anything else | `general` | — |
 
@@ -384,7 +383,7 @@ Stage 2: run_ragas_stage2_eval.py
 **Test sets (in `data/test_queries/`):**
 - `baseline_20.json` — 20 FastAPI questions, no references
 - `baseline_20_with_refs.json` — same 20 with GPT-4-generated references
-- `vcc_baseline_10.json` — 10 VCC questions
+- `fastapi_baseline_10.json` — 10 FastAPI questions
 
 `faithfulness` and `answer_relevancy` don't need a reference corpus and can be run on any query. For `context_precision` and `context_recall`, reference answers are generated using GPT-4 in Stage 1b, enabling measurement of whether the retriever surfaces the right chunks. The two-stage design allows re-running evaluation on the same query results with different metrics without hitting the RAG system again.
 
@@ -396,9 +395,9 @@ Stage 2: run_ragas_stage2_eval.py
 
 The collections were kept separate intentionally:
 
-1. **Different document structures** — FastAPI docs are narrative tutorial markdown; VCC docs combine READMEs, auto-generated API docs from code, and GitHub issue Q&A. A single embedding space would mix these signals.
+1. **Different document structures** — FastAPI docs are narrative tutorial markdown; FastAPI docs combine READMEs, auto-generated API docs from code, and GitHub issue Q&A. A single embedding space would mix these signals.
 2. **Evaluation isolation** — RAGAS metrics can be measured per corpus. Mixing them would make it hard to tell which corpus is underperforming.
-3. **Prompt differentiation** — VCC queries need `IDataTableProps`-style API name boosting and WCAG/a11y acronym handling; FastAPI queries don't. `PromptBuilder`'s domain config encodes this cleanly.
+3. **Prompt differentiation** — FastAPI queries need `IDataTableProps`-style API name boosting and accessibility standards/accessibility acronym handling; FastAPI queries don't. `PromptBuilder`'s domain config encodes this cleanly.
 4. **Future flexibility** — A query router can be added later to auto-select the collection without restructuring ingestion.
 
 ### Why vector DB over traditional keyword search?
@@ -406,7 +405,7 @@ The collections were kept separate intentionally:
 | | Traditional (Elasticsearch/BM25) | Vector (ChromaDB) |
 |---|---|---|
 | Matching | Exact keyword overlap | Semantic similarity |
-| "How do I make a chart accessible?" | Needs "accessible" in docs | Finds WCAG-related chunks even if word differs |
+| "How do I make a chart accessible?" | Needs "accessible" in docs | Finds accessibility standards-related chunks even if word differs |
 | Exact API names | Strong | Weaker |
 | Setup complexity | Higher | Lower |
 
@@ -479,7 +478,7 @@ This repo uses **both**: semantic for intent, BM25 for exact identifier precisio
 | **Retrieval** | Reranking with a cross-encoder | BM25+semantic fusion improves recall; a cross-encoder improves precision by re-scoring top-k with full pair attention |
 | **Retrieval** | Query rewriting / HyDE | Rephrase ambiguous queries before embedding; HyDE generates a hypothetical answer and embeds that instead of the raw query |
 | **Retrieval** | Iterative retrieval (query refinement) | If initial confidence is low, let a planner agent rephrase and retry before falling back to BM25 |
-| **UX** | Automatic corpus routing | Remove the manual FastAPI/VCC toggle; classify the query and select the collection automatically |
+| **UX** | Automatic corpus routing | Remove the manual FastAPI/FastAPI toggle; classify the query and select the collection automatically |
 | **Evaluation** | Continuous eval pipeline | Run RAGAS on each deployment to catch regressions; dashboard to track metric trends over time |
 | **Scale** | Chunking strategy improvements | Sentence-aware splitting, semantic chunking (split at topic boundaries rather than character count) |
 | **Reliability** | `app/dependencies.py` with `Depends()` | Enable mock retrievers in tests; decouple startup from route handlers |
@@ -515,9 +514,9 @@ At query time:
 
 BM25 scores never touch the chunk text directly — it operates entirely in token space and references chunks only by ID at the end.
 
-**API-name boosting:** Tokens that look like interface names (start with `I`, or contain `_`/`-`) are repeated 5× in the BM25 index, giving exact matches on `IDataTableProps` or `visa-charts-react` a strong weight boost.
+**API-name boosting:** Tokens that look like interface names (start with `I`, or contain `_`/`-`) are repeated 5× in the BM25 index, giving exact matches on `IDataTableProps` or `fastapi-charts-react` a strong weight boost.
 
-**Why built at startup:** Tokenizing 2696 VCC chunks takes seconds and significant memory. The `lifespan` context manager in `main.py` builds the index once and caches it in `hybrid_retrievers` dict for the process lifetime. Per-request rebuilding would add unacceptable latency.
+**Why built at startup:** Tokenizing 2696 FastAPI chunks takes seconds and significant memory. The `lifespan` context manager in `main.py` builds the index once and caches it in `hybrid_retrievers` dict for the process lifetime. Per-request rebuilding would add unacceptable latency.
 
 **Semantic vs. BM25 — key distinction:**
 

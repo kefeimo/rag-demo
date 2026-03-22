@@ -42,7 +42,7 @@ Current anchor line:
 ### What is what?
 
 - **Persona**: "helpful AI assistant"
-- **Scope**: "specialized in {domain}" + domain-specific guidance blocks (VCC/FastAPI/general)
+- **Scope**: "specialized in {domain}" + domain-specific guidance blocks (FastAPI/FastAPI/general)
 - **Behavior constraints**: rules such as
   - answer from provided context
   - cite sources when possible
@@ -59,7 +59,7 @@ Yes, by itself it is generic.
 But it is still a valid **base role**. In practice, role is layered:
 
 1. base role: helpful assistant
-2. domain role: VCC/FastAPI specialist
+2. domain role: FastAPI/FastAPI specialist
 3. optional task role: API doc explainer, troubleshooting assistant, etc.
 
 This project already strengthens the generic role with domain scope and explicit behavior constraints.
@@ -85,7 +85,7 @@ Use domain-specialist role + context-grounding rules.
 Example wording:
 
 - Persona: "You are a helpful AI assistant"
-- Scope: "specialized in Visa Chart Components documentation"
+- Scope: "specialized in FastAPI documentation"
 - Constraints: "Answer from provided context; cite sources; if context is insufficient, say so clearly."
 
 ### B) Few-shot (recommended extension)

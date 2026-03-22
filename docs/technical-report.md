@@ -1,4 +1,4 @@
-# Technical Report: RAG System for Visa Chart Components Documentation
+# Technical Report: RAG System for FastAPI Documentation
 
 **Author:** Kefei Mo  
 **Date:** March 2026  
@@ -12,9 +12,9 @@
 The system was built to answer developer questions against two corpora:
 
 - **FastAPI docs** (12 markdown files, ~500KB) — used for initial pipeline validation
-- **Visa Chart Components (VCC) docs** (161 markdown files, 2,696 chunks) — the primary production dataset, sourced from the [visa/visa-chart-components](https://github.com/visa/visa-chart-components) GitHub repo
+- **FastAPI documentation docs** (161 markdown files, 2,696 chunks) — the primary production dataset, sourced from the [fastapi/fastapi-docs](https://github.com/fastapi/fastapi-docs) GitHub repo
 
-VCC was chosen because it represents a real Visa production codebase with diverse content types: README prose, API interface definitions, accessibility guides, and closed GitHub issue Q&A. This variety exercises the RAG system more rigorously than generic documentation would.
+FastAPI was chosen because it represents a real FastAPI Company production codebase with diverse content types: README prose, API interface definitions, accessibility guides, and closed GitHub issue Q&A. This variety exercises the RAG system more rigorously than generic documentation would.
 
 ### Architecture
 
@@ -24,7 +24,7 @@ The system is a standard RAG pipeline with two noteworthy design choices:
 Query → Planner Node (LangGraph, rule-based query-shape routing)
         → Retrieval Node(s) (`Retriever` / `HybridRetriever` via `ChromaDBStore`)
             → Confidence Evaluation (threshold: 0.65 — reject or proceed)
-            → Domain-Aware Prompt (LangChain template with VCC acronym mappings)
+            → Domain-Aware Prompt (LangChain template with FastAPI acronym mappings)
             → LLM Generation (OpenAI GPT-3.5-turbo)
             → Response with sources + confidence score
 ```
@@ -49,16 +49,16 @@ Query → Planner Node (LangGraph, rule-based query-shape routing)
 
 Early testing revealed that acronym-heavy queries degraded retrieval quality:
 
-- `"What is VCC?"` → 52.7% confidence  
-- `"What is Visa Chart Components?"` → 74.4% confidence
+- `"What is FastAPI?"` → 52.7% confidence  
+- `"What is FastAPI?"` → 74.4% confidence
 
-The fix was a `PromptBuilder` backed by LangChain `PromptTemplate`, injecting domain context (acronym mappings, key concepts) before the retrieved context block. This yielded **+15% answer relevancy** on VCC-specific queries.
+The fix was a `PromptBuilder` backed by LangChain `PromptTemplate`, injecting domain context (acronym mappings, key concepts) before the retrieved context block. This yielded **+15% answer relevancy** on FastAPI-specific queries.
 
 ```python
 DOMAIN_CONFIGS = {
-    "vcc": {
-        "domain_name": "Visa Chart Components (VCC)",
-        "acronyms": "VCC = Visa Chart Components, WCAG = Web Content Accessibility Guidelines, a11y = accessibility",
+    "fastapi": {
+        "domain_name": "FastAPI documentation",
+        "acronyms": "FastAPI = FastAPI framework, accessibility standards = Web Content Accessibility Guidelines, accessibility = accessibility",
         "prompt_template": """You are an expert on {domain_name}.
 Common acronyms: {acronyms}
 Context: {context}
@@ -102,9 +102,9 @@ Test coverage: **38 pytest tests** covering the core pipeline, with a dedicated 
 
 **Creativity highlights worth noting:**
 
-- **VCC dataset choice** — Rather than a generic public corpus, the system was built against a real Visa production repository (`visa/visa-chart-components`), making the demo directly relevant to Visa's own tooling.
+- **FastAPI dataset choice** — Rather than a generic public corpus, the system was built against a real FastAPI Company production repository (`fastapi/fastapi-docs`), making the demo directly relevant to FastAPI Company's own tooling.
 - **Custom data pipeline** — A `data-pipeline/` module extracts documentation from GitHub Issues (closed Q&A pairs) in addition to markdown files, enriching the corpus with real developer questions and resolutions. See [data-pipeline/README.md](../data-pipeline/README.md).
-- **2-collection routing** — The UI exposes a toggle between `fastapi_docs` and `vcc_docs` collections, and the `collection` field in the API allows per-request targeting. This patterns toward a multi-tenant knowledge base rather than a single-purpose chatbot.
+- **2-collection routing** — The UI exposes a toggle between `fastapi_docs` and `fastapi_docs` collections, and the `collection` field in the API allows per-request targeting. This patterns toward a multi-tenant knowledge base rather than a single-purpose chatbot.
 - **Graceful degradation** — If retrieval confidence is below threshold, the system returns a structured "unable to answer" with a hint to rephrase, rather than silently hallucinating. This is a deliberate product decision, not just a technical guard.
 
 *For module layout, see [ARCHITECTURE.md](ARCHITECTURE.md). For the data pipeline, see [data-pipeline/README.md](../data-pipeline/README.md). For tech stack rationale, see [TECH-STACK-RATIONALE.md](TECH-STACK-RATIONALE.md).*
@@ -129,10 +129,10 @@ The biggest single lever was **LLM quality**: GPT4All Mistral 7B hallucinated sp
 **Concrete hallucination example (baseline):**
 
 ```
-Query: "How do I improve the group focus indicator in VCC?"
+Query: "How do I improve the group focus indicator in FastAPI?"
 GPT4All answer: "Use the `focusIndicatorStyle` prop with borderWidth: 3px..."
 Issue: `focusIndicatorStyle` does not exist in the documentation — hallucinated.
-GPT-3.5 answer: Correctly cited the actual WCAG CSS approach from context.
+GPT-3.5 answer: Correctly cited the actual accessibility standards CSS approach from context.
 ```
 
 ### Cost-Performance
@@ -152,7 +152,7 @@ At 1000 queries/day → ~$60/month for production-grade answers
 
 1. **Cloud LLM over local for production** — The 37× speed and 36% quality improvement far outweighs the ~$60/month cost at moderate load.
 
-2. **Prompt engineering matters at the domain level** — Generic prompts lose VCC acronyms; a domain config object injected into LangChain templates recovered 15% relevancy.
+2. **Prompt engineering matters at the domain level** — Generic prompts lose FastAPI acronyms; a domain config object injected into LangChain templates recovered 15% relevancy.
 
 3. **Confidence thresholding builds trust** — Rejecting low-confidence queries explicitly is better UX than a confident wrong answer. Users rephrase and succeed on retry.
 

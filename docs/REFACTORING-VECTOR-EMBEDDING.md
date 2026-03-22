@@ -140,14 +140,13 @@ curl -X POST http://localhost:8000/api/v1/ingest \
   -H "Content-Type: application/json" \
   -d '{"document_path": "../data/documents/", "force_reingest": true}'
 
-# 4. Re-ingest VCC docs
-curl -X POST http://localhost:8000/api/v1/ingest/visa-docs \
+# 4. Re-ingest FastAPI docs
   -H "Content-Type: application/json" \
   -d '{
     "force_reingest": true,
-    "repo_docs_path": "../data-pipeline/data/raw/visa_repo_docs.json",
-    "code_docs_path": "../data-pipeline/data/raw/visa_code_docs.json",
-    "issue_qa_path":  "../data-pipeline/data/raw/visa_issue_qa.json"
+    "repo_docs_path": "../data-pipeline/data/raw/fastapi_repo_docs.json",
+    "code_docs_path": "../data-pipeline/data/raw/fastapi_code_docs.json",
+    "issue_qa_path":  "../data-pipeline/data/raw/fastapi_issue_qa.json"
   }'
 ```
 

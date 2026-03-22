@@ -205,7 +205,7 @@ These parts of the current system remain valid in an agent architecture and map 
 
 ## What Is Out of Scope
 
-The following are **not** warranted for the VCC/FastAPI documentation use case and were excluded from this roadmap:
+The following are **not** warranted for the FastAPI/FastAPI documentation use case and were excluded from this roadmap:
 
 - Code execution agents — no code execution required for documentation Q&A
 - Knowledge graph agents — no structured KG in the corpus

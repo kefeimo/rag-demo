@@ -20,9 +20,9 @@ const [queryCache, setQueryCache] = useState({});
 
 // Cache format:
 {
-  "what is vcc": {                    // Normalized query (lowercase, trimmed)
-    query: "What is VCC?",            // Original query
-    answer: "VCC is...",              // LLM-generated answer
+  "what is fastapi": {                    // Normalized query (lowercase, trimmed)
+    query: "What is FastAPI?",            // Original query
+    answer: "FastAPI is...",              // LLM-generated answer
     confidence: 0.85,                 // Retrieval confidence
     sources: [...],                   // Source documents
     response_time: 1.23,              // Original response time
@@ -46,10 +46,10 @@ const cacheKey = `${query.trim().toLowerCase()}`;
 
 **Examples:**
 ```
-"What is VCC?"         → "what is vcc?"
-"  What is VCC?  "     → "what is vcc?" (same key)
-"what is VCC"          → "what is vcc"  (same key)
-"What is Visa Chart?"  → "what is visa chart?" (different key)
+"What is FastAPI?"         → "what is fastapi?"
+"  What is FastAPI?  "     → "what is fastapi?" (same key)
+"what is FastAPI"          → "what is fastapi"  (same key)
+"What is FastAPI Company Chart?"  → "what is FastAPI chart?" (different key)
 ```
 
 ---
@@ -144,7 +144,7 @@ When a query is cached, it displays a purple badge:
 - **Color:** Purple (`bg-purple-100`, `text-purple-700`)
 - **Icon:** Database/storage icon
 - **Tooltip:** "Cached - instant response"
-- **Position:** Next to RAG system badge (VCC/API)
+- **Position:** Next to RAG system badge (FastAPI/API)
 
 ### Console Logging
 
@@ -270,11 +270,11 @@ if (Object.keys(queryCache).length > MAX_CACHE_SIZE) {
 
 **Scenario:** User clicks a query from history
 ```
-User asks: "What is VCC?"
+User asks: "What is FastAPI?"
   → First time: 2s (API call)
   → Adds to history
 
-User clicks history item: "What is VCC?"
+User clicks history item: "What is FastAPI?"
   → Instant (<10ms, cached)
 ```
 
@@ -284,9 +284,9 @@ User clicks history item: "What is VCC?"
 
 **Scenario:** User refines query
 ```
-"What is VCC?" → cached
-"what is vcc"  → cached (same normalized key)
-"What is VCC?" → cached (exact match)
+"What is FastAPI?" → cached
+"what is fastapi"  → cached (same normalized key)
+"What is FastAPI?" → cached (exact match)
 ```
 
 **Benefit:** Variations of same query return instantly
@@ -296,7 +296,7 @@ User clicks history item: "What is VCC?"
 **Scenario:** User switches between RAG systems
 ```
 FastAPI mode: "What is authentication?"
-VCC mode: "What is VCC?"
+FastAPI mode: "What is FastAPI?"
 FastAPI mode: "What is authentication?" ← cached
 ```
 
@@ -324,10 +324,10 @@ Open browser DevTools console and query:
 
 ```javascript
 // First query
-❌ Cache MISS: What is VCC?
+❌ Cache MISS: What is FastAPI?
 
 // Click history item
-✅ Cache HIT: What is VCC?
+✅ Cache HIT: What is FastAPI?
 ```
 
 ### Inspecting Cache State
@@ -339,7 +339,7 @@ $r.props.queryCache
 
 // Output:
 {
-  "what is vcc": { query: "What is VCC?", answer: "...", ... },
+  "what is fastapi": { query: "What is FastAPI?", answer: "...", ... },
   "how to create bar chart": { query: "...", answer: "...", ... }
 }
 ```
@@ -434,8 +434,8 @@ const similar = fuse.search(query);
 ```
 
 **Benefits:**
-- Match typos: "What is VC?" → "What is VCC?"
-- Catch variations: "VCC definition" → "What is VCC?"
+- Match typos: "What is VC?" → "What is FastAPI?"
+- Catch variations: "FastAPI definition" → "What is FastAPI?"
 
 **Considerations:**
 - Increased complexity
@@ -447,7 +447,7 @@ const similar = fuse.search(query);
 
 ```javascript
 const COMMON_QUERIES = [
-  "What is VCC?",
+  "What is FastAPI?",
   "How to create a bar chart?",
   "What are the props for IDataTableProps?"
 ];
@@ -472,7 +472,7 @@ useEffect(() => {
    ```
    Steps:
    1. Open app: http://localhost:5173
-   2. Submit query: "What is VCC?"
+   2. Submit query: "What is FastAPI?"
    3. Wait 1-2 seconds for response
    4. Check console: ❌ Cache MISS
    5. Verify no "Cached" badge in history
@@ -481,7 +481,7 @@ useEffect(() => {
 2. **Repeated Query (Cache Hit)**
    ```
    Steps:
-   1. Click query from history: "What is VCC?"
+   1. Click query from history: "What is FastAPI?"
    2. Response appears instantly (<10ms)
    3. Check console: ✅ Cache HIT
    4. Verify purple "Cached" badge appears
@@ -490,9 +490,9 @@ useEffect(() => {
 3. **Case Insensitivity**
    ```
    Steps:
-   1. Submit: "What is VCC?"
-   2. Submit: "what is vcc"
-   3. Submit: "WHAT IS VCC?"
+   1. Submit: "What is FastAPI?"
+   2. Submit: "what is fastapi"
+   3. Submit: "WHAT IS FastAPI?"
    4. All three should be cache hits (same key)
    ```
 
@@ -515,16 +515,16 @@ describe('Query Cache', () => {
     
     // First query
     const input = getByPlaceholderText('Ask a question...');
-    fireEvent.change(input, { target: { value: 'What is VCC?' } });
+    fireEvent.change(input, { target: { value: 'What is FastAPI?' } });
     fireEvent.submit(input);
     
     await waitFor(() => {
-      expect(getByText(/VCC is/)).toBeInTheDocument();
+      expect(getByText(/FastAPI is/)).toBeInTheDocument();
     });
     
     // Second query (cached)
     const startTime = performance.now();
-    fireEvent.click(getByText('What is VCC?')); // Click history
+    fireEvent.click(getByText('What is FastAPI?')); // Click history
     const endTime = performance.now();
     
     expect(endTime - startTime).toBeLessThan(100); // <100ms
@@ -532,8 +532,8 @@ describe('Query Cache', () => {
   });
   
   test('Different queries generate different cache keys', () => {
-    const key1 = normalizeQuery('What is VCC?');
-    const key2 = normalizeQuery('How to use VCC?');
+    const key1 = normalizeQuery('What is FastAPI?');
+    const key2 = normalizeQuery('How to use FastAPI?');
     
     expect(key1).not.toEqual(key2);
   });

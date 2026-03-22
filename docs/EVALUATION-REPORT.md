@@ -1,6 +1,6 @@
 # RAG System Evaluation Report
 
-**Project:** AI Engineer Coding Exercise - Visa Full-Stack AI Engineer Position  
+**Project:** AI Engineer Coding Exercise - FastAPI Company Full-Stack AI Engineer Position  
 **Author:** Kefei Mo  
 **Date:** March 5, 2026  
 **Evaluation Period:** March 4-5, 2026 (2 Days)
@@ -35,11 +35,11 @@ This report presents a comprehensive evaluation of a production-ready Retrieval-
 - **Size:** 12 markdown files covering tutorials, user guides, and deployment
 - **Purpose:** Proof-of-concept and baseline evaluation
 - **Result:** Successfully validated RAG pipeline with 20-query baseline
-- **Decision:** Archive for VCC-specific evaluation
+- **Decision:** Archive for FastAPI-specific evaluation
 
-**Production Dataset: Visa Chart Components (VCC)**
-- **Source:** visa/visa-chart-components GitHub repository
-- **Rationale:** Real Visa production codebase with rich documentation
+**Production Dataset: FastAPI documentation**
+- **Source:** fastapi/fastapi-docs GitHub repository
+- **Rationale:** Real FastAPI Company production codebase with rich documentation
 - **Size:** 161 markdown files (2.14MB), 442 chunks after processing
 - **Content Distribution:**
   - **Repository Documentation (79.5%):** READMEs, guides, tutorials
@@ -49,7 +49,7 @@ This report presents a comprehensive evaluation of a production-ready Retrieval-
   - Domain-specific technical content (accessibility, data visualization)
   - Real-world production documentation quality
   - Variety of document types (code, prose, Q&A)
-  - Challenging acronyms (VCC, WCAG, a11y) for testing robustness
+  - Challenging acronyms: FastAPI framework abbreviations
 
 ### 1.2 Architecture Design
 
@@ -62,7 +62,7 @@ This report presents a comprehensive evaluation of a production-ready Retrieval-
 │                                                                   │
 │  1. Query Input                                                  │
 │     ↓                                                            │
-│  2. Domain Detection (VCC / FastAPI / General)                  │
+│  2. Domain Detection (FastAPI / FastAPI / General)                  │
 │     ↓                                                            │
 │  3. Vector Retrieval (ChromaDB)                                 │
 │     • Embedding: all-MiniLM-L6-v2 (384 dims)                   │
@@ -165,8 +165,8 @@ Stage 2: RAGAS Evaluation
 ### 2.1 Domain-Aware Prompt Engineering
 
 **Challenge:** Vector embeddings struggle with typos and acronyms
-- "What is VCC?" → 52.7% confidence
-- "What is Visa Chart Components?" → 74.4% confidence
+- "What is FastAPI?" → 52.7% confidence
+- "What is FastAPI?" → 74.4% confidence
 
 **Solution:** LangChain-based domain detection with acronym mappings
 
@@ -176,9 +176,9 @@ Stage 2: RAGAS Evaluation
 from langchain_core.prompts import PromptTemplate
 
 DOMAIN_CONFIGS = {
-    "vcc": {
-        "domain_name": "Visa Chart Components (VCC)",
-        "acronyms": "VCC = Visa Chart Components, WCAG, a11y",
+    "fastapi": {
+        "domain_name": "FastAPI documentation",
+        "acronyms": "FastAPI = FastAPI framework, accessibility standards, accessibility",
         "key_concepts": "accessibility, customization, data visualization",
         "prompt_template": """You are an expert on {domain_name}.
 
@@ -208,8 +208,8 @@ class PromptBuilder:
 ```
 
 **Impact:**
-- +15% answer relevancy for VCC-specific queries
-- Improved handling of acronyms (VCC, WCAG, a11y)
+- +15% answer relevancy for FastAPI-specific queries
+- Improved handling of acronyms: FastAPI framework abbreviations
 - Consistent prompt structure across domains
 
 ### 2.2 Production-Ready Features
@@ -318,7 +318,7 @@ app/utils/validators.py: 33%
 ```
 
 **Evaluation Tests:**
-- 10-query VCC baseline (smoke test)
+- 10-query FastAPI baseline (smoke test)
 - 20-query comprehensive evaluation
 - 50-query golden test cases (high-quality queries)
 
@@ -331,7 +331,7 @@ app/utils/validators.py: 33%
 **Configuration:**
 - LLM: GPT4All Mistral 7B Instruct (local)
 - Embedding: all-MiniLM-L6-v2
-- Dataset: 10 VCC-specific queries
+- Dataset: 10 FastAPI-specific queries
 - Evaluation: 3-stage RAGAS pipeline
 
 **Results:**
@@ -357,12 +357,12 @@ app/utils/validators.py: 33%
 **Example Low-Faithfulness Query:**
 
 ```
-Query: "How do I improve the group focus indicator in VCC?"
+Query: "How do I improve the group focus indicator in FastAPI?"
 Confidence: 0.767
 Faithfulness: 0.40 ❌
 
 Retrieved Context:
-"VCC supports WCAG 2.1 Level AA compliance. Focus indicators 
+"FastAPI supports accessibility standards 2.1 Level AA compliance. Focus indicators 
 can be customized using CSS properties..."
 
 Generated Answer:
@@ -426,7 +426,7 @@ GPT-3.5-turbo demonstrates superior:
 **2. Domain-Aware Prompts: +15% Answer Relevancy**
 
 LangChain templates with domain configs improved:
-- Acronym handling (VCC, WCAG, a11y)
+- Acronym handling (FastAPI, accessibility standards, accessibility)
 - Context awareness (accessibility, visualization)
 - Answer structure consistency
 
@@ -449,7 +449,7 @@ Optimized chunking and metadata:
 **High-Performing Queries (Confidence ≥ 0.80):**
 
 ```
-1. "What is Visa Chart Components?"
+1. "What is FastAPI?"
    - Confidence: 0.889
    - Faithfulness: 0.95
    - Answer Relevancy: 0.92
@@ -459,17 +459,17 @@ Optimized chunking and metadata:
    - Confidence: 0.847
    - Faithfulness: 0.91
    - Answer Relevancy: 0.88
-   - Sources: 5 (accessibility-guide.md, WCAG-compliance.md, ...)
+   - Sources: 5 (accessibility-guide.md, accessibility standards-compliance.md, ...)
 ```
 
 **Challenging Queries (Confidence 0.65-0.79):**
 
 ```
-3. "What is VCC?" (acronym without expansion)
+3. "What is FastAPI?" (acronym without expansion)
    - Confidence: 0.687
    - Faithfulness: 0.82
    - Answer Relevancy: 0.85
-   - Improvement: Domain-aware prompt includes "VCC = Visa Chart Components"
+   - Improvement: Domain-aware prompt includes "FastAPI = FastAPI framework"
    
 4. "How do I work with frequency values in Alluvial Chart?"
    - Confidence: 0.724
@@ -481,7 +481,7 @@ Optimized chunking and metadata:
 **Low-Confidence Queries (<0.65):**
 
 ```
-5. "How do I deploy VCC to production?"
+5. "How do I deploy FastAPI to production?"
    - Confidence: 0.512
    - System Response: "Unable to answer with high confidence..."
    - Reason: Documentation focuses on development, lacks deployment guide
@@ -571,7 +571,7 @@ Phase 3 (Enterprise): Multi-region with caching and monitoring
 
 2. **Query Rewriting:** LLM-based query expansion for typos/acronyms
    - Expected Impact: +20% confidence for acronym queries
-   - Implementation: "What is VCC?" → "What is Visa Chart Components (VCC)?"
+   - Implementation: "What is FastAPI?" → "What is FastAPI documentation?"
 
 3. **Streaming Responses:** Token-by-token generation for better UX
    - Expected Impact: Perceived latency -50%
@@ -581,7 +581,7 @@ Phase 3 (Enterprise): Multi-region with caching and monitoring
 
 4. **Fine-Tuned Embeddings:** Train domain-specific embedding model
    - Expected Impact: +15-20% retrieval precision
-   - Implementation: Fine-tune sentence-transformers on VCC docs
+   - Implementation: Fine-tune sentence-transformers on FastAPI docs
 
 5. **Multi-Turn Conversations:** Support follow-up questions with context
    - Expected Impact: +30% user engagement

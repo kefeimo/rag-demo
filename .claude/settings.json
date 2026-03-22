@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(find docs:*)",
+      "Bash(grep -r -i vcc_docs docs/*.md)",
+      "Bash(grep -r -i \"visa\\\\|vcc\" docs/*.md)",
+      "Bash(grep -ri \"visa\\\\|vcc\" docs/*.md)",
+      "Bash(grep -rin \"visa\\\\|vcc\" docs/**/*.md)",
+      "Bash(grep -rin \"visa\\\\|vcc\" . --include=*.md --include=*.py --include=*.js --include=*.jsx)",
+      "Bash(grep -rin \"visa\\\\|vcc\" . --include=*.md)",
+      "Bash(grep -rin \"visa\\\\|vcc\" . --include=*.py)",
+      "Bash(grep -rin \"visa\\\\|vcc\" . --include=*.js --include=*.jsx)",
+      "Bash(grep -ril \"visa\\\\|vcc\" docs --include=*.md)",
+      "Bash(grep -rin \"visa\\\\|vcc\" docs --include=*.md)",
+      "Bash(grep -rin \"visa\\\\|vcc\" . --include=*.md --include=*.py --include=*.js --include=*.jsx --include=*.yml --include=*.yaml --include=*.env)",
+      "Bash(ls -la *.md)",
+      "Bash(for file:*)",
+      "Bash(do)",
+      "Bash(sed -i -e 's/\\\\bVCC\\\\b/FastAPI/g' -e 's/\\\\bvcc\\\\b/fastapi/g' -e 's/vcc_/fastapi_/g' -e 's/Visa Chart Components/FastAPI framework/g' -e 's/visa-full-stack-ai-engineer/rag-demo/g' -e 's/Visa/FastAPI Company/g' \"$file\")",
+      "Bash(done)"
+    ],
+    "additionalDirectories": [
+      "/home/kefei/project/ai-engineer-coding-exercise/docs"
     ]
   }
 }

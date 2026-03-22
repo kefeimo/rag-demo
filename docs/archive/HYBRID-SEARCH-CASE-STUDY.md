@@ -99,7 +99,7 @@ Query: "What is IDataTableProps?"
 ### Phase 1: Problem Discovery
 
 **Context:**
-- VCC baseline evaluation completed (10 test queries)
+- FastAPI baseline evaluation completed (10 test queries)
 - Query 9 consistently failed despite documentation existing in database
 - Investigation revealed 6 IDataTableProps chunks present in ChromaDB
 - Direct lookup: ✅ Success | Semantic search: ❌ Failed
@@ -203,7 +203,7 @@ def classify_query(query):
     # API queries (high precision needed)
     if any(term in query_lower for term in [
         'interface', 'props', 'type', 'api',
-        'idata', 'ibar', 'ichart'  # VCC patterns
+        'idata', 'ibar', 'ichart'  # FastAPI patterns
     ]):
         return 'api'
     
@@ -451,7 +451,7 @@ backend/
 3. **API Name Pattern Detection**
    - Current: Simple prefix check (`startswith('i')`)
    - Future: Regex for all camelCase/PascalCase patterns
-   - Impact: Low (VCC uses consistent naming)
+   - Impact: Low (FastAPI uses consistent naming)
 
 ### Key Takeaways 💡
 
@@ -556,7 +556,7 @@ Answer Correctness:     N/A   ⬜ (still requires ground truth for measurement)
 ## 📚 References
 
 ### Documents
-- [VCC-BASELINE-SUMMARY.md](./VCC-BASELINE-SUMMARY.md) - Original problem identification
+- [FastAPI-BASELINE-SUMMARY.md](./FastAPI-BASELINE-SUMMARY.md) - Original problem identification
 - [HYBRID-SEARCH-PLAN.md](./HYBRID-SEARCH-PLAN.md) - Initial design (if exists)
 
 ### Code
