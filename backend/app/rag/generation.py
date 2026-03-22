@@ -191,10 +191,8 @@ def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str
     """
     # Determine the documentation domain based on collection name
     collection_name = settings.chroma_collection_name.lower()
-    
-    if "visa" in collection_name or "vcc" in collection_name or "chart" in collection_name:
-        domain = "vcc"
-    elif "fastapi" in collection_name:
+
+    if "fastapi" in collection_name:
         domain = "fastapi"
     else:
         domain = "general"
@@ -322,12 +320,6 @@ class PromptBuilder:
     
     # Domain configurations
     DOMAIN_CONFIGS = {
-        "vcc": {
-            "domain": "Visa Chart Components (VCC)",
-            "domain_topics": "chart types, accessibility features, data props, API usage, or integration guides",
-            "known_acronyms": "  - VCC = Visa Chart Components\n  - WCAG = Web Content Accessibility Guidelines\n  - a11y = accessibility",
-            "domain_guidance": "- VCC is a charting library focused on accessibility\n- When discussing charts, consider accessibility features\n- Props and interfaces follow TypeScript conventions"
-        },
         "fastapi": {
             "domain": "FastAPI web framework",
             "domain_topics": "path operations, dependencies, middleware, or deployment",
@@ -347,7 +339,7 @@ class PromptBuilder:
         Initialize prompt builder with LangChain PromptTemplate
         
         Args:
-            domain: Domain context for prompt customization (vcc, fastapi, general)
+            domain: Domain context for prompt customization (fastapi, general)
         """
         self.domain = domain
         self.domain_config = self.DOMAIN_CONFIGS.get(domain, self.DOMAIN_CONFIGS["general"])

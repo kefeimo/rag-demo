@@ -16,12 +16,11 @@ from app.models import (
     QueryRequest,
     QueryResponse,
     IngestRequest,
-    VccIngestRequest,
     IngestResponse,
     Source
 )
 from app import __version__
-from app.rag.ingestion import ingest_documents, ingest_vcc_documents
+from app.rag.ingestion import ingest_documents
 from app.rag.hybrid_retrieval import HybridRetriever
 from app.rag.agent_graph import HYBRID_GATE_THRESHOLD, LangGraphRAGPipeline
 
@@ -36,22 +35,20 @@ logger = logging.getLogger(__name__)
 def get_help_text_for_collection() -> str:
     """
     Get context-appropriate help text based on the current collection name
-    
+
     Returns:
         Help text string with relevant suggestions
     """
     collection_name = settings.chroma_collection_name.lower()
-    
-    if "visa" in collection_name or "vcc" in collection_name or "chart" in collection_name:
-        return "Please try rephrasing your question or asking about specific Visa Chart Components features, such as: chart types, accessibility features, data props, or integration guides."
-    elif "fastapi" in collection_name:
+
+    if "fastapi" in collection_name:
         return "Please try rephrasing your question or ask about FastAPI features."
     else:
         return "Please try rephrasing your question with more specific terms."
 
 
 # Known collections — extend this list if you add more
-KNOWN_COLLECTIONS = ["fastapi_docs", "vcc_docs"]
+KNOWN_COLLECTIONS = ["fastapi_docs"]
 
 # Per-collection HybridRetriever cache (building BM25 index is expensive)
 hybrid_retrievers: dict = {}
@@ -415,42 +412,6 @@ async def ingest_endpoint(request: IngestRequest):
     except Exception as e:
         logger.error(f"Error ingesting documents: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error ingesting documents: {str(e)}")
-
-
-@app.post("/api/v1/ingest/visa-docs", response_model=IngestResponse, tags=["Admin"])
-async def ingest_visa_docs_endpoint(request: VccIngestRequest = None):
-    """
-    Ingest Visa Chart Components documentation into ChromaDB
-
-    This endpoint ingests all extracted Visa documentation:
-    - Repository docs (53): README, CONTRIBUTING, CHANGELOGs
-    - Code docs (210): Auto-generated API documentation
-    - Issue Q&A (13): GitHub issue discussions
-
-    Optionally pass `repo_docs_path`, `code_docs_path`, and `issue_qa_path` in the
-    request body to override the default Docker paths (useful for local development).
-
-    Returns:
-        IngestResponse with ingestion statistics
-    """
-    if request is None:
-        request = VccIngestRequest()
-
-    logger.info(f"Visa docs ingestion requested (force_reingest={request.force_reingest})")
-
-    try:
-        result = ingest_vcc_documents(
-            repo_docs_path=request.repo_docs_path,
-            code_docs_path=request.code_docs_path,
-            issue_qa_path=request.issue_qa_path,
-            force_reingest=request.force_reingest,
-        )
-
-        return IngestResponse(**result)
-
-    except Exception as e:
-        logger.error(f"Error ingesting Visa docs: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error ingesting Visa docs: {str(e)}")
 
 
 @app.exception_handler(Exception)

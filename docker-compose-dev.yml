@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     # Use the same image as production to avoid rebuilding
@@ -23,11 +21,9 @@ services:
       - ./backend/.env:/app/.env
       # Mount data directory for persistence (at project root, shared across services)
       - ./data:/app/data
-      # Mount data-pipeline raw JSON files for Visa docs ingestion
-      - ./data-pipeline:/app/data-pipeline
       # Cache GPT4All models to avoid re-downloading
       - ~/.cache/gpt4all:/root/.cache/gpt4all
-    # Start uvicorn, wait for health check, then auto-ingest all docs (skip if already loaded)
+    # Start uvicorn, wait for health check, then auto-ingest FastAPI docs (skip if already loaded)
     command: >
       sh -c "
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
@@ -35,8 +31,6 @@ services:
         echo 'Backend ready - running auto-ingest...' &&
         echo 'Ingesting FastAPI docs...' &&
         curl -s -X POST 'http://localhost:8000/api/v1/ingest' -H 'Content-Type: application/json' -d '{\"document_path\": \"data/documents\", \"force_reingest\": false}' &&
-        echo 'Ingesting Visa Chart Components docs...' &&
-        curl -s -X POST 'http://localhost:8000/api/v1/ingest/visa-docs' -H 'Content-Type: application/json' -d '{\"force_reingest\": false, \"repo_docs_path\": \"/app/data-pipeline/data/raw/visa_repo_docs.json\", \"code_docs_path\": \"/app/data-pipeline/data/raw/visa_code_docs.json\", \"issue_qa_path\": \"/app/data-pipeline/data/raw/visa_issue_qa.json\"}' &&
         echo 'Auto-ingest complete' &&
         wait
       "

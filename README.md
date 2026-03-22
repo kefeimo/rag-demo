@@ -14,11 +14,11 @@ Large Language Models (LLMs) are powerful but have critical limitations: their k
 
 - 🔍 **Grounded answers** — responses are anchored to retrieved source documents, dramatically reducing hallucination
 - 📚 **Up-to-date knowledge** — the retrieval corpus can be updated independently of the model, keeping answers current
-- 🏢 **Domain specialization** — private or niche documentation (e.g., Visa Chart Components) can be indexed and queried without fine-tuning the LLM
+- 🏢 **Domain specialization** — private or niche documentation can be indexed and queried without fine-tuning the LLM
 - 🔎 **Traceable sources** — every answer includes citations, enabling users to verify claims against the original documents
 - 💰 **Cost-effective** — achieves domain expertise without the expense of fine-tuning or retraining large models
 
-This project demonstrates a production-ready RAG pipeline applied to the **Visa Chart Components (VCC)** documentation, showcasing how RAG unlocks accurate, trustworthy, and auditable question-answering over specialized knowledge bases.
+This project demonstrates a production-ready RAG pipeline applied to the **FastAPI** documentation, showcasing how RAG unlocks accurate, trustworthy, and auditable question-answering over specialized knowledge bases.
 
 
 ### **Key Features**
@@ -35,7 +35,7 @@ This project demonstrates a production-ready RAG pipeline applied to the **Visa 
 - ✅ **Production Differentiation:**
   - Source attribution in all responses with document metadata
   - "Unknown" handling for out-of-scope queries (confidence threshold <0.65)
-  - Domain-aware prompt templates (VCC, FastAPI, general) with acronym mappings
+  - Domain-aware prompt templates for FastAPI documentation
   - Query history tracking with last 10 queries
   - Response time monitoring and API versioning
   - Confidence indicators with visual feedback (green/yellow/red)
@@ -109,7 +109,7 @@ npm install && npm run dev
 ### **Basic Query Flow**
 
 1. **Open the Frontend:** Navigate to http://localhost:5173
-2. **Enter Your Question:** Type a question about VCC (e.g., "What is Visa Chart Components?")
+2. **Enter Your Question:** Type a question about FastAPI (e.g., "What is FastAPI?")
 3. **View Response:** The system will:
    - Retrieve relevant documents from ChromaDB
    - Generate answer using OpenAI GPT-3.5-turbo with domain-aware prompts
@@ -119,20 +119,14 @@ npm install && npm run dev
 
 ### **Example Queries**
 
-**VCC-Specific Queries:**
+**FastAPI Documentation Queries:**
 ```
-- What is Visa Chart Components?
-- What is VCC?  (system handles acronyms)
-- How do I implement accessibility in VCC?
-- What are the main features of VCC?
-- How do I customize chart components?
-```
-
-**FastAPI Documentation (Alternative Dataset):**
-```
+- What is FastAPI?
 - How do I create a FastAPI application?
 - What is dependency injection in FastAPI?
 - How do I handle authentication in FastAPI?
+- What are FastAPI's main features?
+- How do I create path parameters?
 ```
 
 ### **Understanding Confidence Scores**
@@ -151,11 +145,11 @@ When confidence < 65%, you'll see a warning banner:
 
 **Query Endpoint:**
 ```bash
-curl -X POST "http://localhost:8000/query" \
+curl -X POST "http://localhost:8000/api/v1/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is Visa Chart Components?",
-    "collection_name": "visa_chart_components",
+    "query": "What is FastAPI?",
+    "collection": "fastapi_docs",
     "top_k": 5
   }'
 ```

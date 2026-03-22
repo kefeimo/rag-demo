@@ -4,7 +4,7 @@ import ResponseDisplay from './components/ResponseDisplay';
 import ErrorDisplay from './components/ErrorDisplay';
 import GraphViewer from './components/GraphViewer';
 import ThinkingPanel from './components/ThinkingPanel';
-import { queryRAGStream, checkHealth, ingestDocuments, ingestVisaDocs } from './utils/api';
+import { queryRAGStream, checkHealth, ingestDocuments } from './utils/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,9 +12,7 @@ function App() {
   const [error, setError] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
   const [backendModel, setBackendModel] = useState(null); // LLM model from health check
-  const [ragSystem, setRagSystem] = useState('vcc'); // 'fastapi' or 'vcc'
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
-  const [docsLoaded, setDocsLoaded] = useState({ fastapi: false, vcc: false });
   const [queryHistory, setQueryHistory] = useState([]); // Track query history
   const [queryCache, setQueryCache] = useState({}); // Cache query results {query: responseData}
   const [thinkingSteps, setThinkingSteps] = useState([]); // Live SSE reasoning items ({step, thought})
@@ -43,7 +41,6 @@ function App() {
   }, []);
 
   // Note: Auto-loading documents is disabled. Documents should be pre-ingested.
-  // The VCC documents are already loaded in ChromaDB from backend initialization.
   // If you need to load documents, use the manual ingestion scripts.
 
   const handleQuery = async (query) => {
@@ -54,11 +51,9 @@ function App() {
     setIsThinking(false);
     setCotReasoning('');
 
-    // Map toggle to collection name
-    const collection = ragSystem === 'fastapi' ? 'fastapi_docs' : 'vcc_docs';
+    const collection = 'fastapi_docs';
 
     try {
-      // Cache key includes collection so FastAPI and VCC results don't collide
       const cacheKey = `${collection}:${query.trim().toLowerCase()}`;
       if (queryCache[cacheKey]) {
         console.log('✅ Cache HIT:', query, `(${collection})`);
@@ -98,7 +93,6 @@ function App() {
               query: data.query,
               timestamp: new Date().toISOString(),
               relevance_score: data.relevance_score,
-              ragSystem: ragSystem,
               collection,
               responseTime: data.response_time
             }, ...prev];
@@ -147,53 +141,23 @@ function App() {
         <header className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
             <h1 className="text-4xl font-bold text-gray-900">
-              {ragSystem === 'fastapi' ? 'FastAPI' : 'Visa Chart Components'} RAG System
+              FastAPI RAG System
             </h1>
             <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-gray-200">
               <div className={`w-2 h-2 rounded-full ${getStatusColor()} animate-pulse`}></div>
               <span className="text-xs font-medium text-gray-600">{getStatusText()}</span>
             </div>
           </div>
-          
-          {/* RAG System Toggle */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-sm font-medium text-gray-600">RAG System:</span>
-            <div className="relative inline-flex items-center bg-white border-2 border-gray-300 rounded-full p-1 shadow-sm">
-              <button
-                onClick={() => setRagSystem('fastapi')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                  ragSystem === 'fastapi'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                FastAPI Docs
-              </button>
-              <button
-                onClick={() => setRagSystem('vcc')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                  ragSystem === 'vcc'
-                    ? 'bg-green-600 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                VCC Docs
-              </button>
-            </div>
-          </div>
-          
+
           <p className="text-gray-600">
-            {ragSystem === 'fastapi' 
-              ? 'Ask questions about FastAPI and get AI-powered answers with sources'
-              : 'Ask questions about Visa Chart Components and get AI-powered answers with sources'
-            }
+            Ask questions about FastAPI and get AI-powered answers with sources
           </p>
 
           {/* Document Loading Indicator */}
           {isLoadingDocs && (
             <div className="mt-2 flex items-center justify-center gap-2 text-sm text-gray-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-              <span>Loading {ragSystem === 'vcc' ? 'VCC' : 'FastAPI'} documentation...</span>
+              <span>Loading FastAPI documentation...</span>
             </div>
           )}
         </header>
@@ -202,7 +166,7 @@ function App() {
         <div className="space-y-6">
           {/* Query Input */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <QueryInput onSubmit={handleQuery} onSuggest={suggestRef} isLoading={isLoading} ragSystem={ragSystem} />
+            <QueryInput onSubmit={handleQuery} onSuggest={suggestRef} isLoading={isLoading} />
           </div>
 
           {/* Live thinking panel — appears while SSE stream is active */}
@@ -222,7 +186,7 @@ function App() {
 
           {/* Response Display */}
           {response && (
-            <ResponseDisplay response={response} ragSystem={ragSystem} />
+            <ResponseDisplay response={response} />
           )}
 
           {/* Welcome/Empty State */}
@@ -235,55 +199,27 @@ function App() {
                 Ready to Answer Your Questions
               </h3>
               <p className="text-gray-600 mb-4">
-                {ragSystem === 'fastapi'
-                  ? 'Try asking about FastAPI features, usage examples, or best practices'
-                  : 'Try asking about Visa Chart Components, chart creation, or API usage'
-                }
+                Try asking about FastAPI features, usage examples, or best practices
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {ragSystem === 'fastapi' ? (
-                  <>
-                    <button
-                      onClick={() => handleSuggest('What is FastAPI?')}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      What is FastAPI?
-                    </button>
-                    <button
-                      onClick={() => handleSuggest('How do I create a path parameter?')}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      How do I create a path parameter?
-                    </button>
-                    <button
-                      onClick={() => handleSuggest("What are FastAPI's main features?")}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      What are FastAPI's main features?
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleSuggest('How do I create a bar chart with Visa Chart Components?')}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      How do I create a bar chart?
-                    </button>
-                    <button
-                      onClick={() => handleSuggest('What are the props for IDataTableProps?')}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      What are IDataTableProps?
-                    </button>
-                    <button
-                      onClick={() => handleSuggest('How do I use VCC with React?')}
-                      className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      How to use with React?
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => handleSuggest('What is FastAPI?')}
+                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  What is FastAPI?
+                </button>
+                <button
+                  onClick={() => handleSuggest('How do I create a path parameter?')}
+                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  How do I create a path parameter?
+                </button>
+                <button
+                  onClick={() => handleSuggest("What are FastAPI's main features?")}
+                  className="text-sm px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  What are FastAPI's main features?
+                </button>
               </div>
             </div>
           )}
@@ -331,13 +267,6 @@ function App() {
                             Cached
                           </span>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          item.ragSystem === 'vcc' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {item.ragSystem === 'vcc' ? 'VCC' : 'API'}
-                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">

@@ -37,7 +37,7 @@ export const checkHealth = async () => {
  * Submit a query to the RAG system
  * @param {string} query - The question to ask
  * @param {number} topK - Number of top results to retrieve (default: 3)
- * @param {string|null} collection - ChromaDB collection name ('fastapi_docs' or 'vcc_docs')
+ * @param {string|null} collection - ChromaDB collection name ('fastapi_docs')
  * @returns {Promise<Object>} Query response with answer and sources
  */
 export const queryRAG = async (query, topK = 3, collection = null) => {
@@ -112,16 +112,6 @@ export const ingestDocuments = async (documentPath, forceReingest = false) => {
     document_path: documentPath,
     force_reingest: forceReingest,
   });
-  return response.data;
-};
-
-/**
- * Ingest Visa Chart Components documentation into the RAG system
- * @param {boolean} forceReingest - Whether to force re-ingestion
- * @returns {Promise<Object>} Ingestion response with statistics
- */
-export const ingestVisaDocs = async (forceReingest = false) => {
-  const response = await apiClient.post(`/api/v1/ingest/visa-docs?force_reingest=${forceReingest}`);
   return response.data;
 };
 

@@ -79,12 +79,12 @@ class ChromaDBStore:
 
     Usage pattern:
       # Write path (ingestion):
-      store = ChromaDBStore("vcc_docs")
+      store = ChromaDBStore("fastapi_docs")
       store.get_or_create_collection(reset=False)
       store.add(ids, embeddings, documents, metadatas)
 
       # Read path (retrieval):
-      store = ChromaDBStore("vcc_docs")
+      store = ChromaDBStore("fastapi_docs")
       store.get_collection()          # opens existing collection
       results = store.query(vec, n_results=5, include=["documents", ...])
     """

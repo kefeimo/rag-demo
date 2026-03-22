@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
  * QueryInput Component
  * Text input and submit button for RAG queries
  */
-function QueryInput({ onSubmit, onSuggest, isLoading, ragSystem = 'fastapi' }) {
+function QueryInput({ onSubmit, onSuggest, isLoading }) {
   const [query, setQuery] = useState('');
 
   // Expose setQuery to parent via ref so suggestion buttons can pre-fill the textarea
@@ -13,9 +13,6 @@ function QueryInput({ onSubmit, onSuggest, isLoading, ragSystem = 'fastapi' }) {
   }, [onSuggest]);
 
   const getPlaceholder = () => {
-    if (ragSystem === 'vcc') {
-      return "Ask a question about Visa Chart Components... (e.g., 'How do I create a bar chart?')";
-    }
     return "Ask a question about FastAPI... (e.g., 'What is FastAPI?')";
   };
 
