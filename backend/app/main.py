@@ -403,6 +403,7 @@ async def ingest_endpoint(request: IngestRequest):
         # Call ingestion pipeline
         result = ingest_documents(
             document_path=request.document_path,
+            collection_name=request.collection_name,
             force_reingest=request.force_reingest
         )
         

@@ -306,24 +306,22 @@ class ChromaDBIngestion:
         return len(chunks), elapsed_time
 
 
-def ingest_documents(document_path: str, force_reingest: bool = False) -> Dict[str, Any]:
+def ingest_documents(document_path: str, collection_name: str = "fastapi_docs", force_reingest: bool = False) -> Dict[str, Any]:
     """
-    Main ingestion function: Load, chunk, and store documents into FastAPI docs collection.
+    Main ingestion function: Load, chunk, and store documents into specified collection.
 
-    Always targets the 'fastapi_docs' collection regardless of CHROMA_COLLECTION_NAME env var.
-    (CHROMA_COLLECTION_NAME is only used as a query fallback default, not for ingestion routing.)
-    
     Args:
         document_path: Path to documents directory
+        collection_name: Target collection name (default: "fastapi_docs")
         force_reingest: If True, re-ingest even if documents exist
-        
+
     Returns:
         Dictionary with ingestion statistics
     """
     try:
-        # Initialize loader and ingestion — FastAPI docs always go into 'fastapi_docs'
+        # Initialize loader and ingestion with specified collection
         loader = DocumentLoader()
-        ingestion = ChromaDBIngestion(collection_name="fastapi_docs")
+        ingestion = ChromaDBIngestion(collection_name=collection_name)
         
         # Load documents
         documents = loader.load_documents(document_path)

@@ -35,6 +35,7 @@ class QueryResponse(BaseModel):
 class IngestRequest(BaseModel):
     """Request model for document ingestion endpoint"""
     document_path: str = Field(..., description="Path to documents directory")
+    collection_name: str = Field(default="fastapi_docs", description="Collection name for ingested documents")
     force_reingest: bool = Field(default=False, description="Force re-ingestion even if exists")
 
 

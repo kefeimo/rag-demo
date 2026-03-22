@@ -19,6 +19,7 @@ function App() {
   const [cotReasoning, setCotReasoning] = useState('');   // Visible model CoT reasoning (demo)
   const [isThinking, setIsThinking] = useState(false);   // True while SSE stream is open
   const suggestRef = useRef(null); // Ref to pre-fill QueryInput textarea
+  const [selectedCollection, setSelectedCollection] = useState('at_docs'); // Collection selector
 
   // Pre-fill the textarea without submitting
   const handleSuggest = (text) => {
@@ -51,7 +52,7 @@ function App() {
     setIsThinking(false);
     setCotReasoning('');
 
-    const collection = 'fastapi_docs';
+    const collection = selectedCollection;
 
     try {
       const cacheKey = `${collection}:${query.trim().toLowerCase()}`;
@@ -141,7 +142,7 @@ function App() {
         <header className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
             <h1 className="text-4xl font-bold text-gray-900">
-              FastAPI RAG System
+              Documentation RAG Assistant
             </h1>
             <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-gray-200">
               <div className={`w-2 h-2 rounded-full ${getStatusColor()} animate-pulse`}></div>
@@ -150,7 +151,7 @@ function App() {
           </div>
 
           <p className="text-gray-600">
-            Ask questions about FastAPI and get AI-powered answers with sources
+            Ask questions about your documentation and get AI-powered answers with sources
           </p>
 
           {/* Document Loading Indicator */}
@@ -164,6 +165,21 @@ function App() {
 
         {/* Main Content */}
         <div className="space-y-6">
+          {/* Collection Selector */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Documentation Collection
+            </label>
+            <select
+              value={selectedCollection}
+              onChange={(e) => setSelectedCollection(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="at_docs">Asset Score / Audit Template</option>
+              <option value="fastapi_docs">FastAPI Documentation</option>
+            </select>
+          </div>
+
           {/* Query Input */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <QueryInput onSubmit={handleQuery} onSuggest={suggestRef} isLoading={isLoading} />
