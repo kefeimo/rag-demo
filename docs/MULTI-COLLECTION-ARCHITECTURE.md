@@ -2,9 +2,9 @@
 
 ## Status Overview
 
+✅ **Phase 1 Complete** - Domain/corpus mismatch in prompt construction FIXED
 ✅ **Phase 2 Complete** - Collections API endpoint
 ✅ **Phase 3 Complete** - Multi-collection query with automatic routing
-🔴 **Phase 1 Pending** - Domain/corpus mismatch in prompt construction
 🟢 **Phase 4 Future** - Metadata normalization
 
 ---
@@ -23,6 +23,33 @@ The system now supports multiple documentation collections (`fastapi_docs`, `at_
 ---
 
 ## ✅ Completed Work
+
+### Phase 1 — Fix Domain/Corpus Mismatch (Complete)
+
+**Problem Fixed:**
+Prompt generation was using `settings.chroma_collection_name` (global setting) to infer domain, causing retrieval and generation to be out of sync.
+
+**Implementation:**
+- `infer_domain_from_collections()` - Dynamically determine domain from actual collections used
+- Updated `construct_prompt()` and `generate_answer()` to accept collections parameter
+- Threaded collection context through `agent_graph.py` and `multi_retrieval.py`
+
+**Domain Mapping:**
+- `["fastapi_docs"]` → `"fastapi"` (FastAPI-specific prompts)
+- `["at_docs"]` → `"asset_score"` (Asset Score/Audit Template prompts)
+- Multiple collections → `"general"` (domain-neutral prompts)
+
+**New Domain Configuration:**
+Added `"asset_score"` domain config with:
+- Docker Compose development guidance
+- Customizable enum fields context
+- Rails application specifics
+- Energy calculations and database models
+
+**Files Modified:**
+- `backend/app/rag/generation.py` - Domain inference and new asset_score config
+- `backend/app/rag/multi_retrieval.py` - Pass collections to generation
+- `backend/app/rag/agent_graph.py` - Thread collection through to generation
 
 ### Phase 2 — Collections API (Complete)
 
@@ -62,32 +89,7 @@ The system now supports multiple documentation collections (`fastapi_docs`, `at_
 
 ---
 
-## 🔴 Remaining Work
-
-### Phase 1 — Fix Domain/Corpus Mismatch in Prompt Construction (High Priority)
-
-**Current Bug:**
-
-The query endpoint correctly passes the collection to retrieval, but prompt construction still infers domain from `settings.chroma_collection_name` (a global setting).
-
-**Files:**
-- [`backend/app/rag/generation.py`](../backend/app/rag/generation.py) - Uses global setting for domain
-- [`backend/app/main.py`](../backend/app/main.py) - Should thread collection through to generation
-
-**Consequence:**
-When using multi-collection query, retrieval is correct but prompt construction doesn't know which collection(s) were used.
-
-**Solution:**
-1. Add `collection` or `corpus` parameter to `generate_answer()` function
-2. Map collection to domain dynamically:
-   - `fastapi_docs` → `"fastapi"`
-   - `at_docs` → `"asset_score"` or `"general"`
-   - Multiple collections → `"general"` or domain-neutral prompts
-3. Remove dependency on `settings.chroma_collection_name` for domain inference
-
-**Impact:** Medium - Multi-collection query works well, but prompts could be more domain-aware
-
----
+## 🟢 Remaining Work
 
 ### Phase 4 — Normalize Metadata (Low Priority / Future)
 
@@ -211,16 +213,12 @@ curl -X POST http://localhost:8000/api/v1/query \
 
 ## Summary
 
-**Completed (Phase 2 & 3):**
-- Collections API for dynamic discovery
-- Multi-collection query with automatic routing
-- Clean architecture refactor (API layer separated from business logic)
-- Frontend visual guide instead of manual selector
-
-**Remaining (Phase 1):**
-- Fix domain mismatch in prompt construction
-- Pass collection context through to generation layer
-- Make prompts collection-aware or domain-neutral
+**Completed (All Core Phases):**
+- ✅ Phase 1: Domain/corpus mismatch fixed - prompts now collection-aware
+- ✅ Phase 2: Collections API for dynamic discovery
+- ✅ Phase 3: Multi-collection query with automatic routing
+- ✅ Clean architecture refactor (API layer separated from business logic)
+- ✅ Frontend visual guide instead of manual selector
 
 **Future (Phase 4):**
 - Normalize metadata schemas across collections
@@ -228,4 +226,4 @@ curl -X POST http://localhost:8000/api/v1/query \
 
 ---
 
-**Last Updated:** March 22, 2026 - Phase 2 & 3 implementation complete
+**Last Updated:** March 22, 2026 - Phase 1, 2 & 3 implementation complete
