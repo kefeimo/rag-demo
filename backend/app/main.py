@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
+from typing import Optional
 import json
 import logging
 
@@ -17,12 +18,16 @@ from app.models import (
     QueryResponse,
     IngestRequest,
     IngestResponse,
-    Source
+    Source,
+    CollectionsResponse,
+    CollectionInfo
 )
 from app import __version__
 from app.rag.ingestion import ingest_documents
 from app.rag.hybrid_retrieval import HybridRetriever
 from app.rag.agent_graph import HYBRID_GATE_THRESHOLD, LangGraphRAGPipeline
+from app.rag.collections import list_all_collections
+from app.rag.multi_retrieval import MultiCollectionRetriever
 
 # Configure logging
 logging.basicConfig(
@@ -48,13 +53,16 @@ def get_help_text_for_collection() -> str:
 
 
 # Known collections — extend this list if you add more
-KNOWN_COLLECTIONS = ["fastapi_docs"]
+KNOWN_COLLECTIONS = ["fastapi_docs", "at_docs"]
 
 # Per-collection HybridRetriever cache (building BM25 index is expensive)
 hybrid_retrievers: dict = {}
 
 # Minimal LangGraph orchestration wrapper around current RAG flow
 rag_pipeline = LangGraphRAGPipeline(hybrid_retrievers=hybrid_retrievers)
+
+# Multi-collection retriever (initialized in lifespan)
+multi_retriever: Optional[MultiCollectionRetriever] = None
 
 # Human-readable labels for each graph node — used by the SSE streaming endpoint
 _NODE_THINKING: dict[str, str] = {
@@ -105,7 +113,9 @@ def _summarize_node_thought(node_name: str, output: dict, state: dict) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize hybrid retrievers for all known collections on startup"""
+    """Initialize hybrid retrievers and multi-collection retriever on startup"""
+    global multi_retriever
+
     logger.info("Initializing hybrid retrievers for all collections...")
     for cname in KNOWN_COLLECTIONS:
         try:
@@ -114,6 +124,11 @@ async def lifespan(app: FastAPI):
             logger.info(f"✓ Hybrid retriever ready: {cname}")
         except Exception as e:
             logger.warning(f"Could not init hybrid retriever for '{cname}': {e} (collection may not exist yet)")
+
+    # Initialize multi-collection retriever
+    multi_retriever = MultiCollectionRetriever(rag_pipeline, KNOWN_COLLECTIONS)
+    logger.info("✓ Multi-collection retriever ready")
+
     yield
     # shutdown — nothing to release currently
 
@@ -152,6 +167,72 @@ async def health_check():
     )
 
 
+@app.get("/api/v1/collections", response_model=CollectionsResponse, tags=["Admin"])
+async def list_collections():
+    """
+    List all available ChromaDB collections with document counts
+
+    Returns:
+        CollectionsResponse with list of collections and their metadata
+    """
+    try:
+        collections_data = list_all_collections()
+        collection_info = [
+            CollectionInfo(name=col["name"], count=col["count"])
+            for col in collections_data
+        ]
+        return CollectionsResponse(collections=collection_info)
+
+    except Exception as e:
+        logger.error(f"Error listing collections: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error listing collections: {str(e)}")
+
+
+async def query_all_collections(request: QueryRequest, start_time: float) -> QueryResponse:
+    """
+    Query all known collections and merge results by relevance score.
+
+    Delegates to MultiCollectionRetriever for the actual multi-collection logic.
+
+    Args:
+        request: Query request
+        start_time: Request start time for response_time calculation
+
+    Returns:
+        QueryResponse with merged results from all collections
+    """
+    import time
+
+    # Delegate to multi-collection retriever
+    result = multi_retriever.query_all(query=request.query, top_k=request.top_k)
+
+    # Handle error case
+    if result["error"] or not result["is_relevant"]:
+        help_text = get_help_text_for_collection()
+        response_time = time.time() - start_time
+        return QueryResponse(
+            query=request.query,
+            answer=f"I don't have enough information to answer that question based on the provided documentation. {help_text}",
+            sources=result["sources"],
+            relevance_score=result["relevance_score"],
+            model=settings.llm_provider,
+            response_time=response_time,
+            api_version=__version__,
+        )
+
+    # Success case
+    response_time = time.time() - start_time
+    return QueryResponse(
+        query=request.query,
+        answer=result["answer"],
+        sources=result["sources"],
+        relevance_score=result["relevance_score"],
+        model=settings.llm_provider,
+        response_time=response_time,
+        api_version=__version__,
+    )
+
+
 @app.post("/api/v1/query", response_model=QueryResponse, tags=["RAG"])
 async def query_rag(request: QueryRequest):
     """
@@ -168,8 +249,14 @@ async def query_rag(request: QueryRequest):
     
     logger.info(f"Query received: {request.query}")
 
-    # Resolve collection: request override → env default
-    collection = request.collection or settings.chroma_collection_name
+    # Resolve collection: request override → env default → query all
+    collection = request.collection or None  # None means query all collections
+
+    # If no specific collection requested, query all known collections and merge results
+    if collection is None:
+        logger.info(f"Querying all collections: {KNOWN_COLLECTIONS}")
+        return await query_all_collections(request, start_time)
+
     logger.info(f"Using collection: {collection}")
 
     try:

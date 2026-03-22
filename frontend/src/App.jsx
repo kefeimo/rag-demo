@@ -4,6 +4,7 @@ import ResponseDisplay from './components/ResponseDisplay';
 import ErrorDisplay from './components/ErrorDisplay';
 import GraphViewer from './components/GraphViewer';
 import ThinkingPanel from './components/ThinkingPanel';
+import DocumentationGuide from './components/DocumentationGuide';
 import { queryRAGStream, checkHealth, ingestDocuments } from './utils/api';
 
 function App() {
@@ -19,7 +20,6 @@ function App() {
   const [cotReasoning, setCotReasoning] = useState('');   // Visible model CoT reasoning (demo)
   const [isThinking, setIsThinking] = useState(false);   // True while SSE stream is open
   const suggestRef = useRef(null); // Ref to pre-fill QueryInput textarea
-  const [selectedCollection, setSelectedCollection] = useState('at_docs'); // Collection selector
 
   // Pre-fill the textarea without submitting
   const handleSuggest = (text) => {
@@ -52,7 +52,7 @@ function App() {
     setIsThinking(false);
     setCotReasoning('');
 
-    const collection = selectedCollection;
+    const collection = undefined; // Query all collections by default
 
     try {
       const cacheKey = `${collection}:${query.trim().toLowerCase()}`;
@@ -165,20 +165,8 @@ function App() {
 
         {/* Main Content */}
         <div className="space-y-6">
-          {/* Collection Selector */}
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Documentation Collection
-            </label>
-            <select
-              value={selectedCollection}
-              onChange={(e) => setSelectedCollection(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="at_docs">Asset Score / Audit Template</option>
-              <option value="fastapi_docs">FastAPI Documentation</option>
-            </select>
-          </div>
+          {/* Documentation Guide (Collapsible) */}
+          <DocumentationGuide onQuestionClick={handleSuggest} />
 
           {/* Query Input */}
           <div className="bg-white rounded-lg shadow-md p-6">

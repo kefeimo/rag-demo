@@ -47,6 +47,17 @@ class IngestResponse(BaseModel):
     time_elapsed: str = Field(..., description="Time elapsed for ingestion")
 
 
+class CollectionInfo(BaseModel):
+    """Information about a ChromaDB collection"""
+    name: str = Field(..., description="Collection name")
+    count: int = Field(..., description="Number of documents in collection")
+
+
+class CollectionsResponse(BaseModel):
+    """Response model for collections list endpoint"""
+    collections: List[CollectionInfo] = Field(..., description="Available collections")
+
+
 class HealthResponse(BaseModel):
     """Response model for health check endpoint"""
     status: str = Field(..., description="Service status")
