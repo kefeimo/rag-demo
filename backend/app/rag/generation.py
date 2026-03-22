@@ -159,10 +159,50 @@ class OpenAIClient(LLMClient):
             raise
 
 
+def infer_domain_from_collections(collections: Optional[List[str]] = None) -> str:
+    """
+    Infer domain context from collection names used in retrieval.
+
+    Args:
+        collections: List of collection names (e.g., ["fastapi_docs", "at_docs"])
+                    None means use global setting as fallback
+
+    Returns:
+        Domain string: "fastapi", "asset_score", or "general"
+
+    Examples:
+        ["fastapi_docs"] -> "fastapi"
+        ["at_docs"] -> "asset_score"
+        ["fastapi_docs", "at_docs"] -> "general" (multi-collection)
+        None -> infer from settings.chroma_collection_name
+    """
+    # If no collections provided, fall back to global setting
+    if not collections:
+        collection_name = settings.chroma_collection_name.lower()
+        if "fastapi" in collection_name:
+            return "fastapi"
+        elif "at" in collection_name or "audit" in collection_name or "asset" in collection_name:
+            return "asset_score"
+        return "general"
+
+    # Multi-collection query -> use general domain
+    if len(collections) > 1:
+        return "general"
+
+    # Single collection -> determine domain
+    collection = collections[0].lower()
+    if "fastapi" in collection:
+        return "fastapi"
+    elif "at" in collection or "audit" in collection or "asset" in collection:
+        return "asset_score"
+
+    return "general"
+
+
 def get_llm_client() -> LLMClient:
     """
     Get LLM client based on configuration
-    
+
     Returns:
         Initialized LLM client (GPT4All or OpenAI)
     """
@@ -178,25 +218,25 @@ def get_llm_client() -> LLMClient:
         raise ValueError(f"Unknown LLM provider: {provider}. Use 'gpt4all' or 'openai'")
 
 
-def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str:
+def construct_prompt(
+    query: str,
+    context_documents: List[Dict[str, Any]],
+    collections: Optional[List[str]] = None
+) -> str:
     """
     Construct prompt with system instructions and context
-    
+
     Args:
         query: User query
         context_documents: Retrieved documents with metadata
-        
+        collections: List of collection names used for retrieval (None = infer from settings)
+
     Returns:
         Formatted prompt string
     """
-    # Determine the documentation domain based on collection name
-    collection_name = settings.chroma_collection_name.lower()
+    # Determine the documentation domain based on actual collections used
+    domain = infer_domain_from_collections(collections)
 
-    if "fastapi" in collection_name:
-        domain = "fastapi"
-    else:
-        domain = "general"
-    
     # Use PromptBuilder with domain-specific configuration
     prompt_builder = PromptBuilder(domain=domain)
     
@@ -219,20 +259,22 @@ def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str
 def generate_answer(
     query: str,
     retrieved_documents: List[Dict[str, Any]],
+    collections: Optional[List[str]] = None,
     llm_client: Optional[LLMClient] = None,
     max_tokens: int = 512,
     temperature: float = 0.7
 ) -> str:
     """
     Generate answer using LLM with retrieved context
-    
+
     Args:
         query: User query
         retrieved_documents: Documents retrieved from vector store
+        collections: List of collection names used for retrieval (for domain-aware prompts)
         llm_client: LLM client (creates default if not provided)
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
-        
+
     Returns:
         Generated answer text
     """
@@ -240,9 +282,9 @@ def generate_answer(
         # Initialize LLM client if not provided
         if llm_client is None:
             llm_client = get_llm_client()
-        
-        # Construct prompt with context
-        prompt = construct_prompt(query, retrieved_documents)
+
+        # Construct prompt with context (domain-aware based on collections)
+        prompt = construct_prompt(query, retrieved_documents, collections)
         
         logger.info(f"Prompt length: {len(prompt)} chars")
         logger.info(f"Prompt preview (first 2000 chars):\n{prompt[:2000]}")
@@ -265,7 +307,7 @@ def generate_answer(
             logger.warning("⚠️ OpenAI failed, attempting fallback to GPT4All (CPU)...")
             try:
                 fallback_client = GPT4AllClient()
-                prompt = construct_prompt(query, retrieved_documents)
+                prompt = construct_prompt(query, retrieved_documents, collections)
                 answer = fallback_client.generate(prompt, max_tokens=max_tokens, temperature=temperature)
                 logger.info("✅ Fallback to GPT4All successful")
                 return f"⚠️ Warning: OpenAI API failed, using local GPT4All fallback.\n\n{answer}"
@@ -326,6 +368,12 @@ class PromptBuilder:
             "known_acronyms": "  - API = Application Programming Interface\n  - ASGI = Asynchronous Server Gateway Interface\n  - ORM = Object-Relational Mapping",
             "domain_guidance": "- FastAPI is a modern Python web framework\n- Path operations use decorators (@app.get, @app.post)\n- Type hints are essential for automatic validation"
         },
+        "asset_score": {
+            "domain": "Asset Score / Audit Template application",
+            "domain_topics": "Docker setup, customizable fields, energy calculations, or database models",
+            "known_acronyms": "  - AT = Audit Template\n  - AS = Asset Score\n  - BM25 = Best Match 25 (ranking function)\n  - ORM = Object-Relational Mapping",
+            "domain_guidance": "- Focus on Asset Score and Audit Template development\n- Docker Compose is used for development environment\n- Rails-based application with customizable enum fields"
+        },
         "general": {
             "domain": "technical documentation",
             "domain_topics": "specific features or concepts",
@@ -337,9 +385,9 @@ class PromptBuilder:
     def __init__(self, domain: str = "general"):
         """
         Initialize prompt builder with LangChain PromptTemplate
-        
+
         Args:
-            domain: Domain context for prompt customization (fastapi, general)
+            domain: Domain context for prompt customization (fastapi, asset_score, general)
         """
         self.domain = domain
         self.domain_config = self.DOMAIN_CONFIGS.get(domain, self.DOMAIN_CONFIGS["general"])

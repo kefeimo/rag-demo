@@ -346,10 +346,12 @@ graph TD
         try:
             llm_client = get_llm_client()
             documents = state.get("documents", [])
+            collection = state.get("collection")
 
             raw_answer = generate_answer(
                 query=state["query"],
                 retrieved_documents=documents,
+                collections=[collection] if collection else None,
                 llm_client=llm_client,
             )
             cot_reasoning, answer = parse_cot_response(raw_answer)

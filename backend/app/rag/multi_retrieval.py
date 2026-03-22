@@ -158,7 +158,8 @@ class MultiCollectionRetriever:
         answer = None
         if is_relevant:
             from app.rag.generation import generate_answer
-            answer = generate_answer(query, top_documents)
+            # Pass collection names for domain-aware prompt construction
+            answer = generate_answer(query, top_documents, collections=self.known_collections)
 
         return {
             "documents": top_documents,
