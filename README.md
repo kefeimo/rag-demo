@@ -1,6 +1,6 @@
 # AI Engineer Coding Exercise - RAG System
 
-![Frontend Preview](docs/img/rag-system-frontend.gif)
+![Frontend Preview](docs/img/rag-system-frontend.png)
 
 ---
 
