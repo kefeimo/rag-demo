@@ -168,11 +168,12 @@ def infer_domain_from_collections(collections: Optional[List[str]] = None) -> st
                     None means use global setting as fallback
 
     Returns:
-        Domain string: "fastapi", "asset_score", or "general"
+        Domain string: "fastapi", "asset_score", "tspr", or "general"
 
     Examples:
         ["fastapi_docs"] -> "fastapi"
         ["at_docs"] -> "asset_score"
+        ["tspr_docs"] -> "tspr"
         ["fastapi_docs", "at_docs"] -> "general" (multi-collection)
         None -> infer from settings.chroma_collection_name
     """
@@ -183,6 +184,8 @@ def infer_domain_from_collections(collections: Optional[List[str]] = None) -> st
             return "fastapi"
         elif "at" in collection_name or "audit" in collection_name or "asset" in collection_name:
             return "asset_score"
+        elif "tspr" in collection_name:
+            return "tspr"
         return "general"
 
     # Multi-collection query -> use general domain
@@ -195,6 +198,8 @@ def infer_domain_from_collections(collections: Optional[List[str]] = None) -> st
         return "fastapi"
     elif "at" in collection or "audit" in collection or "asset" in collection:
         return "asset_score"
+    elif "tspr" in collection:
+        return "tspr"
 
     return "general"
 
@@ -374,6 +379,12 @@ class PromptBuilder:
             "known_acronyms": "  - AT = Audit Template\n  - AS = Asset Score\n  - BM25 = Best Match 25 (ranking function)\n  - ORM = Object-Relational Mapping",
             "domain_guidance": "- Focus on Asset Score and Audit Template development\n- Docker Compose is used for development environment\n- Rails-based application with customizable enum fields"
         },
+        "tspr": {
+            "domain": "HVAC System Performance application",
+            "domain_topics": "OpenStudio simulations, local Docker setup, simulation workflows, or MinIO storage",
+            "known_acronyms": "  - HSP = HVAC System Performance\n  - FEDS = Facility Energy Decision System\n  - MinIO = S3-compatible object storage\n  - OpenStudio = Energy modeling and simulation platform",
+            "domain_guidance": "- Focus on HVAC system performance simulation and development\n- Rails application with Docker-based local development\n- OpenStudio integration for energy simulations\n- Simulation caching provides 45-90x performance improvements"
+        },
         "general": {
             "domain": "technical documentation",
             "domain_topics": "specific features or concepts",
@@ -387,7 +398,7 @@ class PromptBuilder:
         Initialize prompt builder with LangChain PromptTemplate
 
         Args:
-            domain: Domain context for prompt customization (fastapi, asset_score, general)
+            domain: Domain context for prompt customization (fastapi, asset_score, tspr, general)
         """
         self.domain = domain
         self.domain_config = self.DOMAIN_CONFIGS.get(domain, self.DOMAIN_CONFIGS["general"])

@@ -24,6 +24,16 @@ const DocumentationGuide = ({ onQuestionClick }) => {
         'How does dependency injection work in FastAPI?',
       ],
     },
+    {
+      name: 'HVAC System Performance',
+      icon: '🏢',
+      description: 'OpenStudio simulations, local setup, simulation workflows',
+      examples: [
+        'How do I set up the local development environment for HVAC System Performance?',
+        'How does simulation caching work and what performance improvements does it provide?',
+        'How do I run and monitor OpenStudio simulations locally?',
+      ],
+    },
   ];
 
   return (

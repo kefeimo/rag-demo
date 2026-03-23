@@ -53,7 +53,7 @@ def get_help_text_for_collection() -> str:
 
 
 # Known collections — extend this list if you add more
-KNOWN_COLLECTIONS = ["fastapi_docs", "at_docs"]
+KNOWN_COLLECTIONS = ["fastapi_docs", "at_docs", "tspr_docs"]
 
 # Per-collection HybridRetriever cache (building BM25 index is expensive)
 hybrid_retrievers: dict = {}
