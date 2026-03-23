@@ -26,7 +26,7 @@ backend/.env*
 !backend/.env.example
 
 # --- Large data we don't need in the image ---
-data/documents/
+# data/documents/  # Now INCLUDED for baked image
 data/results/
 data/test_queries/
 

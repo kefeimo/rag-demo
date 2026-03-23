@@ -1,8 +1,15 @@
-# Dockerfile.render — Optimized for AWS/Render deployment with baked data
-# Supports AWS Bedrock (Claude + Cohere v3) with IAM credentials
-# Usage: Build from PROJECT ROOT to access data/ directory
-#   docker build -f backend/Dockerfile.render -t rag-backend:latest .
-#   docker run --rm -p 8000:8000 --env-file backend/.env rag-backend:latest
+# Dockerfile.ecs — Optimized for AWS ECS Fargate deployment
+# Supports AWS Bedrock (Claude + Cohere v3) with IAM Task Role
+# Works with Docker Hub images directly (no ECR required)
+#
+# Usage: Build from PROJECT ROOT
+#   docker build -f backend/Dockerfile.ecs -t mynameismo/rag-backend-render:latest .
+#   docker push mynameismo/rag-backend-render:latest
+#
+# ECS Deployment:
+#   - Uses IAM Task Role for Bedrock access (no credentials needed)
+#   - Mount EFS at /app/data for persistent ChromaDB storage
+#   - Or use baked data with startup script (copies to ephemeral storage if needed)
 
 FROM python:3.12-slim
 
@@ -22,14 +29,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app/ ./app/
 
 # ── Bake data into image (stored separately from runtime mount) ──────────────
-# App Runner mounts /app/data as ephemeral storage, so we store baked data
-# at /app/data_baked and copy it to /app/data at startup if needed
+# EFS mounts at /app/data, so we store baked data at /app/data_baked
+# and copy it to /app/data at startup if the directory is empty
 RUN mkdir -p /app/data_baked/chroma_db /app/data_baked/documents
 COPY data/chroma_db/ /app/data_baked/chroma_db/
 COPY data/documents/ /app/data_baked/documents/
 
 # ── Startup script ───────────────────────────────────────────────────────────
-# Copies baked data to runtime directory if empty (handles ephemeral storage)
+# Copies baked data to runtime directory if empty (handles EFS mounts)
 COPY backend/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
@@ -37,7 +44,6 @@ RUN chmod +x /app/start.sh
 RUN mkdir -p /app/data/chroma_db /app/data/documents
 
 # ── Runtime ───────────────────────────────────────────────────────────────────
-# Render/AWS sets PORT env var automatically
 ENV PORT=8000
 EXPOSE ${PORT}
 

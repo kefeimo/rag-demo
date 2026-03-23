@@ -87,9 +87,9 @@ class EmbeddingProvider:
 
             # Truncate to safe length and batch
             MAX_CHARS = 6000
-            # Bedrock Cohere has max 128 texts per batch, Titan has no batching (1 per request)
+            # Bedrock Cohere has max 96 texts per batch, Titan has no batching (1 per request)
             # OpenAI supports up to 2048 per batch
-            BATCH_SIZE = 128 if self._provider == "bedrock" else 500
+            BATCH_SIZE = 96 if self._provider == "bedrock" else 500
             safe_texts = [t[:MAX_CHARS] if t.strip() else "." for t in texts]
 
             result: List[List[float]] = []
