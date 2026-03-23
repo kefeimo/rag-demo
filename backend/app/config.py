@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
     
     # LLM Configuration
-    llm_provider: str = Field(default="gpt4all", description="LLM provider: gpt4all or openai")
+    llm_provider: str = Field(default="gpt4all", description="LLM provider: gpt4all, openai, or bedrock")
     gpt4all_model: str = Field(
         default="mistral-7b-instruct-v0.1.Q4_0.gguf",
         description="GPT4All model name"
@@ -22,11 +22,21 @@ class Settings(BaseSettings):
         description="OpenAI model name (gpt-3.5-turbo, gpt-4, etc.)"
     )
     openai_api_key: str = Field(default="", description="OpenAI API key (optional)")
+
+    # AWS Bedrock Configuration
+    aws_access_key_id: str = Field(default="", description="AWS Access Key ID for Bedrock (leave empty if using SSO/profile)")
+    aws_secret_access_key: str = Field(default="", description="AWS Secret Access Key for Bedrock (leave empty if using SSO/profile)")
+    aws_profile: str = Field(default="", description="AWS Profile name (for SSO or named profiles in ~/.aws/credentials)")
+    aws_region: str = Field(default="us-east-1", description="AWS Region for Bedrock")
+    bedrock_model_id: str = Field(
+        default="us.anthropic.claude-sonnet-4-20250514-v1:0",
+        description="AWS Bedrock model ID (e.g., us.anthropic.claude-sonnet-4-20250514-v1:0)"
+    )
     
     # Embedding Configuration
     embedding_provider: str = Field(
         default="openai",
-        description="Embedding provider: openai or sentence-transformers"
+        description="Embedding provider: openai, sentence-transformers, or bedrock"
     )
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
@@ -35,6 +45,10 @@ class Settings(BaseSettings):
     openai_embedding_model: str = Field(
         default="text-embedding-3-small",
         description="OpenAI embedding model (used when embedding_provider=openai)"
+    )
+    bedrock_embedding_model: str = Field(
+        default="amazon.titan-embed-text-v2:0",
+        description="AWS Bedrock embedding model (used when embedding_provider=bedrock)"
     )
     
     # ChromaDB Configuration

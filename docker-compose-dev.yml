@@ -23,6 +23,8 @@ services:
       - ./data:/app/data
       # Cache GPT4All models to avoid re-downloading
       - ~/.cache/gpt4all:/root/.cache/gpt4all
+      # Mount AWS credentials for SSO/profile support (read-write for SSO token refresh)
+      - ~/.aws:/root/.aws
     # Start uvicorn, wait for health check, then auto-ingest FastAPI docs (skip if already loaded)
     command: >
       sh -c "

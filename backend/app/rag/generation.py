@@ -74,7 +74,7 @@ class GPT4AllClient(LLMClient):
             logger.error(f"Failed to load GPT4All model: {str(e)}")
             raise
     
-    def generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    def generate(self, prompt: str, max_tokens: int = 4096, temperature: float = 0.7) -> str:
         """
         Generate response using GPT4All
         
@@ -128,7 +128,7 @@ class OpenAIClient(LLMClient):
         
         logger.info(f"OpenAI client initialized (model={self.model})")
     
-    def generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+    def generate(self, prompt: str, max_tokens: int = 4096, temperature: float = 0.7) -> str:
         """
         Generate response using OpenAI API
         
@@ -156,6 +156,76 @@ class OpenAIClient(LLMClient):
             
         except Exception as e:
             logger.error(f"OpenAI API error: {str(e)}", exc_info=True)
+            raise
+
+
+class BedrockClient(LLMClient):
+    """AWS Bedrock client using LiteLLM"""
+
+    def __init__(self, model: str = None):
+        """
+        Initialize Bedrock client via LiteLLM
+
+        Args:
+            model: Bedrock model ID (default from settings)
+        """
+        try:
+            from litellm import completion
+        except ImportError:
+            raise ImportError("litellm not installed. Run: pip install litellm")
+
+        import os
+        # Set AWS configuration for LiteLLM
+        # Priority: 1) Profile (SSO), 2) Access keys, 3) Default credentials chain
+        if settings.aws_profile:
+            os.environ["AWS_PROFILE"] = settings.aws_profile
+            logger.info(f"Using AWS profile: {settings.aws_profile}")
+        elif settings.aws_access_key_id and settings.aws_secret_access_key:
+            os.environ["AWS_ACCESS_KEY_ID"] = settings.aws_access_key_id
+            os.environ["AWS_SECRET_ACCESS_KEY"] = settings.aws_secret_access_key
+            logger.info("Using AWS access keys from environment")
+        else:
+            logger.info("Using AWS default credentials chain (IAM role, SSO, or default profile)")
+
+        if settings.aws_region:
+            os.environ["AWS_REGION_NAME"] = settings.aws_region
+
+        self.model = model or f"bedrock/{settings.bedrock_model_id}"
+        if not self.model.startswith("bedrock/"):
+            self.model = f"bedrock/{self.model}"
+
+        logger.info(f"Bedrock client initialized (model={self.model}, region={settings.aws_region})")
+
+    def generate(self, prompt: str, max_tokens: int = 4096, temperature: float = 0.7) -> str:
+        """
+        Generate response using AWS Bedrock via LiteLLM
+
+        Args:
+            prompt: Input prompt
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+
+        Returns:
+            Generated text response
+        """
+        try:
+            from litellm import completion
+
+            logger.info(f"Calling Bedrock API (model={self.model})")
+
+            response = completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+
+            answer = response.choices[0].message.content.strip()
+            logger.info(f"Received response ({len(answer)} chars)")
+            return answer
+
+        except Exception as e:
+            logger.error(f"Bedrock API error: {str(e)}", exc_info=True)
             raise
 
 
@@ -209,18 +279,20 @@ def get_llm_client() -> LLMClient:
     Get LLM client based on configuration
 
     Returns:
-        Initialized LLM client (GPT4All or OpenAI)
+        Initialized LLM client (GPT4All, OpenAI, or Bedrock)
     """
     provider = settings.llm_provider.lower()
-    
+
     logger.info(f"Initializing LLM client: {provider}")
-    
+
     if provider == "gpt4all":
         return GPT4AllClient()
     elif provider == "openai":
         return OpenAIClient()
+    elif provider == "bedrock":
+        return BedrockClient()
     else:
-        raise ValueError(f"Unknown LLM provider: {provider}. Use 'gpt4all' or 'openai'")
+        raise ValueError(f"Unknown LLM provider: {provider}. Use 'gpt4all', 'openai', or 'bedrock'")
 
 
 def construct_prompt(
@@ -266,7 +338,7 @@ def generate_answer(
     retrieved_documents: List[Dict[str, Any]],
     collections: Optional[List[str]] = None,
     llm_client: Optional[LLMClient] = None,
-    max_tokens: int = 512,
+    max_tokens: int = 4096,
     temperature: float = 0.7
 ) -> str:
     """
