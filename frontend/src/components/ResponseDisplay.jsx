@@ -22,15 +22,6 @@ function ResponseDisplay({ response, ragSystem }) {
             <p className="text-gray-800">{response.query}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            {ragSystem && (
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                ragSystem === 'vcc' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}>
-                {ragSystem === 'vcc' ? 'VCC Docs' : 'FastAPI Docs'}
-              </span>
-            )}
             {response.api_version && (
               <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-700 border border-gray-300">
                 API v{response.api_version}

@@ -61,7 +61,7 @@ LLM_PROVIDER=openai                  →    llm_provider: str
 OPENAI_API_KEY=sk-...                →    openai_api_key: str
 OPENAI_EMBEDDING_MODEL=text-emb-3    →    openai_embedding_model: str
 CHROMA_PERSIST_DIRECTORY=./data/...  →    chroma_persist_directory: str
-CHROMA_COLLECTION_NAME=vcc_docs      →    chroma_collection_name: str
+CHROMA_COLLECTION_NAME=fastapi_docs  →    chroma_collection_name: str
 RELEVANCE_THRESHOLD=0.65             →    relevance_threshold: float    # str→float auto-cast
 API_PORT=8000                        →    api_port: int                 # str→int auto-cast
 API_RELOAD=true                      →    api_reload: bool              # "true"→True auto-cast
@@ -135,7 +135,7 @@ class QueryResponse(BaseModel):
 ### App factory
 
 ```python
-app = FastAPI(
+app = FastAPI framework(
     title="RAG System API",
     version=__version__,   # imported from app/__init__.py
     docs_url="/docs",
@@ -195,7 +195,7 @@ is the right choice here for three practical reasons:
 
 3. **Sensitive input not exposed in logs.** `GET` URLs appear in server access
    logs, browser history, and CDN/proxy logs in plain text. A user's query
-   (`"What is my Visa credit limit?"`) appearing in access logs is undesirable.
+   containing sensitive information appearing in access logs is undesirable.
    POST body content is not logged by default.
 
 The general rule: use `GET` when the URL alone fully and safely describes the
@@ -220,14 +220,14 @@ async def global_exception_handler(request, exc):
 
 The `lifespan` function must be **defined before `FastAPI()` is instantiated**
 so it can be passed in as an argument. This is why `KNOWN_COLLECTIONS`,
-`hybrid_retrievers`, and `lifespan` all appear above `app = FastAPI(...)` in
+`hybrid_retrievers`, and `lifespan` all appear above `app = FastAPI framework(...)` in
 `main.py`.
 
 ```python
 from contextlib import asynccontextmanager
 
-# Must be defined before app = FastAPI(...)
-KNOWN_COLLECTIONS = ["fastapi_docs", "vcc_docs"]
+# Must be defined before app = FastAPI framework(...)
+KNOWN_COLLECTIONS = ["fastapi_docs"]
 hybrid_retrievers: dict = {}
 
 @asynccontextmanager
@@ -242,7 +242,7 @@ async def lifespan(app: FastAPI):
     yield
     # shutdown — release resources here if needed (DB connections, etc.)
 
-app = FastAPI(lifespan=lifespan, ...)
+app = FastAPI framework(lifespan=lifespan, ...)
 ```
 
 Key differences from `@app.on_event`:
@@ -319,7 +319,7 @@ app.include_router(health.router)
 
 The `prefix` on the router means you don't repeat `/api/v1` on every route.
 
-> **TODO:** Extract `/api/v1/query`, `/api/v1/ingest`, `/api/v1/ingest/visa-docs`,
+> **TODO:** Extract `/api/v1/query`, `/api/v1/ingest`,
 > and `/health` into `app/routers/`.
 
 ---

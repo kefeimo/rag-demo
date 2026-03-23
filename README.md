@@ -1,6 +1,6 @@
 # AI Engineer Coding Exercise - RAG System
 
-![Frontend Preview](docs/img/rag-system-frontend.gif)
+![Frontend Preview](docs/img/rag-system-frontend.png)
 
 ---
 
@@ -14,11 +14,11 @@ Large Language Models (LLMs) are powerful but have critical limitations: their k
 
 - 🔍 **Grounded answers** — responses are anchored to retrieved source documents, dramatically reducing hallucination
 - 📚 **Up-to-date knowledge** — the retrieval corpus can be updated independently of the model, keeping answers current
-- 🏢 **Domain specialization** — private or niche documentation (e.g., Visa Chart Components) can be indexed and queried without fine-tuning the LLM
+- 🏢 **Domain specialization** — private or niche documentation can be indexed and queried without fine-tuning the LLM
 - 🔎 **Traceable sources** — every answer includes citations, enabling users to verify claims against the original documents
 - 💰 **Cost-effective** — achieves domain expertise without the expense of fine-tuning or retraining large models
 
-This project demonstrates a production-ready RAG pipeline applied to the **Visa Chart Components (VCC)** documentation, showcasing how RAG unlocks accurate, trustworthy, and auditable question-answering over specialized knowledge bases.
+This project demonstrates a production-ready RAG pipeline applied to the **FastAPI** documentation, showcasing how RAG unlocks accurate, trustworthy, and auditable question-answering over specialized knowledge bases.
 
 
 ### **Key Features**
@@ -28,16 +28,18 @@ This project demonstrates a production-ready RAG pipeline applied to the **Visa 
 - ✅ **Vector Store Abstraction** (`backend/app/rag/chromadb_store.py`) as a single interface for ChromaDB client/collection operations
 - ✅ **OpenAI GPT-3.5-turbo** with LangChain prompt templates and domain awareness
 - ✅ **React Frontend** (Vite + Tailwind CSS) with query history and confidence indicators
-- ✅ **LangChain** orchestration for RAG pipeline with domain-specific prompts
+- ✅ **LangGraph Stateful Orchestration** (`backend/app/rag/agent_graph.py`) with planner + conditional routing
+- ✅ **Graph Visualization** via backend Mermaid endpoint and frontend in-app graph viewer
+- ✅ **LangChain** prompt orchestration for domain-specific generation
 - ✅ **RAGAS Evaluation** framework with up to 6 metrics (faithfulness, answer relevancy, context precision, context recall, context entity recall, answer correctness)
 - ✅ **Production Differentiation:**
   - Source attribution in all responses with document metadata
   - "Unknown" handling for out-of-scope queries (confidence threshold <0.65)
-  - Domain-aware prompt templates (VCC, FastAPI, general) with acronym mappings
+  - Domain-aware prompt templates for FastAPI documentation
   - Query history tracking with last 10 queries
   - Response time monitoring and API versioning
   - Confidence indicators with visual feedback (green/yellow/red)
-  - Agent-style multi-step pipeline with validation (semantic search → confidence check → hybrid BM25 fallback → LLM generation or graceful rejection)
+  - Agent-style graph pipeline with validation (`planner` → retrieval → evaluate → generate/reject)
 
 ---
 
@@ -107,7 +109,7 @@ npm install && npm run dev
 ### **Basic Query Flow**
 
 1. **Open the Frontend:** Navigate to http://localhost:5173
-2. **Enter Your Question:** Type a question about VCC (e.g., "What is Visa Chart Components?")
+2. **Enter Your Question:** Type a question about FastAPI (e.g., "What is FastAPI?")
 3. **View Response:** The system will:
    - Retrieve relevant documents from ChromaDB
    - Generate answer using OpenAI GPT-3.5-turbo with domain-aware prompts
@@ -117,20 +119,14 @@ npm install && npm run dev
 
 ### **Example Queries**
 
-**VCC-Specific Queries:**
+**FastAPI Documentation Queries:**
 ```
-- What is Visa Chart Components?
-- What is VCC?  (system handles acronyms)
-- How do I implement accessibility in VCC?
-- What are the main features of VCC?
-- How do I customize chart components?
-```
-
-**FastAPI Documentation (Alternative Dataset):**
-```
+- What is FastAPI?
 - How do I create a FastAPI application?
 - What is dependency injection in FastAPI?
 - How do I handle authentication in FastAPI?
+- What are FastAPI's main features?
+- How do I create path parameters?
 ```
 
 ### **Understanding Confidence Scores**
@@ -149,11 +145,11 @@ When confidence < 65%, you'll see a warning banner:
 
 **Query Endpoint:**
 ```bash
-curl -X POST "http://localhost:8000/query" \
+curl -X POST "http://localhost:8000/api/v1/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is Visa Chart Components?",
-    "collection_name": "visa_chart_components",
+    "query": "What is FastAPI?",
+    "collection": "fastapi_docs",
     "top_k": 5
   }'
 ```
@@ -161,15 +157,15 @@ curl -X POST "http://localhost:8000/query" \
 **Response Format:**
 ```json
 {
-  "answer": "Visa Chart Components (VCC) is...",
+  "answer": "FastAPI is a modern, fast web framework...",
   "confidence": 0.847,
   "sources": [
     {
-      "content": "VCC provides...",
+      "content": "FastAPI provides...",
       "metadata": {
         "source": "docs/README.md",
         "chunk_id": "chunk_0",
-        "doc_type": "repo_docs"
+        "doc_type": "markdown_docs"
       },
       "confidence": 0.889
     }
@@ -187,6 +183,11 @@ curl http://localhost:8000/health
 # Response: {"status": "healthy"}
 ```
 
+**LangGraph Mermaid (for demo/inspection):**
+```bash
+curl http://localhost:8000/api/v1/rag/graph/mermaid
+```
+
 **API Documentation:**
 Interactive API docs at http://localhost:8000/docs (Swagger UI)
 
@@ -200,10 +201,7 @@ cd backend
 source venv/bin/activate
 
 # Ingest FastAPI docs
-python ingest_fastapi_docs.py
-
-# Or ingest VCC docs
-python ingest_visa_docs.py
+python -m app.rag.ingestion
 ```
 
 2. **Update Query Collection:**
@@ -241,8 +239,6 @@ The frontend tracks your last 10 queries:
 - [docs/TECH-STACK-RATIONALE.md](docs/TECH-STACK-RATIONALE.md) — why each technology was chosen
 - [docs/REFACOTRING-PROMPT-IMPROVEMENT.md](docs/REFACOTRING-PROMPT-IMPROVEMENT.md) — prompt engineering iteration notes
 - [docs/REFERENCE-RAGAS-METRICS.md](docs/REFERENCE-RAGAS-METRICS.md) — metrics definitions and interpretation
-- [docs/VCC-BASELINE-SUMMARY.md](docs/VCC-BASELINE-SUMMARY.md) — VCC query baseline results
-- [data-pipeline/GOLDEN-TEST-CASES.md](data-pipeline/GOLDEN-TEST-CASES.md) — curated high-quality test queries
 
 ---
 
@@ -253,7 +249,6 @@ ai-engineer-coding-exercise/
 ├── backend/          # FastAPI app, RAG pipeline, ingestion scripts
 ├── frontend/         # React + Vite + Tailwind CSS UI
 ├── evaluation/       # RAGAS evaluation framework
-├── data-pipeline/    # VCC document extraction tools
 ├── data/             # ChromaDB persistence, source docs, test queries
 ├── docs/             # Architecture, planning, and evaluation reports
 ├── docker-compose.yml
@@ -273,6 +268,7 @@ For a detailed breakdown of components and data flow, see **[docs/ARCHITECTURE.m
 - **ChromaDB 0.4.24** - Vector database for semantic search
 - **ChromaDBStore abstraction** - Centralized vector-store layer used by ingestion/retrieval/hybrid modules
 - **OpenAI GPT-3.5-turbo** - Production LLM for generation
+- **LangGraph 1.x** - Stateful graph orchestration and planner/routing nodes
 - **LangChain 0.3.14** - Prompt templates and RAG orchestration
 - **sentence-transformers** - all-MiniLM-L6-v2 embeddings (384 dimensions)
 - **RAGAS 0.2.8** - Evaluation framework for RAG systems
@@ -357,14 +353,13 @@ Full-Stack AI Engineer Candidate
 
 ## 📄 License
 
-This project is created as a coding exercise for the **Visa Full-Stack AI Engineer** position.  
+This project demonstrates a production-ready RAG system implementation.
 All code is original work by Kefei Mo, March 2026.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Visa Chart Components Team** for the excellent documentation that served as the dataset
 - **FastAPI Community** for the comprehensive tutorials and guides
 - **LangChain** for prompt template abstractions
 - **RAGAS** for the evaluation framework

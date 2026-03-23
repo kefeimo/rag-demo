@@ -10,7 +10,7 @@ class QueryRequest(BaseModel):
     """Request model for RAG query endpoint"""
     query: str = Field(..., description="User query", min_length=1, max_length=1000)
     top_k: Optional[int] = Field(default=5, description="Number of results to retrieve", ge=1, le=20)
-    collection: Optional[str] = Field(default=None, description="ChromaDB collection to query (e.g. 'fastapi_docs', 'vcc_docs'). Defaults to CHROMA_COLLECTION_NAME env var.")
+    collection: Optional[str] = Field(default=None, description="ChromaDB collection to query (e.g. 'fastapi_docs'). Defaults to CHROMA_COLLECTION_NAME env var.")
 
 
 class Source(BaseModel):
@@ -18,6 +18,7 @@ class Source(BaseModel):
     content: str = Field(..., description="Document content/chunk")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Document metadata")
     relevance_score: float = Field(..., description="Retrieval relevance score (cosine similarity, computed before LLM generation)", ge=0.0, le=1.0)
+
 
 
 class QueryResponse(BaseModel):
@@ -34,15 +35,8 @@ class QueryResponse(BaseModel):
 class IngestRequest(BaseModel):
     """Request model for document ingestion endpoint"""
     document_path: str = Field(..., description="Path to documents directory")
+    collection_name: str = Field(default="fastapi_docs", description="Collection name for ingested documents")
     force_reingest: bool = Field(default=False, description="Force re-ingestion even if exists")
-
-
-class VccIngestRequest(BaseModel):
-    """Request model for Visa Chart Components ingestion endpoint"""
-    force_reingest: bool = Field(default=False, description="Force re-ingestion even if exists")
-    repo_docs_path: Optional[str] = Field(default=None, description="Override path to visa_repo_docs.json")
-    code_docs_path: Optional[str] = Field(default=None, description="Override path to visa_code_docs.json")
-    issue_qa_path: Optional[str] = Field(default=None, description="Override path to visa_issue_qa.json")
 
 
 class IngestResponse(BaseModel):
@@ -51,6 +45,17 @@ class IngestResponse(BaseModel):
     documents_processed: int = Field(..., description="Number of documents processed")
     chunks_created: int = Field(..., description="Number of chunks created")
     time_elapsed: str = Field(..., description="Time elapsed for ingestion")
+
+
+class CollectionInfo(BaseModel):
+    """Information about a ChromaDB collection"""
+    name: str = Field(..., description="Collection name")
+    count: int = Field(..., description="Number of documents in collection")
+
+
+class CollectionsResponse(BaseModel):
+    """Response model for collections list endpoint"""
+    collections: List[CollectionInfo] = Field(..., description="Available collections")
 
 
 class HealthResponse(BaseModel):

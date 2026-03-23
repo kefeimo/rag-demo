@@ -1,6 +1,6 @@
 # AI Engineer Coding Exercise - Progress Tracking
 
-**Project:** RAG System Implementation for Visa  
+**Project:** RAG System Implementation for FastAPI Company  
 **Timeline:** March 4-5, 2026 (2 Days)  
 **Status:** ✅ Complete  
 **Last Updated:** March 6, 2026 - All Stages Complete
@@ -16,7 +16,7 @@
 | **Stage 1B: Frontend + Docker** | ✅ Complete | 100% | 3.5h | React + Vite + Tailwind + Docker Compose - Both services healthy |
 | **Stage 1C: Basic Evaluation** | ✅ Complete | 100% | 5.0h | 3-stage RAGAS pipeline + 20-query baseline complete |
 | **Stage 2A: Code Quality** | ✅ Complete | 100% | 2.0h | Refactoring + Testing |
-| **Stage 2B: Evaluation Enhancement** | ✅ Complete | 100% | 5.5h | VCC baseline evaluation complete |
+| **Stage 2B: Evaluation Enhancement** | ✅ Complete | 100% | 5.5h | FastAPI baseline evaluation complete |
 | **Stage 2C: RAG Data Pipeline** | ✅ Complete | 100% | 6.0h | 3-pillar extraction + Full ingestion + Auto-load UI |
 | **Stage 2D: Production Features** | ✅ Complete | 100% | 4.0h | GPU Docker + LLM fallback + Confidence indicators |
 | **Stage 2E: Documentation** | ✅ Complete | 100% | 4.0h | README + EVALUATION-REPORT + 7 specialized docs |
@@ -334,63 +334,63 @@
 - [x] All 5 metrics: Context Precision 0.948 ✓, Faithfulness 0.634 ✗, Answer Relevancy 0.772 ✓
 - [x] Results archived in docs/results-archive/
 
-**Decision:** Archive FastAPI evaluation, focus on VCC docs RAG system
+**Decision:** Archive FastAPI evaluation, focus on FastAPI docs RAG system
 
 ---
 
-#### **VCC Docs Evaluation Framework (Hour 11-13)** ✅ COMPLETE
+#### **FastAPI Docs Evaluation Framework (Hour 11-13)** ✅ COMPLETE
 
-**Isolation Strategy:** Separate evaluation pipeline for VCC docs to avoid FastAPI contamination
+**Isolation Strategy:** Separate evaluation pipeline for FastAPI docs to avoid FastAPI contamination
 
-**Hour 11: Setup VCC Evaluation Infrastructure** ✅
-- [x] Create VCC-specific test query dataset
+**Hour 11: Setup FastAPI Evaluation Infrastructure** ✅
+- [x] Create FastAPI-specific test query dataset
   - [x] Use golden test cases from `data-pipeline/GOLDEN-TEST-CASES.md`
-  - [x] Issue #84: "How can I improve the group focus indicator in Visa Chart Components?"
+  - [x] Issue #84: "How can I improve the group focus indicator in FastAPI?"
   - [x] Issue #51: "How do I work with frequency values in Alluvial Chart?"
   - [x] Add 8 derived queries (accessibility, chart types, API usage)
-  - [x] Save as `data/test_queries/vcc_baseline_10.json`
+  - [x] Save as `data/test_queries/fastapi_baseline_10.json`
 - [x] Verify RAG system isolation
-  - [x] Confirm ChromaDB has VCC docs (276 docs, 2696 chunks)
-  - [x] Test query: "How do I create a bar chart?" (VCC-specific)
-  - [x] Verify sources returned are from Visa repos (⚠️ metadata issue detected)
+  - [x] Confirm ChromaDB has FastAPI docs (276 docs, 2696 chunks)
+  - [x] Test query: "How do I create a bar chart?" (FastAPI-specific)
+  - [x] Verify sources returned are from FastAPI Company repos (⚠️ metadata issue detected)
   - [x] Check metadata: ⚠️ All showing 'unknown' - needs fix
-- [x] Update evaluation scripts for VCC context
-  - [x] Modify `run_ragas_stage1_query.py`: Add `--dataset-name vcc` parameter
-  - [x] Update output paths: `vcc_baseline_10_stage1.json` (separate from FastAPI)
+- [x] Update evaluation scripts for FastAPI context
+  - [x] Modify `run_ragas_stage1_query.py`: Add `--dataset-name fastapi` parameter
+  - [x] Update output paths: `fastapi_baseline_10_stage1.json` (separate from FastAPI)
   - [x] Add source validation: `--validate-sources` flag with 50% threshold
 
-**Hour 12: Run VCC Baseline Evaluation (3-Stage Pipeline)** ✅
+**Hour 12: Run FastAPI Baseline Evaluation (3-Stage Pipeline)** ✅
 - [x] **Stage 1A: Query RAG System** (183s total, ~18s per query)
-  - [x] Run: `python run_ragas_stage1_query.py --input ../../data/test_queries/vcc_baseline_10.json --output ../../data/results/vcc_baseline_10_stage1.json --dataset-name vcc --validate-sources`
+  - [x] Run: `python run_ragas_stage1_query.py --input ../../data/test_queries/fastapi_baseline_10.json --output ../../data/results/fastapi_baseline_10_stage1.json --dataset-name fastapi --validate-sources`
   - [x] Result: 10/10 queries successful
   - [x] Confidence range: 0.687-0.889 (good)
   - [x] ⚠️ Source validation: 10/10 warnings (all 'unknown')
-  - [x] Save: `vcc_baseline_10_stage1.json` (58KB)
+  - [x] Save: `fastapi_baseline_10_stage1.json` (58KB)
 - [x] **Stage 1B: Generate References** (~60s, ~$0.50)
-  - [x] Run: `python run_ragas_stage1b_generate_references.py --input ../../data/results/vcc_baseline_10_stage1.json --output ../../data/results/vcc_baseline_10_with_refs.json`
+  - [x] Run: `python run_ragas_stage1b_generate_references.py --input ../../data/results/fastapi_baseline_10_stage1.json --output ../../data/results/fastapi_baseline_10_with_refs.json`
   - [x] Use OpenAI gpt-3.5-turbo for ground truth
   - [x] Result: 10/10 references generated (1153-1952 chars)
-  - [x] Save: `vcc_baseline_10_with_refs.json` (76KB)
+  - [x] Save: `fastapi_baseline_10_with_refs.json` (76KB)
 - [x] **Stage 2: RAGAS Evaluation** (~30s)
-  - [x] Run: `python run_ragas_stage2_eval.py --input ../../data/results/vcc_baseline_10_with_refs.json --output ../../data/results/vcc_baseline_10_full_eval.json`
+  - [x] Run: `python run_ragas_stage2_eval.py --input ../../data/results/fastapi_baseline_10_with_refs.json --output ../../data/results/fastapi_baseline_10_full_eval.json`
   - [x] All 5 metrics: context_precision, faithfulness, answer_relevancy, context_recall, context_entity_recall
   - [x] Result: 50 evaluations (10 queries × 5 metrics)
-  - [x] Save: `vcc_baseline_10_full_eval.json` (64KB)
+  - [x] Save: `fastapi_baseline_10_full_eval.json` (64KB)
 
-**Hour 13: VCC Baseline Analysis & Documentation** ✅
-- [x] Create `VCC-BASELINE-SUMMARY.md` (comprehensive analysis)
+**Hour 13: FastAPI Baseline Analysis & Documentation** ✅
+- [x] Create `FastAPI-BASELINE-SUMMARY.md` (comprehensive analysis)
   - [x] Aggregated metrics (mean, min, max)
   - [x] Compare with FastAPI baseline (detailed comparison table)
-  - [x] Key findings: VCC-specific strengths/weaknesses
+  - [x] Key findings: FastAPI-specific strengths/weaknesses
   - [x] Golden test case results (Issue #84: 0.813 conf, Issue #51: 0.767 conf)
-- [x] Analyze VCC-specific challenges
+- [x] Analyze FastAPI-specific challenges
   - [x] Chart component queries vs API documentation queries
   - [x] Code example retrieval quality (excellent context precision 0.989)
   - [x] Issue Q&A retrieval accuracy (good context recall 0.975)
 - [x] Document isolation strategy
   - [x] 3-level approach: File-based, source validation, backend filtering
-  - [x] Created VCC-EVALUATION-STRATEGY.md (2600+ words)
-  - [x] Created VCC-EVALUATION-QUICKSTART.md (800+ words)
+  - [x] Created FastAPI-EVALUATION-STRATEGY.md (2600+ words)
+  - [x] Created FastAPI-EVALUATION-QUICKSTART.md (800+ words)
   - [x] Created DATA-PIPELINE-SCALABILITY.md (4000+ words)
 
 **Status:** ✅ Complete  
@@ -398,13 +398,13 @@
 **Total Cost:** ~$0.80 (OpenAI API)
 
 **Isolation Approach:**
-1. ✅ Separate test query files: `vcc_baseline_10.json` vs `baseline_20.json` (FastAPI)
-2. ✅ Separate result files: `vcc_*` prefix vs no prefix
+1. ✅ Separate test query files: `fastapi_baseline_10.json` vs `baseline_20.json` (FastAPI)
+2. ✅ Separate result files: `fastapi_*` prefix vs no prefix
 3. ✅ Source validation: Check metadata.source field in retrieved chunks
 4. 🔄 Optional: Backend support for collection filtering (future enhancement)
 
 **Success Metrics:**
-- VCC queries return only VCC sources (95%+ purity)
+- FastAPI queries return only FastAPI sources (95%+ purity)
 - Confidence scores >0.75 for golden test cases
 - All 5 RAGAS metrics successfully calculated
 - Clear separation from FastAPI evaluation results
@@ -413,13 +413,13 @@
 
 ### **Stage 2C: RAG Data Pipeline Framework (Hours 11-16)** ✅ COMPLETE
 
-**🔄 Strategic Pivot:** Focus on VCC (Visa Chart Components) repository - Real Visa codebase with production quality
+**🔄 Strategic Pivot:** Focus on FastAPI repository - Real FastAPI Company codebase with production quality
 
-**Goal:** Demonstrate data engineering skills with actual Visa repository ingestion and evaluation
+**Goal:** Demonstrate data engineering skills with actual FastAPI Company repository ingestion and evaluation
 
-#### **Hour 11-12: VCC Repository Ingestion & Data Pipeline**
-- [x] Selected VCC (Visa Chart Components) repository
-  - [x] Real Visa production repository (accessibility-focused React charts)
+#### **Hour 11-12: FastAPI Repository Ingestion & Data Pipeline**
+- [x] Selected FastAPI repository
+  - [x] Real FastAPI Company production repository (accessibility-focused React charts)
   - [x] Rich documentation: READMEs, API docs, GitHub Issues
   - [x] Public repository, no authentication needed
 - [x] Implemented 3-Pillar Data Pipeline (`data-pipeline/`)
@@ -437,50 +437,50 @@
     - Format: (question: title, answer: resolution, context: discussion)
   - [x] Pipeline orchestrator with progress tracking
   - [x] Markdown cleaning and metadata enrichment
-- [x] Full VCC Repository Ingestion
-  - [x] Cloned visa/visa-chart-components (4 repos total)
+- [x] Full FastAPI Repository Ingestion
+  - [x] Cloned fastapi/fastapi-docs (4 repos total)
   - [x] Extracted 276 documents → 2696 chunks
   - [x] Source distribution:
     - 79.5% READMEs and guides (2143 chunks)
     - 19.4% API documentation (523 chunks)
     - 1.1% Issue Q&A (30 chunks)
   - [x] Ingestion time: ~45 seconds
-  - [x] ChromaDB collection: `vcc_docs` (renamed from fastapi_docs)
+  - [x] ChromaDB collection: `fastapi_docs` (renamed from fastapi_docs)
 
-#### **Hour 12-13: VCC Evaluation Framework & Baseline**
-- [x] Created VCC-specific test query dataset
+#### **Hour 12-13: FastAPI Evaluation Framework & Baseline**
+- [x] Created FastAPI-specific test query dataset
   - [x] 10 queries from golden test cases (GOLDEN-TEST-CASES.md)
   - [x] Issue #84: "How can I improve the group focus indicator?"
   - [x] Issue #51: "How do I work with frequency values in Alluvial Chart?"
   - [x] 8 additional queries: accessibility, chart types, API usage
-  - [x] Saved as `vcc_baseline_10.json`
+  - [x] Saved as `fastapi_baseline_10.json`
 - [x] Ran complete 3-stage RAGAS evaluation
   - [x] **Stage 1A:** Query RAG system (183s, 10/10 successful)
   - [x] **Stage 1B:** Generate references with OpenAI (~60s, $0.50)
   - [x] **Stage 2:** RAGAS evaluation (50 evaluations = 10 queries × 5 metrics)
-- [x] VCC Baseline Results
+- [x] FastAPI Baseline Results
   - [x] Context Precision: **0.989** ✅ (vs 0.948 FastAPI, +4.3%)
   - [x] Context Recall: **0.975** ✅ (excellent coverage)
   - [x] Faithfulness: **0.730** ✅ (vs 0.634 FastAPI, +15.1%)
   - [x] Answer Relevancy: **0.656** ⚠️ (vs 0.772 FastAPI, -15.0%)
   - [x] Context Entity Recall: **0.333** ❌ (vs 0.519 FastAPI, -35.8%)
 - [x] Isolation strategy implemented
-  - [x] Separate test files: `vcc_baseline_10.json` vs `baseline_20.json`
-  - [x] Separate results: `vcc_*` prefix for all outputs
+  - [x] Separate test files: `fastapi_baseline_10.json` vs `baseline_20.json`
+  - [x] Separate results: `fastapi_*` prefix for all outputs
   - [x] Source validation with metadata checks
 
 #### **Hour 13-16: Documentation & Analysis**
 - [x] Created comprehensive documentation
-  - [x] `VCC-BASELINE-SUMMARY.md` (2000+ words)
+  - [x] `FastAPI-BASELINE-SUMMARY.md` (2000+ words)
     - Aggregated metrics with FastAPI comparison
     - Golden test case detailed results
     - Query-by-query performance analysis
     - Key findings and improvement recommendations
-  - [x] `VCC-EVALUATION-STRATEGY.md` (2600+ words)
+  - [x] `FastAPI-EVALUATION-STRATEGY.md` (2600+ words)
     - 3-level isolation approach (file/source/backend)
     - Evaluation methodology and best practices
     - RAGAS metrics interpretation
-  - [x] `VCC-EVALUATION-QUICKSTART.md` (800+ words)
+  - [x] `FastAPI-EVALUATION-QUICKSTART.md` (800+ words)
     - Step-by-step evaluation guide
     - Command examples and expected outputs
   - [x] `DATA-PIPELINE-SCALABILITY.md` (4000+ words)
@@ -494,9 +494,9 @@
     - Expected answers and success criteria
     - Metadata for evaluation validation
 - [x] Updated main README.md
-  - [x] VCC data pipeline section
+  - [x] FastAPI data pipeline section
   - [x] 276 documents, 2696 chunks showcase
-  - [x] Real Visa repository integration
+  - [x] Real FastAPI Company repository integration
 
 **Status:** ✅ Complete  
 **Time Spent:** 6.0h  
@@ -504,14 +504,14 @@
 
 **Actual Results (Exceeded Expectations):**
 - Before: 13 FastAPI docs → 252 chunks
-- After: 276 VCC docs → 2696 chunks (**10.7x increase**)
-- VCC-specific queries: 10/10 successful, confidence 0.687-0.889
+- After: 276 FastAPI docs → 2696 chunks (**10.7x increase**)
+- FastAPI-specific queries: 10/10 successful, confidence 0.687-0.889
 - Golden test cases validated with real GitHub issues
 - Production-quality data pipeline with 3 extraction sources
 
 **Value Delivered:**
 1. ✅ Built reusable 3-pillar data pipeline (docs + API + issues)
-2. ✅ Used actual Visa Chart Components repository
+2. ✅ Used actual FastAPI repository
 3. ✅ Comprehensive evaluation framework (10 queries, 5 RAGAS metrics)
 4. ✅ 4000+ words of scalability documentation
 5. ✅ Demonstrates data engineering + evaluation expertise
@@ -620,7 +620,7 @@
 
 #### **EVALUATION-REPORT.md (Hour 17-19)** ✅
 - [x] **Section 1: Approach & Methodology**
-  - [x] Dataset choice rationale (VCC 161 files, 2.14MB)
+  - [x] Dataset choice rationale (FastAPI 161 files, 2.14MB)
   - [x] Architecture decisions (FastAPI + ChromaDB + OpenAI)
   - [x] Evaluation strategy (RAGAS framework)
 - [x] **Section 2: Implementation Highlights**
@@ -670,7 +670,7 @@
 - [x] `/docs/DOCKER-GPU.md` - GPU setup and troubleshooting
 - [x] `/docs/HYBRID-SEARCH-CASE-STUDY.md` - Semantic + BM25 hybrid retrieval
 - [x] `/docs/REFERENCE-RAGAS-METRICS.md` - Evaluation metrics guide
-- [x] `/docs/VCC-BASELINE-SUMMARY.md` - Baseline evaluation results
+- [x] `/docs/FastAPI-BASELINE-SUMMARY.md` - Baseline evaluation results
 - [x] `/docs/DELIVERABLES.md` - Project deliverables checklist
 - [x] `/evaluation/README.md` - Evaluation pipeline setup and usage
 - [x] `/evaluation/RUN-EVALUATION.md` - Step-by-step evaluation guide
@@ -734,7 +734,7 @@
 | Answer Relevancy | 0.75-0.80 | **0.772** | ✅ GOOD |
 | Context Entity Recall | - | **0.519** | ⚠️ MODERATE |
 
-#### VCC Baseline (Completed: March 5, 13:18)
+#### FastAPI Baseline (Completed: March 5, 13:18)
 
 | Metric | Target | Actual | Min | Max | Status vs Target |
 |--------|--------|--------|-----|-----|------------------|
@@ -744,7 +744,7 @@
 | Answer Relevancy | ≥0.75 | **0.656** | 0.000 | 0.994 | ⚠️ BELOW TARGET (-12.5%) |
 | Context Entity Recall | ≥0.50 | **0.333** | 0.000 | 0.700 | ❌ NEEDS IMPROVEMENT (-33.3%) |
 
-**VCC vs FastAPI Comparison:**
+**FastAPI vs FastAPI Comparison:**
 - ✅ Faithfulness: +15.1% (0.730 vs 0.634) - Less hallucination
 - ✅ Context Precision: +4.3% (0.989 vs 0.948) - Better retrieval
 - ⚠️ Answer Relevancy: -15.0% (0.656 vs 0.772) - More verbose answers
@@ -1242,7 +1242,7 @@
   - **Documentation Created:**
     - `docs/REFERENCE-RAGAS-METRICS.md` (comprehensive reference)
       - All 5 standard RAGAS metrics with examples
-      - VCC baseline performance summary
+      - FastAPI baseline performance summary
       - Interpretation guidelines and targets
       - Clarification on custom metrics
   - **Documents Updated:**
@@ -1324,7 +1324,7 @@
     - Server URL: http://localhost:8000
 - **Phase 2: Generate & Evaluate (20 min):**
   - **Stage 1A - RAG Answers with GPT-3.5-turbo:**
-    - Command: `run_ragas_stage1_query.py --output vcc_gpt35_stage1.json`
+    - Command: `run_ragas_stage1_query.py --output fastapi_gpt35_stage1.json`
     - Results: 10/10 queries completed successfully
     - Performance: 5.3-7.6s per query (vs 80-99s with GPT4All) - **93% faster!**
     - Confidence: 0.486-0.898 range
@@ -1336,7 +1336,7 @@
     - Cost: ~$2.00 for high-quality ground truth
     - 5 queries skipped (no contexts available)
   - **Stage 2 - RAGAS Evaluation:**
-    - Command: `run_ragas_stage2_eval.py --output vcc_gpt35_full_eval.json`
+    - Command: `run_ragas_stage2_eval.py --output fastapi_gpt35_full_eval.json`
     - Evaluated: 5 queries with all 5 RAGAS metrics
     - Duration: 14 seconds
 - **BREAKTHROUGH RESULTS:**
@@ -1383,10 +1383,10 @@
   - ✅ Monitor Context Entity Recall (0.446 - room for improvement)
   - ⚠️ Consider GPT-4 for RAG if budget allows (further quality gains)
 - **Data Files Generated:**
-  - `data/results/vcc_gpt35_stage1.json` - RAG answers with GPT-3.5
-  - `data/results/vcc_gpt35_with_refs_gpt4.json` - With GPT-4 references
-  - `data/results/vcc_gpt35_with_refs_gpt4_filtered.json` - 5 queries with refs
-  - `data/results/vcc_gpt35_full_eval.json` - Final RAGAS evaluation
+  - `data/results/fastapi_gpt35_stage1.json` - RAG answers with GPT-3.5
+  - `data/results/fastapi_gpt35_with_refs_gpt4.json` - With GPT-4 references
+  - `data/results/fastapi_gpt35_with_refs_gpt4_filtered.json` - 5 queries with refs
+  - `data/results/fastapi_gpt35_full_eval.json` - Final RAGAS evaluation
 - 🎯 **Answer Relevancy target EXCEEDED: 0.9715 (target ≥0.75)**
 - 🎯 **All 5 RAGAS metrics improved (100% success rate)**
 - 🎯 **Production-ready with GPT-3.5-turbo + GPT-4 references**
@@ -1399,8 +1399,8 @@
 - **Completed Features:**
   1. ✅ **LangChain Prompt Templates Integration**
      - Refactored from hardcoded prompts to `langchain_core.prompts.PromptTemplate`
-     - Domain-aware prompt configuration (VCC, FastAPI, general)
-     - Built-in acronym handling (VCC = Visa Chart Components, WCAG, a11y)
+     - Domain-aware prompt configuration (FastAPI, FastAPI, general)
+     - Built-in acronym handling (FastAPI = FastAPI framework, accessibility standards, accessibility)
      - Typo-awareness instructions for LLM
      - Using established library instead of custom implementation
   2. ✅ **Enhanced UI - Confidence Display**
@@ -1423,7 +1423,7 @@
      - State management: `queryHistory` tracks last 10 queries
      - Interactive history panel with click-to-rerun
      - Shows: query text, confidence, RAG system, response time, timestamp
-     - Color-coded by RAG system (VCC/FastAPI)
+     - Color-coded by RAG system (FastAPI/FastAPI)
      - Clear button to reset history
      - Responsive design with scroll for many items
   6. ✅ **Dynamic Footer**

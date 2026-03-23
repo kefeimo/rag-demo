@@ -32,9 +32,7 @@
 
 ### What's baked into the backend image
 
-- `vcc_docs` — 2696 chunks (Visa Chart Components documentation)
-- `fastapi_docs` — 165 chunks (FastAPI tutorial docs)
-- VCC raw JSON files at `/app/data-pipeline/data/raw/` (for re-ingestion via `/api/v1/ingest/visa-docs`)
+- `fastapi_docs` — 165 chunks (FastAPI tutorial documentation)
 
 Built from `Dockerfile.render` at the project root (broader build context than `backend/Dockerfile`):
 
@@ -62,7 +60,7 @@ docker push mynameismo/rag-backend:latest
 | `EMBEDDING_PROVIDER` | `openai` |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` |
 | `CHROMA_PERSIST_DIRECTORY` | `./data/chroma_db` |
-| `CHROMA_COLLECTION_NAME` | `vcc_docs` |
+| `CHROMA_COLLECTION_NAME` | `fastapi_docs` |
 | `CORS_ORIGINS` | `*` |
 | `LOG_LEVEL` | `INFO` |
 | `RELEVANCE_THRESHOLD` | `0.65` |
@@ -125,10 +123,10 @@ If `VITE_API_BASE_URL` changes, update it in Vercel's environment settings and t
 ## Verified End-to-End
 
 - [x] `GET /health` → `{"status":"healthy","version":"1.0.0","model":"openai"}`
-- [x] `POST /api/v1/query` with `vcc_docs` collection returns answers with sources
-- [x] Frontend loads at https://ai-engineer-coding-exercise.vercel.app/
+- [x] `POST /api/v1/query` with `fastapi_docs` collection returns answers with sources
+- [x] Frontend loads at deployed URL
 - [x] Frontend queries reach the Render backend (CORS headers OK)
-- [x] ChromaDB collections intact in baked image: `vcc_docs` (2696), `fastapi_docs` (165)
+- [x] ChromaDB collection intact in baked image: `fastapi_docs` (165 chunks)
 | **API key exposure** | Never commit `.env`; use Render/Vercel secret env vars |
 | **Embed model download on startup** | If using local embeddings, ensure the model is either baked into the Docker image or cached on the Render disk |
 

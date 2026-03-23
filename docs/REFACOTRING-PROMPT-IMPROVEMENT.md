@@ -25,14 +25,14 @@ The LLM was returning "I don't have enough information" responses even when rele
 
 **Symptoms:**
 - Retrieved documents: 3 sources with 65-69% relevance
-- Document content: 470-481 chars of actual VCC documentation including code examples
+- Document content: 470-481 chars of actual FastAPI documentation including code examples
 - Prompt length: 2700-3000 chars (properly formatted with CONTEXT section)
 - **LLM Response:** 236 chars generic "I don't have enough information" message
 
 **Example Failed Query:**
 ```
 Query: "how to create pie chart"
-Retrieved: @visa/pie-chart README with <pie-chart> component example
+Retrieved: @fastapi/chart-component README with <pie-chart> component example
 Context included:
   - Component usage: <pie-chart accessibility={...} data={...} valueAccessor="value" ordinalAccessor="label" />
   - Props documentation: valueAccessor, ordinalAccessor, sortOrder, colorPalette
@@ -157,11 +157,11 @@ The system performs well with correctly spelled queries but fails to retrieve re
 **Examples:**
 
 ✅ **Works (Correct Spelling):**
-- Query: "what is visa chart components?"
-- Answer: "Visa Chart Components (VCC) is an accessibility-focused, framework-agnostic set of data experience design systems components for the web. VCC provides a toolset to enable developers to build equal data experiences for everyone. (Source 2: repo_docs)"
+- Query: "what is FastAPI framework?"
+- Answer: "FastAPI documentation is an accessibility-focused, framework-agnostic set of data experience design systems components for the web. FastAPI provides a toolset to enable developers to build equal data experiences for everyone. (Source 2: repo_docs)"
 
 ❌ **Fails (Typo):**
-- Query: "what is visa chart componont?" (typo: "componont" instead of "components")
+- Query: "what is FastAPI component?" (typo: "componont" instead of "components")
 - Answer: "I don't have enough information to answer that question based on the provided documentation."
 
 #### Root Cause
@@ -191,12 +191,12 @@ The vector embedding model creates embeddings based on exact tokens. Typos in us
 The system handles spelled-out terms well but may struggle when users mix acronyms and full forms:
 
 **Examples to Test:**
-- "what is VCC?" vs "what is Visa Chart Components?"
-- "VCC accessibility features" vs "Visa Chart Components accessibility"
+- "what is FastAPI?" vs "what is FastAPI?"
+- "FastAPI accessibility features" vs "FastAPI accessibility"
 
 #### Root Cause
 
-- Embeddings treat "VCC" and "Visa Chart Components" as different semantic concepts
+- Embeddings treat "FastAPI" and "FastAPI" as different semantic concepts
 - Documents may use one form more than the other
 - Query-document mismatch reduces retrieval effectiveness
 
@@ -227,7 +227,7 @@ IMPORTANT RULES:
 
 QUERY UNDERSTANDING:
 - If the query contains typos or spelling variations, try to understand the intent from context
-- Consider common acronyms (e.g., "VCC" = "Visa Chart Components")
+- Consider common acronyms: FastAPI framework abbreviations
 - Look for semantically similar terms in the context even if exact spelling differs
 """
 ```
@@ -349,7 +349,7 @@ def rewrite_query(original_query: str) -> str:
 Output only the corrected query, nothing else.
 
 Known acronyms:
-- VCC = Visa Chart Components
+- FastAPI = FastAPI framework
 
 Query: {original_query}
 Corrected query:"""
@@ -407,16 +407,16 @@ Create a test set with intentional typos and acronyms:
 ```python
 test_queries = [
     # Typo variations
-    ("what is visa chart componont?", "components"),
+    ("what is FastAPI component?", "components"),
     ("tell me about accesibility features", "accessibility"),
-    ("how to instal VCC", "install"),
+    ("how to instal FastAPI", "install"),
     
     # Acronym variations  
-    ("what is VCC?", "Visa Chart Components"),
-    ("VCC setup guide", "Visa Chart Components setup"),
+    ("what is FastAPI?", "FastAPI"),
+    ("FastAPI setup guide", "FastAPI setup"),
     
     # Combined issues
-    ("VCC accesibility fetures", "accessibility features"),
+    ("FastAPI accesibility fetures", "accessibility features"),
 ]
 ```
 

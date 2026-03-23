@@ -160,7 +160,7 @@ docker logs rag-backend-dev 2>&1 | grep "pytorch device_name"
 # Test query performance
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"query": "What are the benefits of the Visa Cashback Program?"}'
+  -d '{"query": "What are the benefits of the FastAPI Company Cashback Program?"}'
 # Should complete in 12-15 seconds (vs 80-125 seconds on CPU)
 ```
 

@@ -159,10 +159,55 @@ class OpenAIClient(LLMClient):
             raise
 
 
+def infer_domain_from_collections(collections: Optional[List[str]] = None) -> str:
+    """
+    Infer domain context from collection names used in retrieval.
+
+    Args:
+        collections: List of collection names (e.g., ["fastapi_docs", "at_docs"])
+                    None means use global setting as fallback
+
+    Returns:
+        Domain string: "fastapi", "asset_score", "tspr", or "general"
+
+    Examples:
+        ["fastapi_docs"] -> "fastapi"
+        ["at_docs"] -> "asset_score"
+        ["tspr_docs"] -> "tspr"
+        ["fastapi_docs", "at_docs"] -> "general" (multi-collection)
+        None -> infer from settings.chroma_collection_name
+    """
+    # If no collections provided, fall back to global setting
+    if not collections:
+        collection_name = settings.chroma_collection_name.lower()
+        if "fastapi" in collection_name:
+            return "fastapi"
+        elif "at" in collection_name or "audit" in collection_name or "asset" in collection_name:
+            return "asset_score"
+        elif "tspr" in collection_name:
+            return "tspr"
+        return "general"
+
+    # Multi-collection query -> use general domain
+    if len(collections) > 1:
+        return "general"
+
+    # Single collection -> determine domain
+    collection = collections[0].lower()
+    if "fastapi" in collection:
+        return "fastapi"
+    elif "at" in collection or "audit" in collection or "asset" in collection:
+        return "asset_score"
+    elif "tspr" in collection:
+        return "tspr"
+
+    return "general"
+
+
 def get_llm_client() -> LLMClient:
     """
     Get LLM client based on configuration
-    
+
     Returns:
         Initialized LLM client (GPT4All or OpenAI)
     """
@@ -178,27 +223,25 @@ def get_llm_client() -> LLMClient:
         raise ValueError(f"Unknown LLM provider: {provider}. Use 'gpt4all' or 'openai'")
 
 
-def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str:
+def construct_prompt(
+    query: str,
+    context_documents: List[Dict[str, Any]],
+    collections: Optional[List[str]] = None
+) -> str:
     """
     Construct prompt with system instructions and context
-    
+
     Args:
         query: User query
         context_documents: Retrieved documents with metadata
-        
+        collections: List of collection names used for retrieval (None = infer from settings)
+
     Returns:
         Formatted prompt string
     """
-    # Determine the documentation domain based on collection name
-    collection_name = settings.chroma_collection_name.lower()
-    
-    if "visa" in collection_name or "vcc" in collection_name or "chart" in collection_name:
-        domain = "vcc"
-    elif "fastapi" in collection_name:
-        domain = "fastapi"
-    else:
-        domain = "general"
-    
+    # Determine the documentation domain based on actual collections used
+    domain = infer_domain_from_collections(collections)
+
     # Use PromptBuilder with domain-specific configuration
     prompt_builder = PromptBuilder(domain=domain)
     
@@ -221,20 +264,22 @@ def construct_prompt(query: str, context_documents: List[Dict[str, Any]]) -> str
 def generate_answer(
     query: str,
     retrieved_documents: List[Dict[str, Any]],
+    collections: Optional[List[str]] = None,
     llm_client: Optional[LLMClient] = None,
     max_tokens: int = 512,
     temperature: float = 0.7
 ) -> str:
     """
     Generate answer using LLM with retrieved context
-    
+
     Args:
         query: User query
         retrieved_documents: Documents retrieved from vector store
+        collections: List of collection names used for retrieval (for domain-aware prompts)
         llm_client: LLM client (creates default if not provided)
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
-        
+
     Returns:
         Generated answer text
     """
@@ -242,9 +287,9 @@ def generate_answer(
         # Initialize LLM client if not provided
         if llm_client is None:
             llm_client = get_llm_client()
-        
-        # Construct prompt with context
-        prompt = construct_prompt(query, retrieved_documents)
+
+        # Construct prompt with context (domain-aware based on collections)
+        prompt = construct_prompt(query, retrieved_documents, collections)
         
         logger.info(f"Prompt length: {len(prompt)} chars")
         logger.info(f"Prompt preview (first 2000 chars):\n{prompt[:2000]}")
@@ -267,7 +312,7 @@ def generate_answer(
             logger.warning("⚠️ OpenAI failed, attempting fallback to GPT4All (CPU)...")
             try:
                 fallback_client = GPT4AllClient()
-                prompt = construct_prompt(query, retrieved_documents)
+                prompt = construct_prompt(query, retrieved_documents, collections)
                 answer = fallback_client.generate(prompt, max_tokens=max_tokens, temperature=temperature)
                 logger.info("✅ Fallback to GPT4All successful")
                 return f"⚠️ Warning: OpenAI API failed, using local GPT4All fallback.\n\n{answer}"
@@ -298,6 +343,22 @@ def extract_sources(retrieved_documents: List[Dict[str, Any]]) -> List[Dict[str,
     return sources
 
 
+def parse_cot_response(text: str) -> tuple:
+    """
+    Parse <thinking>...</thinking> block from model output.
+
+    Returns:
+        (cot_text, answer_text) — cot_text is empty string if no tags found.
+    """
+    import re
+    match = re.search(r'<thinking>(.*?)</thinking>', text, re.DOTALL)
+    if match:
+        cot = match.group(1).strip()
+        answer = text[match.end():].strip()
+        return cot, answer
+    return "", text
+
+
 class PromptBuilder:
     """
     Builder class for constructing prompts for LLM generation
@@ -306,17 +367,23 @@ class PromptBuilder:
     
     # Domain configurations
     DOMAIN_CONFIGS = {
-        "vcc": {
-            "domain": "Visa Chart Components (VCC)",
-            "domain_topics": "chart types, accessibility features, data props, API usage, or integration guides",
-            "known_acronyms": "  - VCC = Visa Chart Components\n  - WCAG = Web Content Accessibility Guidelines\n  - a11y = accessibility",
-            "domain_guidance": "- VCC is a charting library focused on accessibility\n- When discussing charts, consider accessibility features\n- Props and interfaces follow TypeScript conventions"
-        },
         "fastapi": {
             "domain": "FastAPI web framework",
             "domain_topics": "path operations, dependencies, middleware, or deployment",
             "known_acronyms": "  - API = Application Programming Interface\n  - ASGI = Asynchronous Server Gateway Interface\n  - ORM = Object-Relational Mapping",
             "domain_guidance": "- FastAPI is a modern Python web framework\n- Path operations use decorators (@app.get, @app.post)\n- Type hints are essential for automatic validation"
+        },
+        "asset_score": {
+            "domain": "Asset Score / Audit Template application",
+            "domain_topics": "Docker setup, customizable fields, energy calculations, or database models",
+            "known_acronyms": "  - AT = Audit Template\n  - AS = Asset Score\n  - BM25 = Best Match 25 (ranking function)\n  - ORM = Object-Relational Mapping",
+            "domain_guidance": "- Focus on Asset Score and Audit Template development\n- Docker Compose is used for development environment\n- Rails-based application with customizable enum fields"
+        },
+        "tspr": {
+            "domain": "HVAC System Performance application",
+            "domain_topics": "OpenStudio simulations, local Docker setup, simulation workflows, or MinIO storage",
+            "known_acronyms": "  - HSP = HVAC System Performance\n  - FEDS = Facility Energy Decision System\n  - MinIO = S3-compatible object storage\n  - OpenStudio = Energy modeling and simulation platform",
+            "domain_guidance": "- Focus on HVAC system performance simulation and development\n- Rails application with Docker-based local development\n- OpenStudio integration for energy simulations\n- Simulation caching provides 45-90x performance improvements"
         },
         "general": {
             "domain": "technical documentation",
@@ -329,13 +396,36 @@ class PromptBuilder:
     def __init__(self, domain: str = "general"):
         """
         Initialize prompt builder with LangChain PromptTemplate
-        
+
         Args:
-            domain: Domain context for prompt customization (vcc, fastapi, general)
+            domain: Domain context for prompt customization (fastapi, asset_score, tspr, general)
         """
         self.domain = domain
         self.domain_config = self.DOMAIN_CONFIGS.get(domain, self.DOMAIN_CONFIGS["general"])
+        self.prompt_partials = {
+            **self.domain_config,
+            "cot_guidance": self._get_cot_guidance(),
+        }
         self.prompt_template = self._create_prompt_template()
+
+    @staticmethod
+    def _get_cot_guidance() -> str:
+        """Return optional CoT-style internal guidance block based on config flag."""
+        if not settings.prompt_cot_enabled:
+            return ""
+
+        return (
+            "\nREASONING FORMAT:\n"
+            "Think through the question step by step before answering.\n"
+            "Output your reasoning inside <thinking>...</thinking> tags, then provide your final answer after the closing tag.\n"
+            "Example:\n"
+            "<thinking>\n"
+            "1. The context mentions X...\n"
+            "2. The relevant facts are...\n"
+            "3. Therefore the answer is...\n"
+            "</thinking>\n"
+            "Final answer here.\n"
+        )
     
     def _create_prompt_template(self) -> PromptTemplate:
         """
@@ -352,7 +442,7 @@ IMPORTANT RULES:
 3. Code snippets may contain placeholders like {{...}} or {{data}} - these are intentional and show where users should insert their own values
 4. Cite sources when possible (e.g., "According to the documentation...")
 5. Be helpful and provide actionable information when the context contains relevant examples or descriptions
-6. Only say you don't have enough information if the context is truly unrelated to the question
+6. Only say you don't have enough information if the context is truly unrelated to the question. When you do, suggest the user rephrase with more specific terms in their next query, since no conversation history is stored between queries.
 
 QUERY UNDERSTANDING:
 - If the query contains minor spelling variations or typos, try to understand the intent from context
@@ -362,7 +452,7 @@ QUERY UNDERSTANDING:
 
 DOMAIN-SPECIFIC GUIDANCE:
 {domain_guidance}
-
+{cot_guidance}
 {context}
 
 QUESTION:
@@ -373,7 +463,7 @@ ANSWER:"""
         return PromptTemplate(
             template=template,
             input_variables=["context", "query"],
-            partial_variables=self.domain_config
+            partial_variables=self.prompt_partials
         )
     
     def build_prompt(self, query: str, context: str) -> str:

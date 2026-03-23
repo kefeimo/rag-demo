@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implemented automatic document loading when users switch between RAG systems (FastAPI Docs ↔ VCC Docs).
+Implemented automatic document loading when users switch between RAG systems (FastAPI Docs ↔ FastAPI Docs).
 
 ## Implementation Details
 
@@ -14,9 +14,8 @@ Implemented automatic document loading when users switch between RAG systems (Fa
 **File:** `frontend/src/utils/api.js`
 
 ```javascript
-// Load Visa Chart Components docs (276 docs, 2696 chunks)
-export const ingestVisaDocs = async (forceReingest = false) => {
-  const response = await apiClient.post(`/api/v1/ingest/visa-docs?force_reingest=${forceReingest}`);
+// Load FastAPI docs (276 docs, 2696 chunks)
+export const ingestDocuments = async (forceReingest = false) => {
   return response.data;
 };
 
@@ -33,7 +32,7 @@ export const checkCollectionStatus = async () => {
 
 **States Added:**
 - `isLoadingDocs` - Shows loading spinner
-- `docsLoaded` - Tracks loaded systems: `{ fastapi: false, vcc: false }`
+- `docsLoaded` - Tracks loaded systems: `{ fastapi: false, fastapi: false }`
 
 **useEffect Hook:**
 ```javascript
@@ -45,8 +44,8 @@ useEffect(() => {
 
     setIsLoadingDocs(true);
     
-    if (ragSystem === 'vcc') {
-      await ingestVisaDocs(false); // Load VCC docs
+    if (ragSystem === 'fastapi') {
+      await ingestDocuments(false); // Load FastAPI docs
     } else {
       await ingestDocuments('docs', false); // Load FastAPI docs
     }
@@ -62,13 +61,12 @@ useEffect(() => {
 ### 3. User Experience
 
 **On Page Load:**
-1. App starts with VCC selected (default)
-2. Automatically calls `POST /api/v1/ingest/visa-docs?force_reingest=false`
+1. App starts with FastAPI selected (default)
 3. Backend checks ChromaDB:
    - If empty: Ingests 276 docs → 2696 chunks (8 seconds)
    - If already loaded: Returns immediately (0.01 seconds)
-4. Shows loading spinner: "Loading VCC documentation..."
-5. Marks VCC as loaded
+4. Shows loading spinner: "Loading FastAPI documentation..."
+5. Marks FastAPI as loaded
 
 **When User Switches to FastAPI:**
 1. User clicks "FastAPI Docs" button
@@ -86,9 +84,8 @@ useEffect(() => {
 
 ## Backend Endpoints
 
-### VCC Documentation
+### FastAPI Documentation
 ```bash
-POST /api/v1/ingest/visa-docs?force_reingest=false
 ```
 
 **Loads:**
@@ -119,8 +116,7 @@ Body: {"document_path": "docs"}
 
 **Manual Test:**
 ```bash
-# Test VCC docs ingestion
-curl -X POST "http://localhost:8000/api/v1/ingest/visa-docs?force_reingest=false"
+# Test FastAPI docs ingestion
 
 # Test FastAPI docs ingestion
 curl -X POST "http://localhost:8000/api/v1/ingest" \
@@ -146,7 +142,7 @@ curl -X POST "http://localhost:8000/api/v1/ingest" \
 ### Option A: Collection-Level Filtering (Recommended)
 Create separate ChromaDB collections:
 - `fastapi_docs` collection
-- `vcc_docs` collection
+- `fastapi_docs` collection
 
 **Pros:**
 - Clean separation
@@ -155,9 +151,9 @@ Create separate ChromaDB collections:
 
 ### Option B: Metadata Filtering
 Keep single collection, filter by `metadata['source']`:
-- `source: 'repo_docs'` → VCC
-- `source: 'code_docs'` → VCC
-- `source: 'issue_qa'` → VCC
+- `source: 'repo_docs'` → FastAPI
+- `source: 'code_docs'` → FastAPI
+- `source: 'issue_qa'` → FastAPI
 - `source: 'fastapi_docs'` → FastAPI
 
 **Pros:**
@@ -169,10 +165,10 @@ Use separate collections but allow cross-search with a toggle.
 
 ## Files Changed
 
-1. ✅ `frontend/src/utils/api.js` - Added `ingestVisaDocs()` and `checkCollectionStatus()`
+1. ✅ `frontend/src/utils/api.js` - Added `ingestDocuments()` and `checkCollectionStatus()`
 2. ✅ `frontend/src/App.jsx` - Added auto-loading logic with useEffect
 3. ✅ `backend/app/main.py` - Already has both endpoints (no changes needed)
-4. ✅ `backend/ingest_visa_docs.py` - Already functional (no changes needed)
+4. ✅ `backend/ingest_documents` - Already functional (no changes needed)
 
 ## Status
 

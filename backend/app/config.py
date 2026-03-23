@@ -59,6 +59,10 @@ class Settings(BaseSettings):
         default=0.65,
         description="Minimum retrieval relevance score to attempt answer generation (below this the query is rejected)"
     )
+    prompt_cot_enabled: bool = Field(
+        default=True,
+        description="Enable internal CoT-style reasoning guidance in prompt template"
+    )
     
     # API Configuration
     api_host: str = Field(default="0.0.0.0", description="API host")

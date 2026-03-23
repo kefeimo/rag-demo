@@ -63,7 +63,7 @@ If the pipeline logic were extracted to `app/rag/pipeline.py`, the evaluation sc
 ```python
 from app.rag.pipeline import RAGPipeline
 
-pipeline = RAGPipeline(collection_name="vcc_docs")
+pipeline = RAGPipeline(collection_name="fastapi_docs")
 result = pipeline.query(query="What is BarChart?", top_k=5)
 ```
 
@@ -190,8 +190,8 @@ class RAGPipeline:
     def _get_rejection_message(self) -> str:
         """Collection-specific help text for rejected queries."""
         collection = self.collection_name.lower()
-        if "visa" in collection or "vcc" in collection or "chart" in collection:
-            return "I don't have enough information... Please try asking about specific Visa Chart Components features..."
+        if "component" in collection or "fastapi" in collection or "chart" in collection:
+            return "I don't have enough information... Please try asking about specific FastAPI features..."
         elif "fastapi" in collection:
             return "I don't have enough information... Please try asking about FastAPI features."
         else:

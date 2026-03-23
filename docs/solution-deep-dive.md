@@ -34,7 +34,7 @@ This document consolidates the four supporting references into one readable deep
 │   User Query input       RAG Pipeline           2,696 doc chunks    │
 │   Confidence UI          Embedding + Retrieval  384-dim cosine      │
 │   Source display         LLM generation         2 collections       │
-│   Query history          Confidence calc        (vcc_docs,          │
+│   Query history          Confidence calc        (fastapi_docs,          │
 │                          Hybrid fallback         fastapi_docs)      │
 │                                                                     │
 │  ┌───────────────────────────────────────────────────────────────┐  │
@@ -62,23 +62,23 @@ This document consolidates the four supporting references into one readable deep
 | Embeddings | sentence-transformers/all-MiniLM-L6-v2 | 384-dim |
 | LLM (primary) | OpenAI GPT-3.5-turbo | cloud API |
 | LLM (fallback) | GPT4All Mistral 7B | local CPU |
-| Orchestration | Docker Compose | — |
+| Orchestration | LangGraph (`StateGraph`) + Docker Compose | — |
 
 ### 1.2 RAG Pipeline Flow
 
 ```
  1. Query Input
     ↓
- 2. Domain Detection  (VCC / FastAPI / General — triggers template selection)
+ 2. Planner Node  (LangGraph rule-based strategy: semantic-first vs hybrid-first)
     ↓
  3. Query Embedding   (all-MiniLM-L6-v2 → 384-dim vector)
     ↓
- 4. Semantic Retrieval (`ChromaDBStore` abstraction over ChromaDB cosine similarity, top-5)
+ 4. Retrieval Node(s) (`Retriever` / `HybridRetriever` over `ChromaDBStore`, top-k)
     ↓
- 5. Confidence Check  (1 − mean(distances), threshold 0.65)
+ 5. Evaluate Node  (relevance threshold 0.65)
     │
-    ├─ ≥ 0.65 → use semantic results
-    └─ < 0.65 → Hybrid Fallback (BM25 + semantic, choose best)
+   ├─ relevant → generate
+   └─ not relevant → graceful reject
     ↓
  6. Prompt Construction (LangChain template + domain config + acronym map)
     ↓
@@ -86,6 +86,26 @@ This document consolidates the four supporting references into one readable deep
     ↓
  8. Response Delivery  (answer + sources + confidence + response_time)
 ```
+
+### 1.5 LangGraph Implementation (Stateful Orchestration)
+
+The backend now runs query orchestration through a minimal LangGraph pipeline in
+`backend/app/rag/agent_graph.py`:
+
+- `planner` node: classifies query shape and chooses `semantic_first` or `hybrid_first`
+- retrieval nodes: `semantic_retrieve` and `hybrid_retrieve`
+- `evaluate` node: checks relevance threshold and routes to `generate` or finish
+- `generate` node: wraps prompt construction and LLM generation
+
+State is tracked in `RAGAgentState` (including `planned_strategy`, `query_type`,
+`relevance_score`, and `decision_path`). This gives request-level decision
+traceability without changing API UX.
+
+For demos and inspection:
+
+- Backend exposes Mermaid graph text at `/api/v1/rag/graph/mermaid`
+- Frontend includes an in-app graph viewer (`GraphViewer`) that renders the
+  orchestration diagram directly.
 
 ### 1.3 Key Design Decisions
 
@@ -137,21 +157,21 @@ Threshold **0.65** (empirically validated). Below this:
 
 ### 1.4 Domain-Aware Prompting
 
-VCC documentation contains domain-specific acronyms that confuse generic embedding search:
+FastAPI documentation contains domain-specific acronyms that confuse generic embedding search:
 
 ```
-"What is VCC?"                  → 52.7% confidence
-"What is Visa Chart Components?" → 74.4% confidence  (+21%)
+"What is FastAPI?"                  → 52.7% confidence
+"What is FastAPI?" → 74.4% confidence  (+21%)
 ```
 
 **Solution:** LangChain `PromptTemplate` with per-domain configuration:
 
 ```python
 DOMAIN_CONFIGS = {
-    "vcc": {
-        "domain_name": "Visa Chart Components (VCC)",
-        "acronyms": "VCC = Visa Chart Components, WCAG = Web Content "
-                    "Accessibility Guidelines, a11y = accessibility",
+    "fastapi": {
+        "domain_name": "FastAPI documentation",
+        "acronyms": "FastAPI = FastAPI framework, accessibility standards = Web Content "
+                    "Accessibility Guidelines, accessibility = accessibility",
         "key_concepts": "accessibility, customization, data visualization",
         "prompt_template": """You are an expert on {domain_name}.
 
@@ -169,7 +189,7 @@ Do NOT infer or add details not present in the context."""
 }
 ```
 
-**Impact:** +15% Answer Relevancy, +23% Context Precision for VCC-specific queries.
+**Impact:** +15% Answer Relevancy, +23% Context Precision for FastAPI-specific queries.
 
 ---
 
@@ -179,7 +199,7 @@ Do NOT infer or add details not present in the context."""
 
 ### 2.1 The Problem
 
-During VCC baseline evaluation, Query 9 consistently failed:
+During FastAPI baseline evaluation, Query 9 consistently failed:
 
 ```
 Query: "What is IDataTableProps?"
@@ -289,25 +309,25 @@ Stage 2:  RAGAS Evaluation           — iterate freely (~$0.04 / run)
 GPT-3.5 is superior at instruction following — it stays grounded in the retrieved context and avoids fabricating API details. Example of baseline failure:
 
 ```
-Query: "How do I improve the group focus indicator in VCC?"
-Retrieved context: "VCC supports WCAG 2.1 Level AA compliance. Focus
+Query: "How do I improve the group focus indicator in FastAPI?"
+Retrieved context: "FastAPI supports accessibility standards 2.1 Level AA compliance. Focus
   indicators can be customized using CSS properties..."
 
 GPT4All answer: "Use the `focusIndicatorStyle` prop with
   `borderWidth: 3px` and `borderColor: '#0066CC'`..."
     → Faithfulness: 0.40 ❌  (prop name not in context — hallucinated)
 
-GPT-3.5 answer: "According to the VCC documentation, focus indicators
-  can be customized via CSS properties. For WCAG 2.1 compliance..."
+GPT-3.5 answer: "According to the FastAPI documentation, focus indicators
+  can be customized via CSS properties. For accessibility standards 2.1 compliance..."
     → Faithfulness: 0.91 ✅
 ```
 
 **Domain-aware prompts: +15% Answer Relevancy**  
-Acronym mappings (VCC, WCAG, a11y) and domain instructions eliminate the confidence gap between expanded and contracted queries.
+Acronym mappings (FastAPI, accessibility standards, accessibility) and domain instructions eliminate the confidence gap between expanded and contracted queries.
 
 **Confidence thresholding: −57% low-confidence responses**  
 Rather than returning a hallucinated answer, the system now responds:  
-`"Unable to answer with high confidence. Confidence: 0.51. Please verify with the official VCC documentation."`  
+`"Unable to answer with high confidence. Confidence: 0.51. Please verify with the official FastAPI documentation."`  
 This is especially important for deployment-related queries that lack source coverage.
 
 **Retrieval improvements: +18% Context Precision**  
@@ -334,15 +354,15 @@ ROI: 97% faster · 36% higher quality · ~$60/month at 1,000 queries/day
 ### 3.5 Query-Level Patterns
 
 **High-confidence (≥ 0.80):**
-- "What is Visa Chart Components?" — Confidence 0.889, Faithfulness 0.95
+- "What is FastAPI?" — Confidence 0.889, Faithfulness 0.95
 - "How do I implement accessibility features?" — Confidence 0.847, Faithfulness 0.91
 
 **Medium-confidence (0.65–0.79):**
-- "What is VCC?" (acronym without expansion) — Confidence 0.687, handled by domain prompt
+- "What is FastAPI?" (acronym without expansion) — Confidence 0.687, handled by domain prompt
 - "How do I work with frequency values in Alluvial Chart?" — Confidence 0.724, specific API detail
 
 **Low-confidence (< 0.65) — correctly rejected:**
-- "How do I deploy VCC to production?" — Confidence 0.512, documentation lacks deployment guide → prevented hallucinated answer
+- "How do I deploy FastAPI to production?" — Confidence 0.512, documentation lacks deployment guide → prevented hallucinated answer
 
 ---
 
@@ -438,5 +458,5 @@ The evaluation framework was the highest single time investment — and the high
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** March 10, 2026  
+**Last Updated:** March 12, 2026  
 **Status:** Complete — standalone deep-dive companion

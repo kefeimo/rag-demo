@@ -82,7 +82,6 @@ docker-compose.override.yml
 # Data
 data/chroma_db/
 backend/data/
-data/documents/*.md
 data/documents/*.txt
 !data/documents/README.md
 
@@ -98,3 +97,8 @@ evaluation/venv-ragas-gpt4all/
 backend/venv-slim
 
 tmp/
+
+.claude/
+
+# Ignore all markdown documents in data/documents at any depth
+data/documents/**/*.md

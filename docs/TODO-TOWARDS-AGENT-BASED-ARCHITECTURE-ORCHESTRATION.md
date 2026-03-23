@@ -1,24 +1,24 @@
 # TODO: Towards an Agent-Based Architecture & Orchestration
 
-> **Status:** Future direction — not yet implemented.  
+> **Status:** In progress — minimal LangGraph implementation is live.  
 > **Related:** [`REFERENCE-RAG.md`](./REFERENCE-RAG.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md)
 
 ---
 
 ## Current Architecture — Accurate Characterisation
 
-The current system is a **deterministic, rule-driven RAG pipeline** with rule-based orchestration.
+The current system is a **minimal stateful LangGraph RAG pipeline** with a rule-based planner.
 
 ```
 User Query
    ↓
-Domain detection  (collection name → PromptBuilder config)
+Planner node  (query-shape routing: semantic-first vs hybrid-first)
    ↓
-Semantic retrieval  (ChromaDBStore.query → Retriever)
+Retrieval node(s)  (Retriever / HybridRetriever via ChromaDBStore)
    ↓
 Confidence gate  (threshold=0.65)
-   ├─ ≥ 0.65 → use semantic result
-   └─ < 0.65 → HybridRetriever (BM25 + semantic fusion)
+   ├─ relevant → generate
+   └─ not relevant → graceful reject
    ↓
 Prompt construction  (LangChain PromptTemplate, domain-aware)
    ↓
@@ -31,14 +31,23 @@ Guardrails  (confidence banner, source citation, "I don't know" path)
 
 | Property | Current state |
 |---|---|
-| Workflow | Fixed, deterministic |
-| Decision rules | Hard-coded thresholds (`0.65`) and keyword counts |
+| Workflow | Graph-based, stateful per request |
+| Decision rules | Planner + threshold rules (`0.65`) |
 | Request lifecycle | Single pass — one retrieval, one generation, one response |
-| Orchestration | Manual Python control flow in `main.py` |
-| LangChain role | Prompt templates + LLM client abstraction only |
-| State | Stateless — each request is independent |
+| Orchestration | LangGraph `StateGraph` in `agent_graph.py` |
+| LangChain role | Prompt templates + LLM client abstraction |
+| State | `RAGAgentState` tracks strategy, path, scores |
 
-The system behaves like a **team of specialised components** but does **not** implement autonomous agent decision-making.
+This is a pragmatic first step toward agent-based architecture: routing and control flow are now explicit graph nodes and edges.
+
+### Implemented in this iteration
+
+- `backend/app/rag/agent_graph.py` added (`LangGraphRAGPipeline` + `RAGAgentState`)
+- `main.py` query handler now invokes graph execution instead of manual orchestration
+- `planner` node added (rule-based query-shape strategy selection)
+- Decision trace persisted in state (`decision_path`) and logged
+- Mermaid graph endpoint added: `/api/v1/rag/graph/mermaid`
+- Frontend graph viewer added (`GraphViewer`) to render orchestration diagram in-app
 
 ---
 
@@ -156,15 +165,15 @@ graph.add_conditional_edges(
 
 ### Phase 1 — Introduce State Management
 
-- [ ] Add `LangGraph` dependency (`langgraph`)
-- [ ] Define `RAGAgentState` typed dict
-- [ ] Wrap existing `Retriever` and `PromptBuilder` as LangGraph nodes
-- [ ] Replace `main.py` query handler with graph invocation
-- [ ] Verify end-to-end parity with existing test suite
+- [x] Add `LangGraph` dependency (`langgraph`)
+- [x] Define `RAGAgentState` typed dict
+- [x] Wrap existing `Retriever` / `HybridRetriever` / generation steps as graph nodes
+- [x] Replace `main.py` query handler with graph invocation
+- [x] Verify parity with focused backend test suite
 
 ### Phase 2 — Add Planning / Routing Agent
 
-- [ ] Implement `planner_node` that selects retrieval strategy from query characteristics
+- [x] Implement `planner_node` that selects retrieval strategy from query characteristics
 - [ ] Replace hard-coded `classify_query()` with LLM-based intent classification (or a richer rule engine)
 - [ ] Implement automatic collection routing (removes frontend toggle requirement)
 
@@ -196,7 +205,7 @@ These parts of the current system remain valid in an agent architecture and map 
 
 ## What Is Out of Scope
 
-The following are **not** warranted for the VCC/FastAPI documentation use case and were excluded from this roadmap:
+The following are **not** warranted for the FastAPI/FastAPI documentation use case and were excluded from this roadmap:
 
 - Code execution agents — no code execution required for documentation Q&A
 - Knowledge graph agents — no structured KG in the corpus

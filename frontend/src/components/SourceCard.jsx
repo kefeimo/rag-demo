@@ -54,6 +54,12 @@ function SourceCard({ source, index }) {
       {/* Metadata Section */}
       {source.metadata && (
         <div className="mb-3 space-y-1">
+          {source.metadata.collection && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500 font-medium min-w-[60px]">Collection:</span>
+              <span className="text-gray-700 font-mono">{source.metadata.collection}</span>
+            </div>
+          )}
           {source.metadata.source && (
             <div className="flex items-start gap-2 text-xs">
               <span className="text-gray-500 font-medium min-w-[60px]">Document:</span>

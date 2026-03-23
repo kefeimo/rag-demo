@@ -1,6 +1,6 @@
 # AI Engineer Coding Exercise - Strategic Planning Document
 
-**Project:** RAG System Implementation for Visa  
+**Project:** RAG System Implementation for FastAPI Company  
 **Timeline:** 2 Days (16-20 hours)  
 **Date:** March 4-5, 2026  
 **Objective:** Demonstrate production-ready GenAI engineering skills with focus on planning, evaluation, and SDLC best practices
@@ -56,7 +56,7 @@ Based on qualification evaluation, this project emphasizes:
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Dataset** | FastAPI Documentation | Relevant to assignment, abundant quality docs, realistic queries, saves 2 hours vs Visa repos exploration |
+| **Dataset** | FastAPI Documentation | Relevant to assignment, abundant quality docs, realistic queries, saves 2 hours vs FastAPI Company repos exploration |
 | **LLM** | GPT4All (mistral-7b) primary, OpenAI-ready config | Free, aligned with Day 1-2 experience, shows infrastructure skills, easy to switch for better quality if needed |
 | **Vector DB** | ChromaDB | Lightweight, Python-native, sufficient for assignment scale, easy local setup |
 | **Evaluation** | Start 3 metrics/20 queries → Expand 5 metrics/50 queries | Core functionality first, expand if ahead of schedule |
@@ -695,8 +695,8 @@ ai-engineer-coding-exercise/
 
 ### **Anticipated Questions & Prepared Answers**
 
-**Q: "Why FastAPI documentation instead of Visa repos?"**
-> "I chose FastAPI docs for three reasons: First, it's directly relevant to the backend framework in the assignment, showing domain alignment. Second, the documentation is high-quality and comprehensive, allowing me to focus on RAG quality rather than data cleaning. Third, it saved 2-3 hours compared to exploring unfamiliar repos, letting me invest that time in evaluation quality and production patterns. In a real scenario with more time, I'd absolutely use Visa-specific documentation."
+**Q: "Why FastAPI documentation instead of FastAPI Company repos?"**
+> "I chose FastAPI docs for three reasons: First, it's directly relevant to the backend framework in the assignment, showing domain alignment. Second, the documentation is high-quality and comprehensive, allowing me to focus on RAG quality rather than data cleaning. Third, it saved 2-3 hours compared to exploring unfamiliar repos, letting me invest that time in evaluation quality and production patterns. In a real scenario with more time, I'd absolutely use FastAPI Company-specific documentation."
 
 **Q: "Walk me through your evaluation strategy."**
 > "I used a three-phase approach: First, baseline evaluation with 20 queries and 3 core RAGAS metrics to establish initial quality. Second, I expanded to 50 queries covering diverse scenarios including adversarial cases. Third, I implemented an improvement (specific change made) and demonstrated measurable improvement from X to Y. The evaluation isn't just about scores—it drove specific technical decisions like chunk size and confidence thresholding."
@@ -746,13 +746,13 @@ ai-engineer-coding-exercise/
 
 #### **Goals:**
 1. Build reusable framework for generating RAG datasets from real codebases
-2. Demo with actual Visa repositories (show initiative + research)
+2. Demo with actual FastAPI Company repositories (show initiative + research)
 3. Showcase end-to-end thinking: data acquisition → processing → ingestion → RAG
 
 #### **Three-Pillar Data Sources:**
 
 **Pillar 1: Repository Documentation Extraction**
-- Clone Visa open-source repos (e.g., visa/java-sample-code)
+- Clone FastAPI Company open-source repos (e.g., sample-code)
 - Extract existing docs: README, API guides, CHANGELOG, wiki
 - File types: `.md`, `.rst`, `.txt`, `.pdf` (if present)
 - **Output:** Raw documentation corpus
@@ -767,7 +767,7 @@ ai-engineer-coding-exercise/
 - **Output:** Structured API documentation
 
 **Pillar 3: Issue/Ticket-Driven Q&A Dataset**
-- Scrape GitHub Issues & PRs from Visa repos
+- Scrape GitHub Issues & PRs from FastAPI Company repos
 - Filter: Closed issues with accepted answers
 - Convert to (question, answer, context) triples
 - Extract common pain points and solutions
@@ -796,14 +796,14 @@ data-pipeline/
 - [ ] Implement Pillar 1: `repo_docs_extractor.py` (git clone, find .md files)
 - [ ] Implement Pillar 2: `code_doc_generator.py` (basic docstring extraction)
 - [ ] Implement Pillar 3: `issue_qa_converter.py` (GitHub API → Q&A format)
-- [ ] Create `config.yaml` with Visa repo configurations
+- [ ] Create `config.yaml` with FastAPI Company repo configurations
 
-**Hour 15: Demo with Visa Repositories**
-- [ ] Select 1-2 Visa repos (e.g., visa/java-sample-code, visa/openapi)
+**Hour 15: Demo with FastAPI Company Repositories**
+- [ ] Select 1-2 FastAPI Company repos (e.g., sample-code, openapi-spec)
 - [ ] Run pipeline to generate dataset
-- [ ] Metrics: Before (15 FastAPI docs) vs. After (150+ docs including Visa content)
+- [ ] Metrics: Before (15 FastAPI docs) vs. After (150+ docs including FastAPI Company content)
 - [ ] Ingest new dataset into existing RAG system
-- [ ] Test queries: "How do I authenticate with Visa API?"
+- [ ] Test queries: "How do I authenticate with FastAPI Company API?"
 
 **Hour 16: Documentation & Polish**
 - [ ] Create `docs/DATA-PIPELINE.md` (architecture, usage, extensibility)
@@ -814,24 +814,24 @@ data-pipeline/
 #### **Value Propositions for Interview:**
 
 1. **"I don't just build RAG systems, I build data pipelines to feed them"**
-2. **"Used YOUR actual repos (visa/...) as the demo dataset"**
+2. **"Used YOUR actual repos (company/...) as the demo dataset"**
 3. **"Converted 50 GitHub issues into 50 training Q&A pairs"**
 4. **"Auto-generated 200+ API docs from your Java sample code"**
 5. **"Framework is reusable for any organization's codebase"**
 6. **"Showed how to keep docs fresh: git hooks → auto-regenerate"**
 
-#### **Candidate Visa Repositories:**
+#### **Candidate FastAPI Company Repositories:**
 
 Research targets (to be confirmed):
-- `visa/visa-sdk-javascript` - Frontend SDK
-- `visa/java-sample-code` - Backend code samples
-- `visa/developer-recipes` - API integration guides
-- `visa/openapi` - API specifications (OpenAPI/Swagger)
+- `sdk-javascript` - Frontend SDK
+- `sample-code` - Backend code samples
+- `developer-guides` - API integration guides
+- `openapi-spec` - API specifications (OpenAPI/Swagger)
 
 #### **Success Metrics:**
 
 - **Before:** 13 FastAPI docs → 252 chunks
-- **After:** 150+ documents (FastAPI + Visa repos) → 1000+ chunks
+- **After:** 150+ documents (FastAPI + FastAPI Company repos) → 1000+ chunks
 - **Quality:** Demonstrate queries spanning both datasets
 - **Reusability:** Framework can be configured for any GitHub org in 5 minutes
 
@@ -845,7 +845,7 @@ Research targets (to be confirmed):
 2. **Evaluation Excellence:** Not just "it works"—demonstrated measurement and improvement
 3. **Enterprise Thinking:** Unknown handling, source attribution, confidence scoring
 4. **Data Engineering Skills:** Built reusable pipeline for RAG dataset generation ⭐ NEW
-5. **Visa-Specific Research:** Used actual Visa repositories in the demo ⭐ NEW
+5. **FastAPI Company-Specific Research:** Used actual FastAPI Company repositories in the demo ⭐ NEW
 6. **Clear Communication:** Documentation shows strategic thinking, not just code
 7. **Interview Ready:** Code designed for easy modification, improvements documented
 

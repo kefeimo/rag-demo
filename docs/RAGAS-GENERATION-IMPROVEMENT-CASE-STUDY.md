@@ -3,7 +3,7 @@
 **Date:** March 5, 2026  
 **Status:** ✅ **COMPLETE - ALL ACTION ITEMS FULFILLED**  
 **Implementation Date:** March 5, 2026, 17:40  
-**Context:** VCC RAG System Evaluation - Answer Relevancy Below Target (0.656 vs ≥0.75)
+**Context:** FastAPI RAG System Evaluation - Answer Relevancy Below Target (0.656 vs ≥0.75)
 
 ---
 
@@ -33,7 +33,7 @@ After successfully solving the **retrieval problem** with hybrid search (Context
 
 ## Current Performance Analysis
 
-### RAGAS Metrics (VCC Baseline with Hybrid Search)
+### RAGAS Metrics (FastAPI Baseline with Hybrid Search)
 
 | Metric | Target | Actual | Status | Gap | Priority |
 |--------|--------|--------|--------|-----|----------|
@@ -77,7 +77,7 @@ After successfully solving the **retrieval problem** with hybrid search (Context
 
 **Evidence from Baselines:**
 - FastAPI baseline (same GPT4All): Answer Relevancy 0.772 (better but still borderline)
-- VCC baseline (same GPT4All): Answer Relevancy 0.656 (worse with technical content)
+- FastAPI baseline (same GPT4All): Answer Relevancy 0.656 (worse with technical content)
 - Pattern: More technical queries = lower relevancy with GPT4All
 
 ---
@@ -108,7 +108,7 @@ OPENAI_MODEL=gpt-3.5-turbo
 
 #### Cost Analysis
 - **Per Query:** ~$0.002 (GPT-3.5-turbo pricing)
-- **10 Queries (VCC baseline):** $0.02
+- **10 Queries (FastAPI baseline):** $0.02
 - **100 Queries (full evaluation):** $0.20
 - **1000 Queries (production scale):** $2.00
 
@@ -230,7 +230,7 @@ RAGAS Evaluation Judge: GPT-4 ───┘
 
 # GPT-4 Reference (Recommended)
 "IDataTableProps is a TypeScript interface that defines the comprehensive 
-prop structure for the DataTable component in VCC. It includes data array 
+prop structure for the DataTable component in FastAPI. It includes data array 
 configuration, column definitions with sorting/filtering capabilities, 
 accessibility ARIA attributes, and styling customization options."
 # → Comprehensive, detailed, aligns with GPT-4's judging criteria
@@ -384,7 +384,7 @@ I incorrectly suggested "manually write correct answers" (Option B) because I wa
 - You're creating a new benchmark dataset
 - You want to compare "LLM-as-judge" vs "Human-as-judge"
 
-**For your Visa interview project: Skip Option B.**
+**For your FastAPI Company interview project: Skip Option B.**
 
 ---
 
@@ -396,8 +396,8 @@ I incorrectly suggested "manually write correct answers" (Option B) because I wa
 ```bash
 # Uses GPT-3.5 for references (cheaper but less rigorous)
 python run_ragas_stage1b_generate_references.py \
-  --input vcc_baseline_10_stage1.json \
-  --output vcc_baseline_10_with_refs.json \
+  --input fastapi_baseline_10_stage1.json \
+  --output fastapi_baseline_10_with_refs.json \
   --model gpt-3.5-turbo  # ⚠️ Different from judge (GPT-4)
 ```
 
@@ -405,8 +405,8 @@ python run_ragas_stage1b_generate_references.py \
 ```bash
 # Use GPT-4 for references (same as RAGAS judge)
 python run_ragas_stage1b_generate_references.py \
-  --input vcc_baseline_10_stage1.json \
-  --output vcc_baseline_10_with_refs.json \
+  --input fastapi_baseline_10_stage1.json \
+  --output fastapi_baseline_10_with_refs.json \
   --model gpt-4  # ✅ Same as judge (GPT-4)
 ```
 
@@ -469,7 +469,7 @@ answer_correctness = ragas.metrics.answer_correctness.score(
 ```
 
 **Current Status:**
-- ✅ VCC baseline Stage 1B complete: All 10 queries have references
+- ✅ FastAPI baseline Stage 1B complete: All 10 queries have references
 - ❓ Answer Correctness shows "N/A" - **Why?**
 
 **Let me check your evaluation results:**
@@ -483,7 +483,7 @@ answer_correctness = ragas.metrics.answer_correctness.score(
 - You have `reference` field
 - Simple rename fixes it
 
-**Action Item:** Check `vcc_baseline_10_full_eval.json` to see which metrics were calculated.
+**Action Item:** Check `fastapi_baseline_10_full_eval.json` to see which metrics were calculated.
 
 ---
 
@@ -493,7 +493,7 @@ answer_correctness = ragas.metrics.answer_correctness.score(
 
 **Step 1: Update Configuration (2 minutes)** ✅ DONE
 ```bash
-cd /home/kefei/project/resume/project/visa-full-stack-ai-engineer/ai-engineer-coding-exercise/backend
+cd /home/kefei/project/resume/project/rag-demo/ai-engineer-coding-exercise/backend
 
 # ✅ Updated .env file
 LLM_PROVIDER=openai
@@ -520,21 +520,21 @@ cd backend/evaluation
 
 # ✅ Generated RAG answers with GPT-3.5-turbo
 python run_ragas_stage1_query.py \
-  --input ../../data/test_queries/vcc_baseline_10.json \
-  --output ../../data/results/vcc_gpt35_stage1.json \
-  --dataset-name vcc_gpt35
+  --input ../../data/test_queries/fastapi_baseline_10.json \
+  --output ../../data/results/fastapi_gpt35_stage1.json \
+  --dataset-name fastapi_gpt35
 
 # Results: ✅ 10/10 queries successful, 5-7s each (vs 80-99s with GPT4All)
 # Performance: 93% faster response times
-# Output: data/results/vcc_gpt35_stage1.json
+# Output: data/results/fastapi_gpt35_stage1.json
 ```
 
 **Step 4: Generate References with GPT-4 (Rigorous Approach) (5 minutes)** ✅ DONE
 ```bash
 # ✅ Used GPT-4 for references (same as RAGAS judge)
 python run_ragas_stage1b_generate_references.py \
-  --input ../../data/results/vcc_gpt35_stage1.json \
-  --output ../../data/results/vcc_gpt35_with_refs_gpt4.json \
+  --input ../../data/results/fastapi_gpt35_stage1.json \
+  --output ../../data/results/fastapi_gpt35_with_refs_gpt4.json \
   --model gpt-4
 
 # Results: ✅ 5 references generated (1426-1868 chars each)
@@ -547,8 +547,8 @@ python run_ragas_stage1b_generate_references.py \
 ```bash
 # ✅ Evaluated with all 5 RAGAS metrics
 python run_ragas_stage2_eval.py \
-  --input ../../data/results/vcc_gpt35_with_refs_gpt4_filtered.json \
-  --output ../../data/results/vcc_gpt35_full_eval.json
+  --input ../../data/results/fastapi_gpt35_with_refs_gpt4_filtered.json \
+  --output ../../data/results/fastapi_gpt35_full_eval.json
 
 # Results: ✅ ALL TARGETS EXCEEDED
 # - Answer Relevancy: 0.9715 (+48.1% vs baseline 0.656) ✅
@@ -704,7 +704,7 @@ python run_ragas_stage2_eval.py \
 
 **Step 1: Update backend configuration**
 ```bash
-cd /home/kefei/project/resume/project/visa-full-stack-ai-engineer/ai-engineer-coding-exercise/backend
+cd /home/kefei/project/resume/project/rag-demo/ai-engineer-coding-exercise/backend
 
 # Edit .env file
 # Change: LLM_PROVIDER=gpt4all
@@ -732,9 +732,9 @@ cd backend/evaluation
 
 # Query RAG system with GPT-3.5
 python run_ragas_stage1_query.py \
-  --input ../../data/test_queries/vcc_baseline_10.json \
-  --output ../../data/results/vcc_gpt35_stage1.json \
-  --dataset-name vcc_gpt35
+  --input ../../data/test_queries/fastapi_baseline_10.json \
+  --output ../../data/results/fastapi_gpt35_stage1.json \
+  --dataset-name fastapi_gpt35
 
 # Expected: 10/10 queries, ~2-5s each (vs 80s with GPT4All)
 ```
@@ -743,8 +743,8 @@ python run_ragas_stage1_query.py \
 ```bash
 # Use GPT-4 for references (same as RAGAS judge)
 python run_ragas_stage1b_generate_references.py \
-  --input ../../data/results/vcc_gpt35_stage1.json \
-  --output ../../data/results/vcc_gpt35_with_refs_gpt4.json \
+  --input ../../data/results/fastapi_gpt35_stage1.json \
+  --output ../../data/results/fastapi_gpt35_with_refs_gpt4.json \
   --model gpt-4
 
 # Cost: ~$2.00 for 10 references (vs $0.50 with GPT-3.5)
@@ -755,8 +755,8 @@ python run_ragas_stage1b_generate_references.py \
 ```bash
 # Evaluate with GPT-4 references
 python run_ragas_stage2_eval.py \
-  --input ../../data/results/vcc_gpt35_with_refs_gpt4.json \
-  --output ../../data/results/vcc_gpt35_full_eval.json
+  --input ../../data/results/fastapi_gpt35_with_refs_gpt4.json \
+  --output ../../data/results/fastapi_gpt35_full_eval.json
 
 # Expected metrics:
 # - Answer Relevancy: 0.82+ (vs 0.656 baseline)
@@ -809,15 +809,15 @@ python run_ragas_stage2_eval.py \
 # For apples-to-apples comparison if required
 
 python run_ragas_stage1b_generate_references.py \
-  --input ../../data/results/vcc_baseline_10_stage1.json \
-  --output ../../data/results/vcc_baseline_10_with_refs_gpt4.json \
+  --input ../../data/results/fastapi_baseline_10_stage1.json \
+  --output ../../data/results/fastapi_baseline_10_with_refs_gpt4.json \
   --model gpt-4 \
   --regenerate
 
 # Then re-evaluate
 python run_ragas_stage2_eval.py \
-  --input ../../data/results/vcc_baseline_10_with_refs_gpt4.json \
-  --output ../../data/results/vcc_baseline_10_full_eval_gpt4refs.json
+  --input ../../data/results/fastapi_baseline_10_with_refs_gpt4.json \
+  --output ../../data/results/fastapi_baseline_10_full_eval_gpt4refs.json
 
 # Benefit: Consistent GPT-4 references across all experiments
 ```
@@ -891,11 +891,11 @@ python run_ragas_stage2_eval.py \
 - Eliminates unnecessary verbosity
 - Result: **0.9715 relevancy** (near-perfect)
 
-**Sample Query**: "What accessibility features does Visa Chart Components provide?"
+**Sample Query**: "What accessibility features does FastAPI provide?"
 
 **GPT4All Answer** (Relevancy: ~0.65):
 ```
-Based on the provided documentation, Visa Chart Components provides several 
+Based on the provided documentation, FastAPI provides several 
 accessibility features including keyboard navigation support, focus management,
 and ARIA labels. The library is designed to be accessible by default. Let me 
 elaborate on these features in detail... [continues for 250+ words]
@@ -903,7 +903,7 @@ elaborate on these features in detail... [continues for 250+ words]
 
 **GPT-3.5-turbo Answer** (Relevancy: 0.98):
 ```
-Visa Chart Components provides: (1) Keyboard navigation with Tab, Shift+Tab,
+FastAPI provides: (1) Keyboard navigation with Tab, Shift+Tab,
 Arrow keys; (2) Focus management with visible indicators; (3) ARIA labels and 
 roles; (4) Screen reader support. Configured via props like accessibility, 
 showTooltip, and getAccessibilityDescription.
@@ -1010,7 +1010,7 @@ The lower score reflects **model capability differences**, not system quality is
 **GPT4All Answer** (206 words, verbose):
 ```
 Based on the provided documentation, IDataTableProps is an interface used in 
-Visa Chart Components to define the structure of data passed to data table 
+FastAPI to define the structure of data passed to data table 
 components. Let me explain this in detail...
 
 [continues with generic explanations, tangential information about TypeScript
@@ -1020,7 +1020,7 @@ usage examples]
 
 **GPT-3.5-turbo Answer** (123 words, focused):
 ```
-IDataTableProps is an interface in Visa Chart Components that defines props
+IDataTableProps is an interface in FastAPI that defines props
 for data table visualizations. Key properties:
 
 - data: Array of objects with your data
@@ -1144,14 +1144,14 @@ backend/evaluation/
 └── run_ragas_stage2_eval.py                     # Stage 2: RAGAS evaluation (6 metrics)
 
 data/results/
-├── vcc_baseline_10_stage1.json                  # Baseline Stage 1A: GPT4All answers
-├── vcc_baseline_10_with_refs.json               # Baseline Stage 1B: + GPT-3.5 references
-├── vcc_baseline_10_full_eval.json               # Baseline Stage 2: Original evaluation
-├── vcc_gpt35_stage1.json                        # ✅ NEW: GPT-3.5 RAG answers
-├── vcc_gpt35_with_refs_gpt4.json                # ✅ NEW: + GPT-4 references (rigorous)
-├── vcc_gpt35_with_refs_gpt4_filtered.json       # ✅ NEW: Filtered (5 queries with refs)
-├── vcc_gpt35_full_eval.json                     # ✅ NEW: Evaluation (5 metrics)
-└── vcc_gpt35_full_eval_with_correctness.json    # ✅ NEW: Complete evaluation (6 metrics) ⭐
+├── fastapi_baseline_10_stage1.json                  # Baseline Stage 1A: GPT4All answers
+├── fastapi_baseline_10_with_refs.json               # Baseline Stage 1B: + GPT-3.5 references
+├── fastapi_baseline_10_full_eval.json               # Baseline Stage 2: Original evaluation
+├── fastapi_gpt35_stage1.json                        # ✅ NEW: GPT-3.5 RAG answers
+├── fastapi_gpt35_with_refs_gpt4.json                # ✅ NEW: + GPT-4 references (rigorous)
+├── fastapi_gpt35_with_refs_gpt4_filtered.json       # ✅ NEW: Filtered (5 queries with refs)
+├── fastapi_gpt35_full_eval.json                     # ✅ NEW: Evaluation (5 metrics)
+└── fastapi_gpt35_full_eval_with_correctness.json    # ✅ NEW: Complete evaluation (6 metrics) ⭐
 
 docs/
 ├── RAGAS-GENERATION-IMPROVEMENT-CASE-STUDY.md   # This document ✅ FINALIZED (with integrated analysis)
@@ -1161,7 +1161,7 @@ docs/
 ```
 
 **Key Evaluation Files:**
-- **vcc_gpt35_full_eval_with_correctness.json**: Final evaluation with all 6 RAGAS metrics
+- **fastapi_gpt35_full_eval_with_correctness.json**: Final evaluation with all 6 RAGAS metrics
   - Includes Answer Correctness: 0.5285
   - Faithfulness: 0.8090 (corrected value)
   - Context Entity Recall: 0.4329

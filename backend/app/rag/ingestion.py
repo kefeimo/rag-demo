@@ -23,7 +23,7 @@ class DocumentLoader:
 
     Supports two source formats:
     - Markdown files via load_documents()      — used for FastAPI docs corpus
-    - JSON files via load_json_documents()     — used for VCC docs corpus
+    - JSON files via load_json_documents()     — used for custom JSON-formatted docs
     """
     
     def __init__(self, chunk_size: int = None, chunk_overlap: int = None):
@@ -90,9 +90,7 @@ class DocumentLoader:
         """
         Load pre-structured documents from one or more JSON files.
 
-        Each JSON file must be a list of objects with 'content' and 'metadata' keys,
-        which is the format produced by the data-pipeline extractors:
-            visa_repo_docs.json, visa_code_docs.json, visa_issue_qa.json
+        Each JSON file must be a list of objects with 'content' and 'metadata' keys.
 
         Args:
             *json_paths: One or more paths to JSON files. Non-existent paths are
@@ -291,9 +289,17 @@ class ChromaDBIngestion:
             return 0, time.time() - start_time
         
         # Prepare data for ChromaDB
-        ids = [f"chunk_{i}" for i in range(len(chunks))]
+        # Generate unique IDs using collection name, source file, and chunk ID
+        ids = []
+        for i, chunk in enumerate(chunks):
+            source = chunk["metadata"].get("source", "unknown")
+            chunk_id = chunk["metadata"].get("chunk_id", i)
+            # Use source filename and chunk_id to create unique ID
+            unique_id = f"{self.collection_name}_{source.replace('/', '_').replace('.', '_')}_{chunk_id}"
+            ids.append(unique_id)
+
         documents = [chunk["content"] for chunk in chunks]
-        metadatas = [chunk["metadata"] for chunk in chunks]
+        metadatas = [{**chunk["metadata"], "collection": self.collection_name} for chunk in chunks]
         
         # Generate embeddings
         embeddings = self.generate_embeddings(documents)
@@ -308,24 +314,22 @@ class ChromaDBIngestion:
         return len(chunks), elapsed_time
 
 
-def ingest_documents(document_path: str, force_reingest: bool = False) -> Dict[str, Any]:
+def ingest_documents(document_path: str, collection_name: str = "fastapi_docs", force_reingest: bool = False) -> Dict[str, Any]:
     """
-    Main ingestion function: Load, chunk, and store documents into FastAPI docs collection.
+    Main ingestion function: Load, chunk, and store documents into specified collection.
 
-    Always targets the 'fastapi_docs' collection regardless of CHROMA_COLLECTION_NAME env var.
-    (CHROMA_COLLECTION_NAME is only used as a query fallback default, not for ingestion routing.)
-    
     Args:
         document_path: Path to documents directory
+        collection_name: Target collection name (default: "fastapi_docs")
         force_reingest: If True, re-ingest even if documents exist
-        
+
     Returns:
         Dictionary with ingestion statistics
     """
     try:
-        # Initialize loader and ingestion — FastAPI docs always go into 'fastapi_docs'
+        # Initialize loader and ingestion with specified collection
         loader = DocumentLoader()
-        ingestion = ChromaDBIngestion(collection_name="fastapi_docs")
+        ingestion = ChromaDBIngestion(collection_name=collection_name)
         
         # Load documents
         documents = loader.load_documents(document_path)
@@ -353,75 +357,4 @@ def ingest_documents(document_path: str, force_reingest: bool = False) -> Dict[s
             "chunks_created": 0,
             "chunks_added": 0,
             "time_elapsed": "0s"
-        }
-
-
-def ingest_vcc_documents(
-    repo_docs_path: str = None,
-    code_docs_path: str = None,
-    issue_qa_path: str = None,
-    force_reingest: bool = True,
-) -> Dict[str, Any]:
-    """
-    Load, chunk, and store VCC documentation into the 'vcc_docs' collection.
-
-    Reads up to three JSON files produced by the data-pipeline extractors:
-      - visa_repo_docs.json  — README, CONTRIBUTING, CHANGELOGs (53 docs)
-      - visa_code_docs.json  — auto-generated API docs from source (210 docs)
-      - visa_issue_qa.json   — GitHub issue Q&A pairs (13 docs)
-
-    Missing files are skipped with a warning; at least one must exist.
-    Always targets the 'vcc_docs' collection regardless of CHROMA_COLLECTION_NAME.
-
-    Args:
-        repo_docs_path: Path to visa_repo_docs.json (default: Docker path)
-        code_docs_path: Path to visa_code_docs.json (default: Docker path)
-        issue_qa_path:  Path to visa_issue_qa.json  (default: Docker path)
-        force_reingest: If True, reset collection before ingestion
-
-    Returns:
-        Dictionary with ingestion statistics
-    """
-    # Default to paths baked into the Docker image
-    repo_docs_path = repo_docs_path or "/app/data-pipeline/data/raw/visa_repo_docs.json"
-    code_docs_path = code_docs_path or "/app/data-pipeline/data/raw/visa_code_docs.json"
-    issue_qa_path  = issue_qa_path  or "/app/data-pipeline/data/raw/visa_issue_qa.json"
-
-    try:
-        loader    = DocumentLoader()
-        ingestion = ChromaDBIngestion(collection_name="vcc_docs")
-
-        # Load all JSON sources; non-existent paths are skipped with a warning
-        documents = loader.load_json_documents(
-            repo_docs_path,
-            code_docs_path,
-            issue_qa_path,
-        )
-
-        if not documents:
-            raise FileNotFoundError(
-                "No VCC documents found. Check that at least one JSON path exists."
-            )
-
-        chunks = loader.process_documents(documents)
-        chunks_added, elapsed_time = ingestion.ingest_chunks(chunks, force_reingest)
-
-        return {
-            "status": "success",
-            "documents_processed": len(documents),
-            "chunks_created": len(chunks),
-            "chunks_added": chunks_added,
-                "collection_count": ingestion.store.count(),
-            "time_elapsed": f"{elapsed_time:.2f}s",
-        }
-
-    except Exception as e:
-        logger.error(f"VCC ingestion failed: {str(e)}", exc_info=True)
-        return {
-            "status": "error",
-            "error": str(e),
-            "documents_processed": 0,
-            "chunks_created": 0,
-            "chunks_added": 0,
-            "time_elapsed": "0s",
         }

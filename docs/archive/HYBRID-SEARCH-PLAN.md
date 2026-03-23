@@ -87,7 +87,7 @@ from typing import List, Dict, Any
 import numpy as np
 
 class HybridRetriever:
-    def __init__(self, collection_name: str = "vcc_docs"):
+    def __init__(self, collection_name: str = "fastapi_docs"):
         # Semantic search (existing)
         self.semantic_retriever = Retriever(collection_name)
         
@@ -402,7 +402,7 @@ def search(self, query: str, top_k: int = 5):
 
 def test_hybrid_search_api_query():
     """Test that API queries return correct interfaces"""
-    retriever = HybridRetriever('vcc_docs')
+    retriever = HybridRetriever('fastapi_docs')
     
     # Query that failed in evaluation
     results = retriever.search(
@@ -420,7 +420,7 @@ def test_hybrid_search_api_query():
 
 def test_semantic_weight_adjustment():
     """Test that semantic weight affects ranking"""
-    retriever = HybridRetriever('vcc_docs')
+    retriever = HybridRetriever('fastapi_docs')
     
     # Pure semantic (should fail)
     semantic_only = retriever.search(
@@ -451,7 +451,7 @@ def test_semantic_weight_adjustment():
 ### Integration Tests
 
 ```python
-def test_vcc_evaluation_with_hybrid_search():
+def test_evaluation_with_hybrid_search():
     """Re-run Query 9 with hybrid search"""
     from backend.evaluation.run_ragas_stage1_query import run_rag_query
     
@@ -481,8 +481,8 @@ def benchmark_hybrid_vs_semantic():
         # ... more queries
     ]
     
-    semantic_retriever = Retriever('vcc_docs')
-    hybrid_retriever = HybridRetriever('vcc_docs')
+    semantic_retriever = Retriever('fastapi_docs')
+    hybrid_retriever = HybridRetriever('fastapi_docs')
     
     import time
     
@@ -539,7 +539,7 @@ def benchmark_hybrid_vs_semantic():
 
 ### Phase 2: Testing (Day 2-3)
 - [ ] Test with Query 9 (IDataTableProps)
-- [ ] Test with all 10 VCC baseline queries
+- [ ] Test with all 10 FastAPI baseline queries
 - [ ] Performance benchmarking
 - [ ] Compare results with semantic-only
 
@@ -584,7 +584,7 @@ def benchmark_hybrid_vs_semantic():
 **Next Steps:**
 1. Get approval for implementation
 2. Start with Phase 1 (development)
-3. Test thoroughly with VCC evaluation queries
+3. Test thoroughly with FastAPI evaluation queries
 4. Deploy and measure improvements
 
 **Estimated Time:** 2-3 hours (Phases 1-2)  
