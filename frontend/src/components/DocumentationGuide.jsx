@@ -6,16 +6,18 @@ const DocumentationGuide = ({ onQuestionClick }) => {
   const collections = [
     {
       name: 'Asset Score / Audit Template',
-      icon: '📦',
-      description: 'Docker setup, energy calculations, customizable fields',
+      collection_name: 'at_docs',
+      icon: '🏗️',
+      description: 'Building energy audits, lifecycle savings, retrofit measures',
       examples: [
-        'How do I set up the development environment using Docker Compose?',
-        'How does the energy saving calculation work?',
-        'How do I add a new customizable enum field?',
+        'How does the lifecycle energy savings calculation work in Asset Score?',
+        'How do I add a new customizable enum field to the audit template?',
+        'How do validation rules work in the audit template?',
       ],
     },
     {
       name: 'FastAPI Framework',
+      collection_name: 'fastapi_docs',
       icon: '📘',
       description: 'Web framework fundamentals, API development, async patterns',
       examples: [
@@ -26,6 +28,7 @@ const DocumentationGuide = ({ onQuestionClick }) => {
     },
     {
       name: 'HVAC System Performance',
+      collection_name: 'tspr_docs',
       icon: '🏢',
       description: 'OpenStudio simulations, local setup, simulation workflows',
       examples: [
@@ -91,7 +94,7 @@ const DocumentationGuide = ({ onQuestionClick }) => {
                 {collection.examples.map((example, exIdx) => (
                   <button
                     key={exIdx}
-                    onClick={() => onQuestionClick(example)}
+                    onClick={() => onQuestionClick({ question: example, collection: collection.collection_name })}
                     className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors"
                   >
                     • {example}

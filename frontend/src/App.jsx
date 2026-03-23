@@ -19,11 +19,19 @@ function App() {
   const [thinkingSteps, setThinkingSteps] = useState([]); // Live SSE reasoning items ({step, thought})
   const [cotReasoning, setCotReasoning] = useState('');   // Visible model CoT reasoning (demo)
   const [isThinking, setIsThinking] = useState(false);   // True while SSE stream is open
+  const [selectedCollection, setSelectedCollection] = useState(undefined); // Collection for current query
   const suggestRef = useRef(null); // Ref to pre-fill QueryInput textarea
 
   // Pre-fill the textarea without submitting
-  const handleSuggest = (text) => {
-    if (suggestRef.current) suggestRef.current(text);
+  // Accepts string (backward compat) or { question, collection }
+  const handleSuggest = (input) => {
+    if (typeof input === 'string') {
+      if (suggestRef.current) suggestRef.current(input);
+      setSelectedCollection(undefined); // Reset to query all collections
+    } else {
+      if (suggestRef.current) suggestRef.current(input.question);
+      setSelectedCollection(input.collection);
+    }
   };
 
   // Check backend health on mount
@@ -52,7 +60,7 @@ function App() {
     setIsThinking(false);
     setCotReasoning('');
 
-    const collection = undefined; // Query all collections by default
+    const collection = selectedCollection; // Use selected collection or undefined for all
 
     try {
       const cacheKey = `${collection}:${query.trim().toLowerCase()}`;

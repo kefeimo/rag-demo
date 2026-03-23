@@ -19,6 +19,7 @@ The system now supports multiple documentation collections (`fastapi_docs`, `at_
 |------------|-----------|-------------|
 | `fastapi_docs` | 165 | FastAPI framework documentation |
 | `at_docs` | 2408 | Asset Score / Audit Template documentation |
+| `tspr_docs` | ~200 | HVAC System Performance (HSP) documentation |
 
 ---
 
@@ -37,6 +38,7 @@ Prompt generation was using `settings.chroma_collection_name` (global setting) t
 **Domain Mapping:**
 - `["fastapi_docs"]` → `"fastapi"` (FastAPI-specific prompts)
 - `["at_docs"]` → `"asset_score"` (Asset Score/Audit Template prompts)
+- `["tspr_docs"]` → `"tspr"` (HVAC System Performance prompts)
 - Multiple collections → `"general"` (domain-neutral prompts)
 
 **New Domain Configuration:**
@@ -77,36 +79,67 @@ Added `"asset_score"` domain config with:
 - Removed manual collection dropdown selector
 - Added collapsible `DocumentationGuide` component
 - Shows available collections with 3 example questions each
-- Queries all collections by default (unified search experience)
+- Example questions target specific collections for accurate results
+- Collection name displayed in source metadata
 - App title changed to "Documentation RAG Assistant" (neutral, not corpus-specific)
 
 **Files Modified:**
 - `backend/app/main.py` - Refactored to thin API layer (522 lines, down from ~650)
 - `backend/app/rag/multi_retrieval.py` - New module
 - `backend/app/rag/collections.py` - New module
-- `frontend/src/App.jsx` - Remove selector, add guide component
-- `frontend/src/components/DocumentationGuide.jsx` - New component
+- `backend/app/rag/ingestion.py` - Added collection metadata and unique ID generation
+- `frontend/src/App.jsx` - Collection-aware query routing from example questions
+- `frontend/src/components/DocumentationGuide.jsx` - Collection-specific example questions
+- `frontend/src/components/SourceCard.jsx` - Display collection metadata
 
 ---
 
-## 🟢 Remaining Work
+## ✅ Recent Enhancements (March 2026)
 
-### Phase 4 — Normalize Metadata (Low Priority / Future)
+### Collection-Specific Query Routing
 
-**Current State:**
-Collections have different metadata schemas:
-- `fastapi_docs`: Basic metadata (source, filename, chunk_id, etc.)
-- `at_docs`: Similar basic metadata
+**Implementation:**
+- `DocumentationGuide` component passes `{question, collection}` object
+- `App.jsx` uses `selectedCollection` state to target specific collections
+- Example questions now query their specific collection instead of all collections
+- Prevents cross-corpus contamination (e.g., AT questions returning FastAPI results)
+
+### Collection Metadata in Sources
+
+**Implementation:**
+- Backend adds `collection` field to metadata during ingestion
+- `SourceCard` component displays collection name before document path
+- Unique chunk IDs using format: `{collection}_{source}_{chunk_id}`
+- Fixes duplicate chunk IDs when force re-ingesting
+
+**Files Modified:**
+- `backend/app/rag/ingestion.py:294` - Add collection to metadata, generate unique IDs
+- `frontend/src/components/SourceCard.jsx:54-61` - Display collection field
+- `frontend/src/components/DocumentationGuide.jsx:6-37` - Add collection_name to each collection
+- `frontend/src/App.jsx:18-29` - Add selectedCollection state and routing
+
+### TSPR Collection Support
+
+**Implementation:**
+- Added `tspr_docs` collection with HVAC System Performance documentation
+- Added "tspr" domain configuration in `generation.py`
+- 3 example questions covering local setup, simulation caching, and monitoring
+- `docker-compose-dev.yml` auto-ingests all 3 collections on startup
+
+---
+
+## 🟢 Future Work
+
+### Phase 4 — Extended Metadata (Low Priority)
 
 **Potential Enhancement:**
-Enrich both collections with normalized metadata:
-- `corpus`: `"fastapi"` | `"at_docs"`
+Further enrich metadata with:
 - `doc_family`: `"markdown_docs"` | `"api_docs"` | `"how_to"`
-- `framework`: `"fastapi"` | `"asset_score"` | etc.
+- `framework`: `"fastapi"` | `"asset_score"` | `"openstudio"`
 - `section_title`: Extracted from headings
 - `source_url`: If available
 
-**Benefit:** Better filtering, source display, and future reranking capabilities
+**Benefit:** Advanced filtering and reranking capabilities
 
 ---
 
@@ -226,4 +259,9 @@ curl -X POST http://localhost:8000/api/v1/query \
 
 ---
 
-**Last Updated:** March 22, 2026 - Phase 1, 2 & 3 implementation complete
+**Last Updated:** March 22, 2026
+- Phase 1, 2 & 3 implementation complete
+- Collection-specific query routing from frontend
+- Collection metadata display in sources
+- TSPR collection support added
+- Unique chunk ID generation fix

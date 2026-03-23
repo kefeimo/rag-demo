@@ -289,9 +289,17 @@ class ChromaDBIngestion:
             return 0, time.time() - start_time
         
         # Prepare data for ChromaDB
-        ids = [f"chunk_{i}" for i in range(len(chunks))]
+        # Generate unique IDs using collection name, source file, and chunk ID
+        ids = []
+        for i, chunk in enumerate(chunks):
+            source = chunk["metadata"].get("source", "unknown")
+            chunk_id = chunk["metadata"].get("chunk_id", i)
+            # Use source filename and chunk_id to create unique ID
+            unique_id = f"{self.collection_name}_{source.replace('/', '_').replace('.', '_')}_{chunk_id}"
+            ids.append(unique_id)
+
         documents = [chunk["content"] for chunk in chunks]
-        metadatas = [chunk["metadata"] for chunk in chunks]
+        metadatas = [{**chunk["metadata"], "collection": self.collection_name} for chunk in chunks]
         
         # Generate embeddings
         embeddings = self.generate_embeddings(documents)

@@ -30,7 +30,11 @@ services:
         until curl -sf http://localhost:8000/health > /dev/null; do echo 'Waiting for backend...'; sleep 3; done &&
         echo 'Backend ready - running auto-ingest...' &&
         echo 'Ingesting FastAPI docs...' &&
-        curl -s -X POST 'http://localhost:8000/api/v1/ingest' -H 'Content-Type: application/json' -d '{\"document_path\": \"data/documents\", \"force_reingest\": false}' &&
+        curl -s -X POST 'http://localhost:8000/api/v1/ingest' -H 'Content-Type: application/json' -d '{\"document_path\": \"data/documents/fastapi-docs\", \"collection_name\": \"fastapi_docs\", \"force_reingest\": false}' &&
+        echo 'Ingesting AT docs...' &&
+        curl -s -X POST 'http://localhost:8000/api/v1/ingest' -H 'Content-Type: application/json' -d '{\"document_path\": \"data/documents/at-docs\", \"collection_name\": \"at_docs\", \"force_reingest\": false}' &&
+        echo 'Ingesting TSPR docs...' &&
+        curl -s -X POST 'http://localhost:8000/api/v1/ingest' -H 'Content-Type: application/json' -d '{\"document_path\": \"data/documents/tspr-docs\", \"collection_name\": \"tspr_docs\", \"force_reingest\": false}' &&
         echo 'Auto-ingest complete' &&
         wait
       "
