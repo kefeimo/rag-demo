@@ -2,6 +2,8 @@
 
 This guide covers deploying the RAG backend to AWS App Runner with Bedrock integration and pre-baked ChromaDB data.
 
+> **Note:** This guide is for **production cloud deployment**. For local development, see [SET-UP-CLAUDE-ON-WSL.md](SET-UP-CLAUDE-ON-WSL.md) which covers using PNNL AI Incubator for faster iteration with access to multiple model providers.
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -275,6 +277,20 @@ vercel --prod  # Redeploy
 | `AWS_REGION` | `us-west-2` | Bedrock service region |
 | `CHROMA_PERSIST_DIRECTORY` | `/app/data/chroma_db` | ChromaDB storage path |
 | `CORS_ORIGINS` | `https://ai-engineer-coding-exercise.vercel.app,...` | Allowed frontend origins |
+
+> **Cloud Deployment Configuration**
+>
+> These environment variables are for **AWS Bedrock** which is recommended for production cloud deployments. This configuration:
+> - Uses IAM roles for authentication (no API keys to manage)
+> - Ensures public internet accessibility from cloud services
+> - Provides production-grade SLA and reliability
+>
+> For **local development**, use PNNL AI Incubator instead, which provides:
+> - Access to multiple model providers (Claude, GPT, Gemini)
+> - Single API key for all models
+> - Faster iteration without AWS credential management
+>
+> See [SET-UP-CLAUDE-ON-WSL.md](SET-UP-CLAUDE-ON-WSL.md#deployment-considerations-local-vs-cloud) for local development configuration.
 
 ### Key Technical Details
 
