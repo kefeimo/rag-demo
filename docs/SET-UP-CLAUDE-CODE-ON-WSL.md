@@ -146,7 +146,7 @@ Add to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 # PNNL AI Incubator (✅ confirmed working setup)
-export ANTHROPIC_API_KEY="sk-nTj47WE6-A2ykMGRtCNo0A"  # Replace with your actual API key
+export ANTHROPIC_API_KEY="sk-nTj47WE6-xxxxxx"  # Replace with your actual API key
 export ANTHROPIC_BASE_URL="https://ai-incubator-api.pnnl.gov"
 
 # For project keys
@@ -387,7 +387,7 @@ The official Claude Code VSCode extension currently **does NOT support custom AP
 curl -fsSL https://claude.ai/install.sh | bash
 
 # Add to ~/.bashrc - Working configuration:
-export ANTHROPIC_API_KEY="sk-nTj47WE6-A2ykMGRtCNo0A"  # Replace with your actual key
+export ANTHROPIC_API_KEY="sk-nTj47WE6-xxxxxx"  # Replace with your actual key
 export ANTHROPIC_BASE_URL="https://ai-incubator-api.pnnl.gov"
 export ANTHROPIC_MODEL="claude-sonnet-4-20250514-v1-project"
 export ANTHROPIC_SMALL_FAST_MODEL="claude-3-5-haiku-20241022-project"
